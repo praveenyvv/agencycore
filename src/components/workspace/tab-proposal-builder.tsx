@@ -2,17 +2,17 @@
 
 import React, { useState } from 'react';
 import {
-  Calendar,
   CheckCircle2,
   Clock,
   Download,
+  Edit3,
   FileSpreadsheet,
   FileText,
   MessageSquare,
   Plus,
-  RefreshCw,
   Send,
   Trash2,
+  X,
   XCircle,
 } from 'lucide-react';
 import { useAuth } from '@/components/providers/app-providers';
@@ -28,6 +28,7 @@ import {
 import { formatTimestamp } from '@/lib/utils';
 import type {
   Project,
+  ProjectProposal,
   ProposalOutcome,
   ProposalPricingItem,
 } from '@/types/agency';
@@ -38,12 +39,15 @@ export function TabProposalBuilder({ project }: { project: Project }) {
     proposals,
     contacts,
     createProposal,
+    updateProposal,
+    deleteProposal,
     recordProposalOutcome,
   } = useAuth();
 
   const [showBuilder, setShowBuilder] = useState(false);
+  const [editingProposal, setEditingProposal] = useState<ProjectProposal | null>(null);
 
-  // Form states
+  // Form states for Create/Edit
   const [title, setTitle] = useState(
     `${project.title} — Technical Scope & Commercial Proposal`
   );
@@ -121,22 +125,77 @@ export function TabProposalBuilder({ project }: { project: Project }) {
     setPricingItems((prev) => prev.filter((_, i) => i !== idx));
   };
 
-  const handleCreateProposal = (e: React.FormEvent) => {
+  const handleCreateOrUpdateProposal = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || pricingItems.length === 0) return;
 
-    createProposal({
-      project_id: project.id,
-      title,
-      solution_overview: solutionOverview,
-      workflow_team_schedule: workflowSchedule,
-      expected_deliverables_results: expectedResults,
-      long_term_support_services: longTermSupport,
-      pricing_items: pricingItems,
-      next_review_meeting_at: nextReviewDate || undefined,
-    });
+    if (editingProposal) {
+      let oneTime = 0;
+      let recurring = 0;
+      const formattedItems: ProposalPricingItem[] = pricingItems.map((pi, idx) => {
+        const costNum = Number(pi.cost) || 0;
+        if (pi.billing_cycle === 'monthly' || pi.billing_cycle === 'yearly') {
+          recurring += costNum;
+        } else {
+          oneTime += costNum;
+        }
+        return {
+          id: `pi-${idx}-${Date.now()}`,
+          description: pi.description,
+          category: pi.category,
+          cost: costNum,
+          billing_cycle: pi.billing_cycle,
+          is_recurring: pi.billing_cycle === 'monthly' || pi.billing_cycle === 'yearly',
+        };
+      });
 
-    setShowBuilder(false);
+      updateProposal(editingProposal.id, {
+        title: title.trim(),
+        solution_overview: solutionOverview.trim(),
+        workflow_team_schedule: workflowSchedule.trim(),
+        expected_deliverables_results: expectedResults.trim(),
+        long_term_support_services: longTermSupport.trim(),
+        pricing_items: formattedItems,
+        total_one_time_cost: oneTime,
+        total_recurring_cost: recurring,
+        next_review_meeting_at: nextReviewDate || undefined,
+      });
+
+      setEditingProposal(null);
+      setShowBuilder(false);
+    } else {
+      createProposal({
+        project_id: project.id,
+        title,
+        solution_overview: solutionOverview,
+        workflow_team_schedule: workflowSchedule,
+        expected_deliverables_results: expectedResults,
+        long_term_support_services: longTermSupport,
+        pricing_items: pricingItems,
+        next_review_meeting_at: nextReviewDate || undefined,
+      });
+
+      setShowBuilder(false);
+    }
+  };
+
+  const startEditProposal = (prop: ProjectProposal) => {
+    setEditingProposal(prop);
+    setTitle(prop.title);
+    setSolutionOverview(prop.solution_overview);
+    setWorkflowSchedule(prop.workflow_team_schedule);
+    setExpectedResults(prop.expected_deliverables_results);
+    setLongTermSupport(prop.long_term_support_services);
+    setNextReviewDate(prop.next_review_meeting_at || '');
+    setPricingItems(
+      prop.pricing_items.map((pi) => ({
+        description: pi.description,
+        category: pi.category,
+        cost: pi.cost,
+        billing_cycle: pi.billing_cycle || 'one-time',
+      }))
+    );
+    setShowBuilder(true);
   };
 
   const handleOpenOutcome = (proposalId: string, action: ProposalOutcome) => {
@@ -183,7 +242,7 @@ export function TabProposalBuilder({ project }: { project: Project }) {
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-base font-semibold text-zinc-900">
-            Proposals &amp; Commercial Scope Specification
+            Proposals &amp; Commercial Scope Specification ({projectProposals.length})
           </h2>
           <p className="text-xs text-zinc-500">
             Draft customized solution documents, configure itemized pricing tables,
@@ -191,23 +250,41 @@ export function TabProposalBuilder({ project }: { project: Project }) {
           </p>
         </div>
         {permissions.canManageMeetingsAndProposals && (
-          <Button size="sm" onClick={() => setShowBuilder((v) => !v)}>
+          <Button
+            size="sm"
+            onClick={() => {
+              setEditingProposal(null);
+              setShowBuilder((v) => !v);
+            }}
+          >
             <Plus className="h-3.5 w-3.5" />
-            {showBuilder ? 'Close Proposal Form' : 'Draft New Proposal'}
+            {showBuilder ? 'Close Form' : 'Draft New Proposal'}
           </Button>
         )}
       </div>
 
-      {/* Proposal Builder Form */}
+      {/* Proposal Builder Form (Create / Edit) */}
       {showBuilder && (
         <Card className="border-zinc-300 bg-zinc-50/50">
           <CardHeader>
-            <CardTitle className="text-sm">
-              Templated Word-Style Proposal Editor
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm">
+                {editingProposal ? `Edit Proposal: ${editingProposal.title}` : 'Templated Word-Style Proposal Editor'}
+              </CardTitle>
+              <button
+                type="button"
+                className="text-zinc-400 hover:text-zinc-700"
+                onClick={() => {
+                  setEditingProposal(null);
+                  setShowBuilder(false);
+                }}
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleCreateProposal} className="space-y-4">
+            <form onSubmit={handleCreateOrUpdateProposal} className="space-y-4">
               <div className="grid gap-3 sm:grid-cols-3">
                 <div className="space-y-1 sm:col-span-2">
                   <label className="text-xs font-medium text-zinc-700">
@@ -393,12 +470,15 @@ export function TabProposalBuilder({ project }: { project: Project }) {
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => setShowBuilder(false)}
+                  onClick={() => {
+                    setEditingProposal(null);
+                    setShowBuilder(false);
+                  }}
                 >
                   Cancel
                 </Button>
                 <Button type="submit" size="sm">
-                  Save Proposal Specification
+                  {editingProposal ? 'Update Proposal' : 'Save Proposal Specification'}
                 </Button>
               </div>
             </form>
@@ -439,6 +519,7 @@ export function TabProposalBuilder({ project }: { project: Project }) {
                       {prop.status.toUpperCase()}
                     </Badge>
                   </div>
+
                   <div className="flex items-center gap-2">
                     <Button
                       size="sm"
@@ -448,8 +529,33 @@ export function TabProposalBuilder({ project }: { project: Project }) {
                         generateProposalPdf(project, prop, projectContacts)
                       }
                     >
-                      <Download className="h-3.5 w-3.5" /> Download Proposal PDF
+                      <Download className="h-3.5 w-3.5" /> PDF
                     </Button>
+
+                    {permissions.canManageMeetingsAndProposals && (
+                      <div className="flex items-center gap-1.5 pl-2 border-l border-zinc-200">
+                        <button
+                          type="button"
+                          className="text-zinc-500 hover:text-zinc-900 p-1"
+                          title="Edit Proposal"
+                          onClick={() => startEditProposal(prop)}
+                        >
+                          <Edit3 className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          className="text-red-500 hover:text-red-700 p-1"
+                          title="Delete Proposal"
+                          onClick={() => {
+                            if (confirm('Delete this proposal?')) {
+                              deleteProposal(prop.id);
+                            }
+                          }}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
 

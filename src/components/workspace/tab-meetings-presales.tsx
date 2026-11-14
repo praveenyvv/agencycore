@@ -5,11 +5,13 @@ import {
   Calendar,
   CheckCircle2,
   Clock,
-  ExternalLink,
+  Edit3,
   MessageSquare,
   Plus,
   RefreshCw,
   Send,
+  Trash2,
+  X,
   XCircle,
 } from 'lucide-react';
 import { useAuth } from '@/components/providers/app-providers';
@@ -22,25 +24,37 @@ import {
   getWhatsAppReminderTemplate,
 } from '@/lib/reminder-templates';
 import { formatTimestamp } from '@/lib/utils';
-import type { MeetingOutcome, Project } from '@/types/agency';
+import type { MeetingOutcome, Project, ProjectMeeting } from '@/types/agency';
 
 export function TabMeetingsPreSales({ project }: { project: Project }) {
   const {
-    currentUser,
     permissions,
     meetings,
     contacts,
     createMeeting,
+    updateMeeting,
+    deleteMeeting,
     recordMeetingOutcome,
   } = useAuth();
 
   const [showNewMeeting, setShowNewMeeting] = useState(false);
+  const [editingMeeting, setEditingMeeting] = useState<ProjectMeeting | null>(null);
+
+  // Add form fields
   const [title, setTitle] = useState('');
   const [scheduledAt, setScheduledAt] = useState('');
   const [painPoints, setPainPoints] = useState('');
   const [solutionNotes, setSolutionNotes] = useState('');
   const [goals, setGoals] = useState('');
   const [notes, setNotes] = useState('');
+
+  // Edit form fields
+  const [editTitle, setEditTitle] = useState('');
+  const [editScheduledAt, setEditScheduledAt] = useState('');
+  const [editPainPoints, setEditPainPoints] = useState('');
+  const [editSolutionNotes, setEditSolutionNotes] = useState('');
+  const [editGoals, setEditGoals] = useState('');
+  const [editNotes, setEditNotes] = useState('');
 
   // Outcome Modal State
   const [activeMeetingId, setActiveMeetingId] = useState<string | null>(null);
@@ -53,6 +67,9 @@ export function TabMeetingsPreSales({ project }: { project: Project }) {
   const projectMeetings = meetings
     .filter((m) => m.project_id === project.id)
     .sort((a, b) => b.scheduled_at.localeCompare(a.scheduled_at));
+
+  // The latest scheduled meeting is the one at index 0
+  const latestMeeting = projectMeetings[0];
 
   const projectContacts = contacts.filter((c) => c.project_id === project.id);
   const primaryContact =
@@ -79,6 +96,32 @@ export function TabMeetingsPreSales({ project }: { project: Project }) {
     setGoals('');
     setNotes('');
     setShowNewMeeting(false);
+  };
+
+  const startEdit = (m: ProjectMeeting) => {
+    setEditingMeeting(m);
+    setEditTitle(m.title);
+    setEditScheduledAt(m.scheduled_at ? m.scheduled_at.slice(0, 16) : '');
+    setEditPainPoints(m.pain_points || '');
+    setEditSolutionNotes(m.solution_notes || '');
+    setEditGoals(m.expectations_goals || '');
+    setEditNotes(m.general_notes || '');
+  };
+
+  const handleEditSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingMeeting || !editTitle.trim()) return;
+
+    updateMeeting(editingMeeting.id, {
+      title: editTitle.trim(),
+      scheduled_at: editScheduledAt,
+      pain_points: editPainPoints.trim(),
+      solution_notes: editSolutionNotes.trim(),
+      expectations_goals: editGoals.trim(),
+      general_notes: editNotes.trim(),
+    });
+
+    setEditingMeeting(null);
   };
 
   const handleOpenOutcome = (meetingId: string, action: MeetingOutcome) => {
@@ -129,16 +172,16 @@ export function TabMeetingsPreSales({ project }: { project: Project }) {
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-base font-semibold text-zinc-900">
-            Meetings, Discovery &amp; Deal Progression
+            Discovery Meetings &amp; Client Sessions ({projectMeetings.length})
           </h2>
           <p className="text-xs text-zinc-500">
             Record pain points, capture live solutions, schedule meetings, and
-            transition approved deals to proposals or drafts.
+            manage deal progression.
           </p>
         </div>
         {permissions.canManageMeetingsAndProposals && (
           <Button size="sm" onClick={() => setShowNewMeeting((v) => !v)}>
-            <Plus className="h-3.5 w-3.5" /> Schedule / Log Meeting
+            <Plus className="h-3.5 w-3.5" /> {showNewMeeting ? 'Close' : 'Schedule / Log Meeting'}
           </Button>
         )}
       </div>
@@ -246,6 +289,99 @@ export function TabMeetingsPreSales({ project }: { project: Project }) {
         </Card>
       )}
 
+      {/* Edit Meeting Modal */}
+      {editingMeeting && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-lg rounded-xl border border-zinc-200 bg-white p-5 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-zinc-100 pb-2">
+              <h3 className="text-sm font-semibold text-zinc-900">
+                Edit Meeting: {editingMeeting.title}
+              </h3>
+              <button
+                type="button"
+                className="text-zinc-400 hover:text-zinc-700 cursor-pointer"
+                onClick={() => setEditingMeeting(null)}
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleEditSubmit} className="space-y-3">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-zinc-700">Meeting Title *</label>
+                  <Input
+                    required
+                    value={editTitle}
+                    onChange={(e) => setEditTitle(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-zinc-700">Date &amp; Time *</label>
+                  <Input
+                    required
+                    type="datetime-local"
+                    value={editScheduledAt}
+                    onChange={(e) => setEditScheduledAt(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-zinc-700">Pain Points</label>
+                <textarea
+                  rows={2}
+                  className="w-full rounded-md border border-zinc-200 p-2 text-xs text-zinc-900"
+                  value={editPainPoints}
+                  onChange={(e) => setEditPainPoints(e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-zinc-700">Solution Approach</label>
+                <textarea
+                  rows={2}
+                  className="w-full rounded-md border border-zinc-200 p-2 text-xs text-zinc-900"
+                  value={editSolutionNotes}
+                  onChange={(e) => setEditSolutionNotes(e.target.value)}
+                />
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-zinc-700">Goals</label>
+                  <Input
+                    value={editGoals}
+                    onChange={(e) => setEditGoals(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-zinc-700">Notes</label>
+                  <Input
+                    value={editNotes}
+                    onChange={(e) => setEditNotes(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 border-t border-zinc-100 pt-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setEditingMeeting(null)}
+                >
+                  Cancel
+                </Button>
+                <Button type="submit" size="sm">
+                  Save Changes
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* Meetings List */}
       <div className="space-y-3">
         {projectMeetings.length === 0 ? (
@@ -255,140 +391,198 @@ export function TabMeetingsPreSales({ project }: { project: Project }) {
             </CardContent>
           </Card>
         ) : (
-          projectMeetings.map((meeting) => (
-            <Card key={meeting.id} className="transition-all hover:border-zinc-300">
-              <CardContent className="p-4 space-y-3">
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between border-b border-zinc-100 pb-2">
-                  <div className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4 text-zinc-500" />
-                    <h3 className="text-sm font-semibold text-zinc-900">
-                      {meeting.title}
-                    </h3>
-                    <Badge
-                      variant={
-                        meeting.outcome === 'approved'
-                          ? 'success'
-                          : meeting.outcome === 'denied'
-                          ? 'danger'
-                          : meeting.outcome === 'rescheduled'
-                          ? 'warning'
-                          : meeting.outcome === 'remainder'
-                          ? 'purple'
-                          : 'secondary'
-                      }
-                    >
-                      {meeting.outcome.toUpperCase()}
-                    </Badge>
-                  </div>
-                  <div className="text-xs text-zinc-500">
-                    Scheduled: {formatTimestamp(meeting.scheduled_at)}
-                  </div>
-                </div>
+          projectMeetings.map((meeting) => {
+            // Is this the latest active meeting?
+            const isLatest = meeting.id === latestMeeting?.id;
+            const hasDecidedOutcome = meeting.outcome !== 'scheduled';
 
-                {/* Notes Grid */}
-                <div className="grid gap-3 text-xs md:grid-cols-3">
-                  {meeting.pain_points && (
-                    <div className="rounded-md bg-red-50/60 p-2.5">
-                      <div className="font-semibold text-red-900 pb-0.5">
-                        Client Pain Points:
+            return (
+              <Card key={meeting.id} className="transition-all hover:border-zinc-300">
+                <CardContent className="p-4 space-y-3">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between border-b border-zinc-100 pb-2">
+                    <div className="flex items-center gap-2">
+                      <Calendar className="h-4 w-4 text-zinc-500" />
+                      <h3 className="text-sm font-semibold text-zinc-900">
+                        {meeting.title}
+                      </h3>
+                      <Badge
+                        variant={
+                          meeting.outcome === 'approved'
+                            ? 'success'
+                            : meeting.outcome === 'denied'
+                            ? 'danger'
+                            : meeting.outcome === 'rescheduled'
+                            ? 'warning'
+                            : meeting.outcome === 'remainder'
+                            ? 'purple'
+                            : 'secondary'
+                        }
+                      >
+                        {meeting.outcome.toUpperCase()}
+                      </Badge>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs text-zinc-500">
+                        Scheduled: {formatTimestamp(meeting.scheduled_at)}
+                      </span>
+                      {permissions.canManageMeetingsAndProposals && (
+                        <div className="flex items-center gap-1.5 pl-2 border-l border-zinc-200">
+                          <button
+                            type="button"
+                            className="text-zinc-500 hover:text-zinc-900 cursor-pointer p-1"
+                            title="Edit Meeting"
+                            onClick={() => startEdit(meeting)}
+                          >
+                            <Edit3 className="h-3.5 w-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            className="text-red-500 hover:text-red-700 cursor-pointer p-1"
+                            title="Delete Meeting"
+                            onClick={() => {
+                              if (confirm('Delete this meeting and its records?')) {
+                                deleteMeeting(meeting.id);
+                              }
+                            }}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Notes Grid */}
+                  <div className="grid gap-3 text-xs md:grid-cols-3">
+                    {meeting.pain_points && (
+                      <div className="rounded-md bg-red-50/60 p-2.5">
+                        <div className="font-semibold text-red-900 pb-0.5">
+                          Client Pain Points:
+                        </div>
+                        <p className="text-red-800 leading-relaxed">
+                          {meeting.pain_points}
+                        </p>
                       </div>
-                      <p className="text-red-800 leading-relaxed">
-                        {meeting.pain_points}
-                      </p>
+                    )}
+
+                    {meeting.solution_notes && (
+                      <div className="rounded-md bg-emerald-50/60 p-2.5">
+                        <div className="font-semibold text-emerald-900 pb-0.5">
+                          Solutions &amp; Strategy:
+                        </div>
+                        <p className="text-emerald-800 leading-relaxed">
+                          {meeting.solution_notes}
+                        </p>
+                      </div>
+                    )}
+
+                    {meeting.expectations_goals && (
+                      <div className="rounded-md bg-blue-50/60 p-2.5">
+                        <div className="font-semibold text-blue-900 pb-0.5">
+                          Targets &amp; Goals:
+                        </div>
+                        <p className="text-blue-800 leading-relaxed">
+                          {meeting.expectations_goals}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  {meeting.general_notes && (
+                    <p className="text-xs text-zinc-600 italic">
+                      Notes: {meeting.general_notes}
+                    </p>
+                  )}
+
+                  {/* Outcome Note if any */}
+                  {meeting.outcome_note && (
+                    <div className="rounded-md border border-zinc-200 bg-zinc-50 p-2 text-xs text-zinc-700">
+                      <span className="font-semibold text-zinc-900">
+                        Recorded Decision ({formatTimestamp(meeting.outcome_at || '')}):
+                      </span>{' '}
+                      {meeting.outcome_note}
                     </div>
                   )}
 
-                  {meeting.solution_notes && (
-                    <div className="rounded-md bg-emerald-50/60 p-2.5">
-                      <div className="font-semibold text-emerald-900 pb-0.5">
-                        Solutions &amp; Strategy:
-                      </div>
-                      <p className="text-emerald-800 leading-relaxed">
-                        {meeting.solution_notes}
-                      </p>
+                  {/* Clean Decision Flow:
+                      Only the LATEST meeting shows the 4 outcome buttons if not yet decided.
+                      If already decided (Approved, Denied, Rescheduled, Remainder), show ONLY the selected status badge!
+                  */}
+                  {permissions.canManageMeetingsAndProposals && (
+                    <div className="border-t border-zinc-100 pt-2.5">
+                      {hasDecidedOutcome ? (
+                        <div className="flex items-center gap-2 text-xs">
+                          <span className="text-zinc-500 font-medium">Outcome Selected:</span>
+                          <span className="font-bold text-zinc-800 flex items-center gap-1.5 capitalize">
+                            {meeting.outcome === 'approved' && <CheckCircle2 className="h-4 w-4 text-emerald-600" />}
+                            {meeting.outcome === 'denied' && <XCircle className="h-4 w-4 text-red-600" />}
+                            {meeting.outcome === 'rescheduled' && <RefreshCw className="h-4 w-4 text-amber-600" />}
+                            {meeting.outcome === 'remainder' && <Clock className="h-4 w-4 text-violet-600" />}
+                            {meeting.outcome}
+                          </span>
+                          <button
+                            type="button"
+                            className="text-[11px] text-blue-600 hover:underline ml-2 cursor-pointer"
+                            onClick={() => handleOpenOutcome(meeting.id, meeting.outcome)}
+                          >
+                            (Change Decision)
+                          </button>
+                        </div>
+                      ) : isLatest ? (
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <span className="text-[11px] font-medium text-zinc-500">
+                            Select Next Step for this Meeting:
+                          </span>
+                          <div className="flex flex-wrap gap-1.5">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="text-xs text-emerald-700 hover:bg-emerald-50"
+                              onClick={() => handleOpenOutcome(meeting.id, 'approved')}
+                            >
+                              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                              Approved (Advance to Proposal)
+                            </Button>
+
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="text-xs text-red-700 hover:bg-red-50"
+                              onClick={() => handleOpenOutcome(meeting.id, 'denied')}
+                            >
+                              <XCircle className="h-3.5 w-3.5 text-red-600" />
+                              Denied (Save to Drafts)
+                            </Button>
+
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="text-xs text-amber-700 hover:bg-amber-50"
+                              onClick={() => handleOpenOutcome(meeting.id, 'rescheduled')}
+                            >
+                              <RefreshCw className="h-3.5 w-3.5 text-amber-600" />
+                              Reschedule
+                            </Button>
+
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="text-xs text-violet-700 hover:bg-violet-50"
+                              onClick={() => handleOpenOutcome(meeting.id, 'remainder')}
+                            >
+                              <Clock className="h-3.5 w-3.5 text-violet-600" />
+                              Remainder (Follow-Up)
+                            </Button>
+                          </div>
+                        </div>
+                      ) : null}
                     </div>
                   )}
-
-                  {meeting.expectations_goals && (
-                    <div className="rounded-md bg-blue-50/60 p-2.5">
-                      <div className="font-semibold text-blue-900 pb-0.5">
-                        Targets &amp; Goals:
-                      </div>
-                      <p className="text-blue-800 leading-relaxed">
-                        {meeting.expectations_goals}
-                      </p>
-                    </div>
-                  )}
-                </div>
-
-                {meeting.general_notes && (
-                  <p className="text-xs text-zinc-600 italic">
-                    Notes: {meeting.general_notes}
-                  </p>
-                )}
-
-                {/* Outcome Display or Action Buttons */}
-                {meeting.outcome_note && (
-                  <div className="rounded-md border border-zinc-200 bg-zinc-50 p-2 text-xs text-zinc-700">
-                    <span className="font-semibold text-zinc-900">
-                      Outcome Note ({formatTimestamp(meeting.outcome_at || '')}):
-                    </span>{' '}
-                    {meeting.outcome_note}
-                  </div>
-                )}
-
-                {/* Step 2 Buttons (Approved, Denied, Rescheduled, Remainder) */}
-                {permissions.canManageMeetingsAndProposals && (
-                  <div className="flex flex-wrap items-center justify-between gap-2 border-t border-zinc-100 pt-2.5">
-                    <span className="text-[11px] font-medium text-zinc-500">
-                      Record Next Step / Deal Progression:
-                    </span>
-                    <div className="flex flex-wrap gap-1.5">
-                      <Button
-                        size="sm"
-                        variant={meeting.outcome === 'approved' ? 'default' : 'outline'}
-                        className="text-xs text-emerald-700 hover:bg-emerald-50"
-                        onClick={() => handleOpenOutcome(meeting.id, 'approved')}
-                      >
-                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
-                        Approved (Advance to Proposal)
-                      </Button>
-
-                      <Button
-                        size="sm"
-                        variant={meeting.outcome === 'denied' ? 'default' : 'outline'}
-                        className="text-xs text-red-700 hover:bg-red-50"
-                        onClick={() => handleOpenOutcome(meeting.id, 'denied')}
-                      >
-                        <XCircle className="h-3.5 w-3.5 text-red-600" />
-                        Denied (Save to Drafts)
-                      </Button>
-
-                      <Button
-                        size="sm"
-                        variant={meeting.outcome === 'rescheduled' ? 'default' : 'outline'}
-                        className="text-xs text-amber-700 hover:bg-amber-50"
-                        onClick={() => handleOpenOutcome(meeting.id, 'rescheduled')}
-                      >
-                        <RefreshCw className="h-3.5 w-3.5 text-amber-600" />
-                        Reschedule
-                      </Button>
-
-                      <Button
-                        size="sm"
-                        variant={meeting.outcome === 'remainder' ? 'default' : 'outline'}
-                        className="text-xs text-violet-700 hover:bg-violet-50"
-                        onClick={() => handleOpenOutcome(meeting.id, 'remainder')}
-                      >
-                        <Clock className="h-3.5 w-3.5 text-violet-600" />
-                        Remainder (Follow-Up)
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          ))
+                </CardContent>
+              </Card>
+            );
+          })
         )}
       </div>
 

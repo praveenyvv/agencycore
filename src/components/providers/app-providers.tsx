@@ -174,9 +174,12 @@ interface AuthContextValue {
   updateContact: (contactId: string, updates: Partial<ProjectContact>) => void;
   deleteContact: (contactId: string) => void;
   createMeeting: (input: CreateMeetingInput) => ProjectMeeting;
+  updateMeeting: (meetingId: string, updates: Partial<ProjectMeeting>) => void;
+  deleteMeeting: (meetingId: string) => void;
   recordMeetingOutcome: (input: RecordMeetingOutcomeInput) => void;
   createProposal: (input: CreateProposalInput) => ProjectProposal;
   updateProposal: (proposalId: string, updates: Partial<ProjectProposal>) => void;
+  deleteProposal: (proposalId: string) => void;
   recordProposalOutcome: (input: RecordProposalOutcomeInput) => void;
   reopenDraftProject: (projectId: string, targetStage: 'Meeting Scheduled' | 'Proposal Review' | 'Intake' | 'In Execution', note?: string) => void;
   uploadDocument: (input: UploadDocumentInput) => ProjectDocument;
@@ -501,6 +504,22 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
     [currentUser.id, appendLog]
   );
 
+  const updateMeeting = useCallback(
+    (meetingId: string, updates: Partial<ProjectMeeting>) => {
+      setMeetings((prev) =>
+        prev.map((m) => (m.id === meetingId ? { ...m, ...updates } : m))
+      );
+    },
+    []
+  );
+
+  const deleteMeeting = useCallback(
+    (meetingId: string) => {
+      setMeetings((prev) => prev.filter((m) => m.id !== meetingId));
+    },
+    []
+  );
+
   const recordMeetingOutcome = useCallback(
     (input: RecordMeetingOutcomeInput) => {
       const existing = meetings.find((m) => m.id === input.meeting_id);
@@ -674,6 +693,13 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
             : p
         )
       );
+    },
+    []
+  );
+
+  const deleteProposal = useCallback(
+    (proposalId: string) => {
+      setProposals((prev) => prev.filter((p) => p.id !== proposalId));
     },
     []
   );
@@ -1263,9 +1289,12 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
     updateContact,
     deleteContact,
     createMeeting,
+    updateMeeting,
+    deleteMeeting,
     recordMeetingOutcome,
     createProposal,
     updateProposal,
+    deleteProposal,
     recordProposalOutcome,
     reopenDraftProject,
     uploadDocument,
