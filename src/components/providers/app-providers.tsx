@@ -311,11 +311,29 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
   );
 
   const accessibleProjects = useMemo(() => {
-    if (currentUser.role === 'admin' || currentUser.role === 'pm') {
+    // 1. Internal Agency Staff (Admin, PM, and Members/Employees):
+    // All internal agency staff (designers, developers, PMs, founders) have access
+    // to agency projects to collaborate across design, engineering, and QA.
+    if (
+      currentUser.role === 'admin' ||
+      currentUser.role === 'pm' ||
+      currentUser.role === 'member'
+    ) {
       return projects;
     }
-    const allowedIds = memberships[currentUser.id] ?? [];
-    return projects.filter((p) => allowedIds.includes(p.id));
+
+    // 2. External Clients: Strictly scoped to their own company's projects
+    const allowedIds = new Set(memberships[currentUser.id] ?? []);
+    return projects.filter((p) => {
+      if (allowedIds.has(p.id)) return true;
+      if (
+        currentUser.client_company &&
+        p.client_name.toLowerCase().includes(currentUser.client_company.toLowerCase())
+      ) {
+        return true;
+      }
+      return false;
+    });
   }, [currentUser, projects, memberships]);
 
   const accessibleTasks = useMemo(() => {
@@ -398,10 +416,15 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
 
       setProjects((prev) => [newProject, ...prev]);
       setRequirements((prev) => [newReq, ...prev]);
-      setMemberships((prev) => ({
-        ...prev,
-        [currentUser.id]: [...(prev[currentUser.id] ?? []), projectId],
-      }));
+      setMemberships((prev) => {
+        const next = { ...prev };
+        DEMO_USERS.forEach((u) => {
+          if (u.role !== 'client') {
+            next[u.id] = Array.from(new Set([...(next[u.id] ?? []), projectId]));
+          }
+        });
+        return next;
+      });
 
       appendLog(
         projectId,
@@ -1129,6 +1152,15 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
       };
 
       setTasks((prev) => [newTask, ...prev]);
+
+      if (input.assignee_id) {
+        setMemberships((prev) => ({
+          ...prev,
+          [input.assignee_id!]: Array.from(
+            new Set([...(prev[input.assignee_id!] ?? []), input.project_id])
+          ),
+        }));
+      }
       appendLog(
         input.project_id,
         'TASK_CREATED',
