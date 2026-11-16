@@ -20,7 +20,10 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { ModernDateTimePicker } from '@/components/ui/date-time-picker';
+import {
+  ModernDateTimePicker,
+  getCurrentLocalDateTimeString,
+} from '@/components/ui/date-time-picker';
 import { generateProposalPdf } from '@/lib/proposal-pdf';
 import {
   getEmailReminderTemplate,
@@ -202,7 +205,7 @@ export function TabProposalBuilder({ project }: { project: Project }) {
   const handleOpenOutcome = (proposalId: string, action: ProposalOutcome) => {
     setActiveProposalId(proposalId);
     setOutcomeAction(action);
-    setOutcomeDate(new Date().toISOString().slice(0, 16));
+    setOutcomeDate(getCurrentLocalDateTimeString());
     setOutcomeNote('');
     setReminderCopied(null);
   };

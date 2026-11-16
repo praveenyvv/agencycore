@@ -18,7 +18,10 @@ import { useAuth } from '@/components/providers/app-providers';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ModernDateTimePicker } from '@/components/ui/date-time-picker';
+import {
+  ModernDateTimePicker,
+  getCurrentLocalDateTimeString,
+} from '@/components/ui/date-time-picker';
 import { Input } from '@/components/ui/input';
 import {
   getEmailReminderTemplate,
@@ -44,7 +47,7 @@ export function TabMeetingsPreSales({ project }: { project: Project }) {
 
   // Add form fields
   const [title, setTitle] = useState('');
-  const [scheduledAt, setScheduledAt] = useState('');
+  const [scheduledAt, setScheduledAt] = useState(() => getCurrentLocalDateTimeString());
   const [painPoints, setPainPoints] = useState('');
   const [solutionNotes, setSolutionNotes] = useState('');
   const [goals, setGoals] = useState('');
@@ -82,14 +85,15 @@ export function TabMeetingsPreSales({ project }: { project: Project }) {
 
   const handleCreateMeeting = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || !scheduledAt) return;
+    const finalScheduledAt = scheduledAt || getCurrentLocalDateTimeString();
+    if (!title.trim() || !finalScheduledAt) return;
 
     const isGeneral = hasApprovedDiscovery || meetingMode === 'general';
 
     createMeeting({
       project_id: project.id,
       title,
-      scheduled_at: scheduledAt,
+      scheduled_at: finalScheduledAt,
       is_general_session: isGeneral,
       pain_points: isGeneral ? undefined : painPoints,
       solution_notes: isGeneral ? undefined : solutionNotes,
@@ -98,7 +102,7 @@ export function TabMeetingsPreSales({ project }: { project: Project }) {
     });
 
     setTitle('');
-    setScheduledAt('');
+    setScheduledAt(getCurrentLocalDateTimeString());
     setPainPoints('');
     setSolutionNotes('');
     setGoals('');
@@ -139,7 +143,7 @@ export function TabMeetingsPreSales({ project }: { project: Project }) {
   ) => {
     setActiveMeetingId(meetingId);
     setOutcomeAction(action);
-    setOutcomeDate(new Date().toISOString().slice(0, 16));
+    setOutcomeDate(getCurrentLocalDateTimeString());
     setOutcomeNote('');
     setIsChangingDecision(isChange);
     setReminderContactId(primaryContact?.id || '');
@@ -200,6 +204,7 @@ export function TabMeetingsPreSales({ project }: { project: Project }) {
             size="sm"
             onClick={() => {
               setMeetingMode(hasApprovedDiscovery ? 'general' : 'presales');
+              setScheduledAt(getCurrentLocalDateTimeString());
               setShowNewMeeting((v) => !v);
             }}
           >
