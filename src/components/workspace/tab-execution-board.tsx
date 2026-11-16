@@ -94,7 +94,7 @@ export function TabExecutionBoard({ project }: { project: Project }) {
     defaultValues: {
       priority: 'Medium',
       status: 'To Do',
-      due_date: project.target_end_date,
+      due_date: project.target_end_date || new Date().toISOString().slice(0, 10),
     },
   });
 

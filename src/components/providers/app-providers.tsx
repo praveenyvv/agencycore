@@ -54,8 +54,8 @@ export interface CreateProjectInput {
   title: string;
   client_name: string;
   project_type: ProjectType;
-  start_date: string;
-  target_end_date: string;
+  start_date?: string | null;
+  target_end_date?: string | null;
   scope_summary: string;
   out_of_scope_notes?: string;
   deliverables?: string[];
@@ -385,8 +385,8 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
         client_name: input.client_name.trim(),
         project_type: input.project_type,
         status: stage,
-        start_date: input.start_date,
-        target_end_date: input.target_end_date,
+        start_date: input.start_date || null,
+        target_end_date: input.target_end_date || null,
         actual_end_date: null,
         is_archived: false,
         created_by: currentUser.id,

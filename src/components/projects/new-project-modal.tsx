@@ -18,34 +18,27 @@ const PROJECT_TYPES: ProjectType[] = [
   'Digital Marketing',
 ];
 
-const newProjectSchema = z
-  .object({
-    title: z.string().min(3, 'Project title must be at least 3 characters'),
-    client_name: z.string().min(2, 'Client name is required'),
-    project_type: z.enum([
-      'Website',
-      'Web App',
-      'Mobile App',
-      'Digital Marketing',
-    ]),
-    initial_stage: z.enum([
-      'Lead/Discovery',
-      'Meeting Scheduled',
-      'Intake',
-      'In Execution',
-    ]),
-    start_date: z.string().min(1, 'Start date is required'),
-    target_end_date: z.string().min(1, 'Target end date is required'),
-    scope_summary: z
-      .string()
-      .min(5, 'Initial summary or pain points must be at least 5 characters'),
-    out_of_scope_notes: z.string().optional(),
-    deliverables_text: z.string().optional(),
-  })
-  .refine((data) => data.target_end_date >= data.start_date, {
-    message: 'Target end date must be on or after the start date',
-    path: ['target_end_date'],
-  });
+const newProjectSchema = z.object({
+  title: z.string().min(3, 'Project title must be at least 3 characters'),
+  client_name: z.string().min(2, 'Client name is required'),
+  project_type: z.enum([
+    'Website',
+    'Web App',
+    'Mobile App',
+    'Digital Marketing',
+  ]),
+  initial_stage: z.enum([
+    'Lead/Discovery',
+    'Meeting Scheduled',
+    'Intake',
+    'In Execution',
+  ]),
+  scope_summary: z
+    .string()
+    .min(5, 'Initial summary or pain points must be at least 5 characters'),
+  out_of_scope_notes: z.string().optional(),
+  deliverables_text: z.string().optional(),
+});
 
 type NewProjectFormValues = z.infer<typeof newProjectSchema>;
 
@@ -70,8 +63,6 @@ export function NewProjectModal({ open, onClose }: NewProjectModalProps) {
       client_name: '',
       project_type: 'Web App',
       initial_stage: 'Lead/Discovery',
-      start_date: '2026-11-14',
-      target_end_date: '2026-12-18',
       scope_summary: '',
       out_of_scope_notes: '',
       deliverables_text: 'Discovery & Pain-Point Architecture\nCore Build & QA\nProduction Handover',
@@ -91,8 +82,6 @@ export function NewProjectModal({ open, onClose }: NewProjectModalProps) {
       client_name: values.client_name,
       project_type: values.project_type,
       initial_stage: values.initial_stage,
-      start_date: values.start_date,
-      target_end_date: values.target_end_date,
       scope_summary: values.scope_summary,
       out_of_scope_notes: values.out_of_scope_notes,
       deliverables,
@@ -153,7 +142,7 @@ export function NewProjectModal({ open, onClose }: NewProjectModalProps) {
             </div>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-4">
+          <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1">
               <label className="text-xs font-medium text-zinc-700">
                 Project Type *
@@ -183,30 +172,6 @@ export function NewProjectModal({ open, onClose }: NewProjectModalProps) {
                 <option value="Intake">Intake (Confirmed Deal)</option>
                 <option value="In Execution">Directly In Execution</option>
               </select>
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-zinc-700">
-                Start Date *
-              </label>
-              <Input type="date" {...register('start_date')} />
-              {errors.start_date && (
-                <p className="text-[11px] text-red-600">
-                  {errors.start_date.message}
-                </p>
-              )}
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-zinc-700">
-                Target End Date *
-              </label>
-              <Input type="date" {...register('target_end_date')} />
-              {errors.target_end_date && (
-                <p className="text-[11px] text-red-600">
-                  {errors.target_end_date.message}
-                </p>
-              )}
             </div>
           </div>
 

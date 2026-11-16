@@ -177,8 +177,8 @@ export interface Project {
   client_name: string;
   project_type: ProjectType;
   status: ProjectStatus;
-  start_date: string;
-  target_end_date: string;
+  start_date?: string | null;
+  target_end_date?: string | null;
   actual_end_date?: string | null;
   is_archived: boolean;
   // Pre-sales draft state tracking
