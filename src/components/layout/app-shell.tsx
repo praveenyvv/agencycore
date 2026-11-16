@@ -12,6 +12,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Command,
+  Contact,
   FolderKanban,
   Globe,
   Layers,
@@ -123,6 +124,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         href: '/',
         icon: LayoutDashboard,
         visible: true,
+      },
+      {
+        label: 'Business Contacts',
+        href: '/contacts',
+        icon: Contact,
+        visible: currentUser.role !== 'client',
       },
       {
         label: 'Drafts & Deals',

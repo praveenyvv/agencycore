@@ -116,6 +116,34 @@ export const INITIAL_CONTACTS: ProjectContact[] = [
     can_access_portal: false,
     created_at: '2026-09-05T14:00:00Z',
   },
+
+  // Standalone Business Contacts (Not yet linked to any project)
+  {
+    id: 'cnt-biz-1',
+    project_id: null,
+    company_name: 'Hyperion Logistics',
+    name: 'Elena Vance',
+    role: 'Chief Marketing Officer',
+    email: 'elena.vance@hyperionlogistics.com',
+    phone: '+1 (312) 555-0188',
+    notes: 'Met at SaaS Summit. Interested in custom fleet tracking dashboard redesign.',
+    is_primary: false,
+    can_access_portal: false,
+    created_at: '2026-11-08T10:00:00Z',
+  },
+  {
+    id: 'cnt-biz-2',
+    project_id: null,
+    company_name: 'Aether Robotics',
+    name: 'Marcus Thorne',
+    role: 'Founder & CEO',
+    email: 'marcus@aetherrobotics.ai',
+    phone: '+1 (415) 555-0142',
+    notes: 'Exploring mobile controller app. Wants exploratory proposal and technical architecture sync.',
+    is_primary: false,
+    can_access_portal: false,
+    created_at: '2026-11-12T14:30:00Z',
+  },
 ];
 
 // ============================================================================

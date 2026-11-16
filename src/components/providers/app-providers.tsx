@@ -63,12 +63,13 @@ export interface CreateProjectInput {
 }
 
 export interface CreateContactInput {
-  project_id: string;
+  project_id?: string | null;
+  company_name?: string | null;
   name: string;
   role: string;
   email: string;
-  phone?: string;
-  notes?: string;
+  phone?: string | null;
+  notes?: string | null;
   is_primary?: boolean;
   can_access_portal?: boolean;
 }
@@ -77,6 +78,7 @@ export interface CreateMeetingInput {
   project_id: string;
   title: string;
   scheduled_at: string;
+  is_general_session?: boolean;
   pain_points?: string;
   solution_notes?: string;
   expectations_goals?: string;
@@ -90,6 +92,7 @@ export interface RecordMeetingOutcomeInput {
   outcome_note?: string;
   reschedule_date?: string;
   remainder_date?: string;
+  is_edit?: boolean;
 }
 
 export interface CreateProposalInput {
@@ -418,13 +421,14 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
     [permissions.canCreateProject, currentUser.id, appendLog]
   );
 
-  // 2. Contacts Management (Multiple contacts per project)
+  // 2. Contacts Management (Multiple contacts per project or unlinked business contacts)
   const addContact = useCallback(
     (input: CreateContactInput): ProjectContact => {
       const contactId = makeId('cnt');
       const newContact: ProjectContact = {
         id: contactId,
-        project_id: input.project_id,
+        project_id: input.project_id || null,
+        company_name: input.company_name?.trim() || null,
         name: input.name.trim(),
         role: input.role.trim(),
         email: input.email.trim(),
@@ -436,14 +440,16 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
       };
 
       setContacts((prev) => [newContact, ...prev]);
-      appendLog(
-        input.project_id,
-        'CONTACT_ADDED',
-        'contact',
-        contactId,
-        `Added contact ${newContact.name} (${newContact.role})`,
-        { email: newContact.email, role: newContact.role }
-      );
+      if (input.project_id) {
+        appendLog(
+          input.project_id,
+          'CONTACT_ADDED',
+          'contact',
+          contactId,
+          `Added contact ${newContact.name} (${newContact.role})`,
+          { email: newContact.email, role: newContact.role }
+        );
+      }
       return newContact;
     },
     [appendLog]
@@ -472,31 +478,36 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
         project_id: input.project_id,
         title: input.title.trim(),
         scheduled_at: input.scheduled_at,
+        is_general_session: Boolean(input.is_general_session),
         pain_points: input.pain_points?.trim() || '',
         solution_notes: input.solution_notes?.trim() || '',
         expectations_goals: input.expectations_goals?.trim() || '',
         general_notes: input.general_notes?.trim() || '',
-        outcome: 'scheduled',
+        outcome: input.is_general_session ? 'approved' : 'scheduled',
         created_by: currentUser.id,
         created_at: now,
       };
 
       setMeetings((prev) => [newMeeting, ...prev]);
-      setProjects((prev) =>
-        prev.map((p) =>
-          p.id === input.project_id && p.status === 'Lead/Discovery'
-            ? { ...p, status: 'Meeting Scheduled', updated_at: now }
-            : p
-        )
-      );
+      if (!input.is_general_session) {
+        setProjects((prev) =>
+          prev.map((p) =>
+            p.id === input.project_id && p.status === 'Lead/Discovery'
+              ? { ...p, status: 'Meeting Scheduled', updated_at: now }
+              : p
+          )
+        );
+      }
 
       appendLog(
         input.project_id,
         'MEETING_SCHEDULED',
         'meeting',
         meetingId,
-        `Scheduled meeting "${newMeeting.title}" for ${newMeeting.scheduled_at}`,
-        { scheduled_at: newMeeting.scheduled_at }
+        input.is_general_session
+          ? `Logged general insight/review meeting "${newMeeting.title}" for ${newMeeting.scheduled_at}`
+          : `Scheduled meeting "${newMeeting.title}" for ${newMeeting.scheduled_at}`,
+        { scheduled_at: newMeeting.scheduled_at, general: Boolean(input.is_general_session) }
       );
 
       return newMeeting;
@@ -537,15 +548,17 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
                 outcome_at: outcomeAt,
                 outcome_note: input.outcome_note || '',
                 next_action_at: input.reschedule_date || input.remainder_date,
+                decision_edited_by: input.is_edit ? currentUser.name : m.decision_edited_by,
+                decision_edited_at: input.is_edit ? now : m.decision_edited_at,
               }
             : m
         )
       );
 
       // Transition project status according to outcome specification:
-      // Approved -> advances to 'Proposal Review' / creates proposal step
+      // Approved -> advances to 'Proposal Review'
       // Denied -> moves to 'Draft / On Hold' with note
-      // Rescheduled -> remains 'Meeting Scheduled' with updated next action
+      // Rescheduled -> remains 'Meeting Scheduled'
       // Remainder -> moves to 'Draft / On Hold' with remainder reminder date
       setProjects((prev) =>
         prev.map((p) => {
@@ -591,19 +604,24 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
         'MEETING_OUTCOME_RECORDED',
         'meeting',
         input.meeting_id,
-        `Recorded meeting outcome: ${input.outcome.toUpperCase()}${
-          input.outcome_note ? ` — "${input.outcome_note}"` : ''
-        }`,
+        input.is_edit
+          ? `Decision changed to ${input.outcome.toUpperCase()} by ${currentUser.name}${
+              input.outcome_note ? ` — "${input.outcome_note}"` : ''
+            }`
+          : `Recorded meeting outcome: ${input.outcome.toUpperCase()}${
+              input.outcome_note ? ` — "${input.outcome_note}"` : ''
+            }`,
         {
           outcome: input.outcome,
           outcome_at: outcomeAt,
           note: input.outcome_note,
+          edited_by: input.is_edit ? currentUser.name : undefined,
           reschedule_date: input.reschedule_date,
           remainder_date: input.remainder_date,
         }
       );
     },
-    [meetings, appendLog]
+    [meetings, currentUser.name, appendLog]
   );
 
   // 4. Proposals (Template, Pricing Table, Outcome Actions)

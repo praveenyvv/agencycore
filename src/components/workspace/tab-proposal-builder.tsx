@@ -20,6 +20,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { ModernDateTimePicker } from '@/components/ui/date-time-picker';
 import { generateProposalPdf } from '@/lib/proposal-pdf';
 import {
   getEmailReminderTemplate,
@@ -296,14 +297,11 @@ export function TabProposalBuilder({ project }: { project: Project }) {
                     onChange={(e) => setTitle(e.target.value)}
                   />
                 </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-medium text-zinc-700">
-                    Follow-Up Review Meeting (Optional)
-                  </label>
-                  <Input
-                    type="datetime-local"
+                <div>
+                  <ModernDateTimePicker
+                    label="Follow-Up Review Meeting (Optional)"
                     value={nextReviewDate}
-                    onChange={(e) => setNextReviewDate(e.target.value)}
+                    onChange={(val) => setNextReviewDate(val)}
                   />
                 </div>
               </div>
@@ -688,18 +686,18 @@ export function TabProposalBuilder({ project }: { project: Project }) {
             </div>
 
             <div className="space-y-3 text-xs">
-              <div className="space-y-1">
-                <label className="font-medium text-zinc-700">
-                  {outcomeAction === 'approved'
-                    ? 'Contract Signing Date & Time'
-                    : outcomeAction === 'remainder'
-                    ? 'Scheduled Follow-Up Reminder Date'
-                    : 'Decision Date'}
-                </label>
-                <Input
-                  type="datetime-local"
+              <div>
+                <ModernDateTimePicker
+                  label={
+                    outcomeAction === 'approved'
+                      ? 'Contract Signing Date & Time'
+                      : outcomeAction === 'remainder'
+                      ? 'Scheduled Follow-Up Reminder Date'
+                      : 'Decision Date'
+                  }
+                  required
                   value={outcomeDate}
-                  onChange={(e) => setOutcomeDate(e.target.value)}
+                  onChange={(val) => setOutcomeDate(val)}
                 />
               </div>
 

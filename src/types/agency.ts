@@ -95,7 +95,8 @@ export interface User {
 
 export interface ProjectContact {
   id: string;
-  project_id: string;
+  project_id?: string | null; // Optional if unlinked standalone business lead
+  company_name?: string | null; // For standalone business contact
   name: string;
   role: string;
   email: string;
@@ -111,6 +112,7 @@ export interface ProjectMeeting {
   project_id: string;
   title: string;
   scheduled_at: string;
+  is_general_session?: boolean; // General insights / check-in session (no traditional 4 outcome gates)
   pain_points?: string;
   solution_notes?: string;
   expectations_goals?: string;
@@ -118,6 +120,8 @@ export interface ProjectMeeting {
   outcome: MeetingOutcome;
   outcome_at?: string;
   outcome_note?: string;
+  decision_edited_by?: string;
+  decision_edited_at?: string;
   next_action_at?: string;
   created_by: string;
   created_at: string;

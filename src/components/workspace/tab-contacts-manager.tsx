@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import {
+  AlertTriangle,
   Edit3,
   Mail,
   Phone,
@@ -22,6 +23,7 @@ export function TabContactsManager({ project }: { project: Project }) {
 
   const [showAdd, setShowAdd] = useState(false);
   const [editingContact, setEditingContact] = useState<ProjectContact | null>(null);
+  const [contactToDelete, setContactToDelete] = useState<ProjectContact | null>(null);
 
   // Add form fields
   const [name, setName] = useState('');
@@ -100,6 +102,13 @@ export function TabContactsManager({ project }: { project: Project }) {
     });
 
     setEditingContact(null);
+  };
+
+  const confirmDelete = () => {
+    if (contactToDelete) {
+      deleteContact(contactToDelete.id);
+      setContactToDelete(null);
+    }
   };
 
   return (
@@ -293,6 +302,50 @@ export function TabContactsManager({ project }: { project: Project }) {
         </div>
       )}
 
+      {/* Delete Confirmation Modal (Protective Pop-up) */}
+      {contactToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-sm rounded-xl border border-zinc-200 bg-white p-5 shadow-2xl space-y-4">
+            <div className="flex items-center gap-3 text-red-600">
+              <div className="rounded-full bg-red-100 p-2">
+                <AlertTriangle className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-zinc-900">
+                  Delete Contact?
+                </h3>
+                <p className="text-xs text-zinc-500">
+                  Are you sure you want to remove &quot;{contactToDelete.name}&quot;?
+                </p>
+              </div>
+            </div>
+
+            <p className="text-xs text-zinc-600">
+              This action cannot be undone. Meeting and proposal records linked to this contact will be preserved.
+            </p>
+
+            <div className="flex justify-end gap-2 border-t border-zinc-100 pt-3">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setContactToDelete(null)}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                size="sm"
+                onClick={confirmDelete}
+              >
+                Yes, Delete Contact
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Contacts Grid */}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {projectContacts.length === 0 ? (
@@ -350,7 +403,7 @@ export function TabContactsManager({ project }: { project: Project }) {
                     <button
                       type="button"
                       className="text-red-500 hover:text-red-700 flex items-center gap-1 cursor-pointer"
-                      onClick={() => deleteContact(contact.id)}
+                      onClick={() => setContactToDelete(contact)}
                     >
                       <Trash2 className="h-3.5 w-3.5" /> Delete
                     </button>
