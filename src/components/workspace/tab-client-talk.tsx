@@ -399,7 +399,7 @@ export function TabClientTalk({ project }: { project: Project }) {
                   <select
                     value={talkType}
                     onChange={(e) => setTalkType(e.target.value as ClientTalkType)}
-                    className="w-full rounded-md border border-zinc-200 bg-white p-2 text-xs text-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
+                    className="w-full h-9 rounded-md border border-zinc-200 bg-white px-2.5 text-xs text-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900 shadow-xs"
                   >
                     <option value="Call">Call</option>
                     <option value="WhatsApp">WhatsApp</option>

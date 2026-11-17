@@ -64,24 +64,17 @@ export function ModernDateTimePicker({
   };
 
   return (
-    <div className="space-y-1">
+    <div className="space-y-1 w-full">
       {label && (
-        <label className="text-xs font-medium text-zinc-700 flex items-center justify-between">
-          <span>
-            {label} {required && '*'}
-          </span>
-          {datePart && (
-            <span className="text-[10px] text-zinc-400 font-mono">
-              Selected: {datePart} at {timePart || '00:00'}
-            </span>
-          )}
+        <label className="block text-xs font-medium text-zinc-700 truncate">
+          {label} {required && '*'}
         </label>
       )}
 
-      <div className="flex items-center gap-2">
+      <div className="grid grid-cols-12 gap-1.5 w-full">
         {/* Date Selector */}
-        <div className="relative flex-1 min-w-[130px]">
-          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2.5 text-zinc-400">
+        <div className="relative col-span-7 min-w-0">
+          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2 text-zinc-400">
             <CalendarIcon className="h-3.5 w-3.5" />
           </div>
           <Input
@@ -89,20 +82,20 @@ export function ModernDateTimePicker({
             required={required}
             value={datePart}
             onChange={(e) => handleDateChange(e.target.value)}
-            className="pl-8 h-9 text-xs font-medium bg-white"
+            className="pl-7 pr-1 h-9 text-xs font-medium bg-white w-full"
           />
         </div>
 
         {/* Time Selector */}
-        <div className="relative w-36 shrink-0">
-          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2.5 text-zinc-400">
+        <div className="relative col-span-5 min-w-0">
+          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2 text-zinc-400">
             <Clock className="h-3.5 w-3.5" />
           </div>
           <Input
             type="time"
             value={timePart}
             onChange={(e) => handleTimeChange(e.target.value)}
-            className="pl-8 h-9 text-xs font-mono bg-white"
+            className="pl-7 pr-1 h-9 text-xs font-mono bg-white w-full"
           />
         </div>
       </div>
