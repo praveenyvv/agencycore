@@ -80,7 +80,30 @@ export type ActivityActionType =
   | 'TASK_DEADLINE_CHANGED'
   | 'DELIVERABLE_SUBMITTED'
   | 'CLIENT_SIGN_OFF'
-  | 'DOCUMENT_UPLOADED';
+  | 'DOCUMENT_UPLOADED'
+  | 'CLIENT_TALK_LOGGED'
+  | 'CLIENT_TALK_UPDATED'
+  | 'CLIENT_TALK_DELETED';
+
+export type ClientTalkType = 'Call' | 'WhatsApp' | 'Email' | 'Meeting';
+
+export interface ClientTalkRecord {
+  id: string;
+  project_id: string;
+  type: ClientTalkType;
+  date: string; // YYYY-MM-DDTHH:mm or ISO string
+  notes: string;
+  created_by?: string;
+  created_at: string;
+  updated_at?: string;
+}
+
+export interface CreateClientTalkInput {
+  project_id: string;
+  type: ClientTalkType;
+  date: string;
+  notes: string;
+}
 
 export interface User {
   id: string;

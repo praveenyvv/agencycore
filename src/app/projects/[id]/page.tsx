@@ -12,6 +12,7 @@ import {
   Kanban,
   KeyRound,
   Lock,
+  MessageCircle,
   MessageSquare,
   ShieldAlert,
   Users,
@@ -21,6 +22,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { TabAssetRepository } from '@/components/workspace/tab-asset-repository';
 import { TabAuditTimeline } from '@/components/workspace/tab-audit-timeline';
+import { TabClientTalk } from '@/components/workspace/tab-client-talk';
 import { TabContactsManager } from '@/components/workspace/tab-contacts-manager';
 import { TabCredentialVault } from '@/components/workspace/tab-credential-vault';
 import { TabDocuments } from '@/components/workspace/tab-documents';
@@ -36,6 +38,7 @@ type WorkspaceTab =
   | 'overview'
   | 'contacts'
   | 'meetings'
+  | 'talks'
   | 'proposals'
   | 'documents'
   | 'assets'
@@ -77,6 +80,12 @@ export default function ProjectWorkspacePage() {
         id: 'meetings',
         label: 'Meetings & Discovery',
         icon: MessageSquare,
+        visible: !isClient,
+      },
+      {
+        id: 'talks',
+        label: 'Client Talk',
+        icon: MessageCircle,
         visible: !isClient,
       },
       {
@@ -233,6 +242,7 @@ export default function ProjectWorkspacePage() {
         {resolvedTab === 'overview' && <TabOverviewScope project={project} />}
         {resolvedTab === 'contacts' && <TabContactsManager project={project} />}
         {resolvedTab === 'meetings' && <TabMeetingsPreSales project={project} />}
+        {resolvedTab === 'talks' && <TabClientTalk project={project} />}
         {resolvedTab === 'proposals' && <TabProposalBuilder project={project} />}
         {resolvedTab === 'documents' && <TabDocuments project={project} />}
         {resolvedTab === 'assets' && <TabAssetRepository project={project} />}

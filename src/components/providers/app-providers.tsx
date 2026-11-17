@@ -13,6 +13,8 @@ import type {
   ActivityActionType,
   ActivityLog,
   AssetFolderCategory,
+  ClientTalkRecord,
+  CreateClientTalkInput,
   DeliverableItem,
   MeetingOutcome,
   Project,
@@ -40,6 +42,7 @@ import {
 import {
   INITIAL_ACTIVITY_LOGS,
   INITIAL_ASSETS,
+  INITIAL_CLIENT_TALKS,
   INITIAL_CONTACTS,
   INITIAL_CREDENTIALS,
   INITIAL_DOCUMENTS,
@@ -160,6 +163,7 @@ interface AuthContextValue {
   accessibleTasks: Task[];
   contacts: ProjectContact[];
   meetings: ProjectMeeting[];
+  clientTalks: ClientTalkRecord[];
   proposals: ProjectProposal[];
   documents: ProjectDocument[];
   requirements: ProjectRequirement[];
@@ -180,6 +184,10 @@ interface AuthContextValue {
   updateMeeting: (meetingId: string, updates: Partial<ProjectMeeting>) => void;
   deleteMeeting: (meetingId: string) => void;
   recordMeetingOutcome: (input: RecordMeetingOutcomeInput) => void;
+  // Client Talk Mutations
+  addClientTalk: (input: CreateClientTalkInput) => ClientTalkRecord;
+  updateClientTalk: (talkId: string, updates: Partial<ClientTalkRecord>) => void;
+  deleteClientTalk: (talkId: string) => void;
   createProposal: (input: CreateProposalInput) => ProjectProposal;
   updateProposal: (proposalId: string, updates: Partial<ProjectProposal>) => void;
   deleteProposal: (proposalId: string) => void;
@@ -267,6 +275,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
   );
   const [contacts, setContacts] = useState<ProjectContact[]>(INITIAL_CONTACTS);
   const [meetings, setMeetings] = useState<ProjectMeeting[]>(INITIAL_MEETINGS);
+  const [clientTalks, setClientTalks] = useState<ClientTalkRecord[]>(INITIAL_CLIENT_TALKS);
   const [proposals, setProposals] = useState<ProjectProposal[]>(INITIAL_PROPOSALS);
   const [documents, setDocuments] = useState<ProjectDocument[]>(INITIAL_DOCUMENTS);
   const [requirements, setRequirements] = useState<ProjectRequirement[]>(INITIAL_REQUIREMENTS);
@@ -645,6 +654,76 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
       );
     },
     [meetings, currentUser.name, appendLog]
+  );
+
+  // 3.5 Client Talk (Call, WhatsApp, Email, Meeting communications timeline)
+  const addClientTalk = useCallback(
+    (input: CreateClientTalkInput): ClientTalkRecord => {
+      const talkId = makeId('talk');
+      const now = new Date().toISOString();
+      const newTalk: ClientTalkRecord = {
+        id: talkId,
+        project_id: input.project_id,
+        type: input.type,
+        date: input.date,
+        notes: input.notes.trim(),
+        created_by: currentUser.id,
+        created_at: now,
+      };
+
+      setClientTalks((prev) => [newTalk, ...prev]);
+      appendLog(
+        input.project_id,
+        'CLIENT_TALK_LOGGED',
+        'project',
+        talkId,
+        `Logged client talk (${newTalk.type}): "${newTalk.notes.slice(0, 60)}${
+          newTalk.notes.length > 60 ? '...' : ''
+        }"`,
+        { type: newTalk.type, date: newTalk.date }
+      );
+      return newTalk;
+    },
+    [currentUser.id, appendLog]
+  );
+
+  const updateClientTalk = useCallback(
+    (talkId: string, updates: Partial<ClientTalkRecord>) => {
+      const now = new Date().toISOString();
+      setClientTalks((prev) =>
+        prev.map((t) => (t.id === talkId ? { ...t, ...updates, updated_at: now } : t))
+      );
+      const existing = clientTalks.find((t) => t.id === talkId);
+      if (existing) {
+        appendLog(
+          existing.project_id,
+          'CLIENT_TALK_UPDATED',
+          'project',
+          talkId,
+          `Updated client talk record (${updates.type || existing.type})`,
+          { ...updates }
+        );
+      }
+    },
+    [clientTalks, appendLog]
+  );
+
+  const deleteClientTalk = useCallback(
+    (talkId: string) => {
+      const existing = clientTalks.find((t) => t.id === talkId);
+      setClientTalks((prev) => prev.filter((t) => t.id !== talkId));
+      if (existing) {
+        appendLog(
+          existing.project_id,
+          'CLIENT_TALK_DELETED',
+          'project',
+          talkId,
+          `Deleted client talk record (${existing.type})`,
+          { type: existing.type }
+        );
+      }
+    },
+    [clientTalks, appendLog]
   );
 
   // 4. Proposals (Template, Pricing Table, Outcome Actions)
@@ -1323,6 +1402,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
     accessibleTasks,
     contacts,
     meetings,
+    clientTalks,
     proposals,
     documents,
     requirements,
@@ -1342,6 +1422,9 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
     updateMeeting,
     deleteMeeting,
     recordMeetingOutcome,
+    addClientTalk,
+    updateClientTalk,
+    deleteClientTalk,
     createProposal,
     updateProposal,
     deleteProposal,

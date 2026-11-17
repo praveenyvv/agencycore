@@ -1,6 +1,7 @@
 import type {
   ActivityLog,
   AssetFolderCategory,
+  ClientTalkRecord,
   ProjectAsset,
   ProjectContact,
   ProjectCredential,
@@ -215,6 +216,89 @@ export const INITIAL_MEETINGS: ProjectMeeting[] = [
     next_action_at: '2027-01-15',
     created_by: 'usr-pm-1',
     created_at: '2026-09-08T09:00:00Z',
+  },
+];
+
+// ============================================================================
+// 2.5 CLIENT TALK (Call, WhatsApp, Email, Meeting communications timeline)
+// ============================================================================
+export const INITIAL_CLIENT_TALKS: ClientTalkRecord[] = [
+  // Aurora Labs Marketing Site
+  {
+    id: 'talk-aurora-1',
+    project_id: 'proj-aurora-web',
+    type: 'Call',
+    date: '2026-11-16T11:30',
+    notes: 'Discussed project timeline with Claire. Client is very happy with frontend velocity and wants the next milestone preview by Friday afternoon.',
+    created_by: 'usr-pm-1',
+    created_at: '2026-11-16T11:35:00Z',
+  },
+  {
+    id: 'talk-aurora-2',
+    project_id: 'proj-aurora-web',
+    type: 'WhatsApp',
+    date: '2026-11-15T17:05',
+    notes: 'Shared the latest hero section design tokens and layout screenshots with David Zhao for quick design feedback.',
+    created_by: 'usr-member-2',
+    created_at: '2026-11-15T17:10:00Z',
+  },
+  {
+    id: 'talk-aurora-3',
+    project_id: 'proj-aurora-web',
+    type: 'Meeting',
+    date: '2026-11-13T15:00',
+    notes: 'Bi-weekly sync at client office:\n- Homepage layout approved\n- Payment gateway & webhook demo scheduled for next sprint\n- Confirmed CMS case study schema',
+    created_by: 'usr-pm-1',
+    created_at: '2026-11-13T16:00:00Z',
+  },
+  {
+    id: 'talk-aurora-4',
+    project_id: 'proj-aurora-web',
+    type: 'Email',
+    date: '2026-11-10T10:15',
+    notes: 'Sent the revised proposal and commercial terms breakdown for phase 2 along with staging access instructions.',
+    created_by: 'usr-admin-1',
+    created_at: '2026-11-10T10:20:00Z',
+  },
+
+  // Solaris Patient Telemetry Portal
+  {
+    id: 'talk-solaris-1',
+    project_id: 'proj-solaris-health',
+    type: 'Call',
+    date: '2026-11-16T14:00',
+    notes: 'Call with Dr. Robert Vance regarding HIPAA audit standards. Agreed on zero-knowledge encryption for vitals data.',
+    created_by: 'usr-pm-1',
+    created_at: '2026-11-16T14:20:00Z',
+  },
+  {
+    id: 'talk-solaris-2',
+    project_id: 'proj-solaris-health',
+    type: 'WhatsApp',
+    date: '2026-11-14T09:45',
+    notes: 'Priya confirmed their dev team will provide sandbox test credentials for EHR integration next Monday.',
+    created_by: 'usr-pm-1',
+    created_at: '2026-11-14T09:50:00Z',
+  },
+
+  // Veridian FinTech Portal
+  {
+    id: 'talk-veridian-1',
+    project_id: 'proj-veridian-app',
+    type: 'Meeting',
+    date: '2026-11-14T16:30',
+    notes: 'Sprint review with CTO Alexander. Reviewed compliance test report and approved final QA migration checklist.',
+    created_by: 'usr-pm-1',
+    created_at: '2026-11-14T17:00:00Z',
+  },
+  {
+    id: 'talk-veridian-2',
+    project_id: 'proj-veridian-app',
+    type: 'Email',
+    date: '2026-11-12T11:00',
+    notes: 'Delivered penetration testing and automated security scan summary to compliance committee.',
+    created_by: 'usr-admin-1',
+    created_at: '2026-11-12T11:15:00Z',
   },
 ];
 
