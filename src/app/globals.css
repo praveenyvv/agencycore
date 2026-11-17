@@ -114,12 +114,19 @@ html, body {
 }
 
 /* Dynamic adaptive screen adjustments for 14", 15", 16" laptops & scaling */
+:root {
+  --header-h: 60px;
+}
+
 @media screen and (max-height: 850px) {
+  :root {
+    --header-h: 52px;
+  }
   .compact-adaptive {
-    padding: 14px !important;
+    padding: 12px 14px !important;
   }
   .compact-stat-num {
-    font-size: 26px !important;
+    font-size: 24px !important;
   }
 }
 
@@ -127,6 +134,14 @@ html, body {
   :root {
     --sidebar-w: 220px;
   }
+}
+
+/* Compact Screen Mode for 14" Laptops */
+.compact-screen {
+  --header-h: 52px;
+}
+.compact-screen main {
+  padding: 12px 16px !important;
 }
 
 /* Design System Utility Classes */

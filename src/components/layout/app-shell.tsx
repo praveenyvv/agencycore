@@ -13,12 +13,14 @@ import {
   Contact,
   FolderOpen,
   Globe,
+  Laptop,
   Layers,
   LayoutDashboard,
   Lock,
   LogOut,
   Megaphone,
   Menu,
+  Monitor,
   Plus,
   RotateCcw,
   Search,
@@ -66,6 +68,67 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
+  // Adaptive Screen Fit mode (Auto / 14-inch laptop / 16-inch desktop)
+  type ScreenFitMode = 'auto' | '14-inch' | '16-inch';
+  const [screenFit, setScreenFit] = useState<ScreenFitMode>('auto');
+  const [screenMenuOpen, setScreenMenuOpen] = useState(false);
+  const [currentZoom, setCurrentZoom] = useState<number>(1);
+
+  useEffect(() => {
+    const saved = localStorage.getItem('hb_screen_fit') as ScreenFitMode;
+    if (saved && ['auto', '14-inch', '16-inch'].includes(saved)) {
+      setScreenFit(saved);
+    }
+  }, []);
+
+  useEffect(() => {
+    const calculateAndApplyZoom = () => {
+      let zoomLevel = 1;
+      if (screenFit === '14-inch') {
+        zoomLevel = 0.88;
+      } else if (screenFit === '16-inch') {
+        zoomLevel = 1;
+      } else {
+        // Auto detection mode:
+        // A 14" laptop with 150% Windows scaling has viewport innerHeight ~580-680px or innerWidth <= 1366px
+        // A 14" laptop with 125% Windows scaling has viewport innerHeight ~700-760px
+        const h = window.innerHeight;
+        const w = window.innerWidth;
+        if (h <= 740 || w <= 1366) {
+          zoomLevel = 0.88;
+        } else if (h <= 820) {
+          zoomLevel = 0.92;
+        } else {
+          zoomLevel = 1;
+        }
+      }
+
+      setCurrentZoom(zoomLevel);
+      try {
+        (document.documentElement.style as any).zoom = String(zoomLevel);
+        if (zoomLevel < 1) {
+          document.documentElement.classList.add('compact-screen');
+        } else {
+          document.documentElement.classList.remove('compact-screen');
+        }
+      } catch (err) {
+        console.error('Failed to set zoom:', err);
+      }
+    };
+
+    calculateAndApplyZoom();
+    window.addEventListener('resize', calculateAndApplyZoom);
+    return () => {
+      window.removeEventListener('resize', calculateAndApplyZoom);
+    };
+  }, [screenFit]);
+
+  const handleSelectScreenFit = (mode: ScreenFitMode) => {
+    setScreenFit(mode);
+    localStorage.setItem('hb_screen_fit', mode);
+    setScreenMenuOpen(false);
+  };
+
   // Redirect to /login if signed out (unless already on /login)
   useEffect(() => {
     if (!isAuthenticated && pathname !== '/login') {
@@ -85,6 +148,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         setSwitcherOpen(false);
         setNotificationsOpen(false);
         setPersonaMenuOpen(false);
+        setScreenMenuOpen(false);
       }
     };
     window.addEventListener('keydown', onKeyDown);
@@ -405,8 +469,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       {/* Main Container */}
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        {/* Top Header (60px tall, white, bottom border, 24px side padding) */}
-        <header className="flex h-[60px] shrink-0 items-center justify-between border-b border-[#e5e7eb] bg-white px-6 shadow-[0_1px_3px_rgba(0,0,0,0.04)] z-10">
+        {/* Top Header (adaptive height, white, bottom border, side padding) */}
+        <header className="flex h-[var(--header-h,60px)] shrink-0 items-center justify-between border-b border-[#e5e7eb] bg-white px-4 sm:px-6 shadow-[0_1px_3px_rgba(0,0,0,0.04)] z-10 transition-all">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setMobileOpen(true)}
@@ -433,6 +497,110 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
           {/* Right Controls */}
           <div className="flex items-center gap-2">
+            {/* Screen Scale / Adaptive Screen Size Controller (14" vs 16" laptops) */}
+            <div className="relative">
+              <button
+                onClick={() => setScreenMenuOpen((o) => !o)}
+                className="flex h-[34px] items-center gap-1.5 rounded-[8px] border border-[#e5e7eb] bg-white px-2.5 text-[#6b7280] hover:border-[#4361ee] hover:text-[#4361ee] hover:bg-[rgba(67,97,238,0.08)] transition-all cursor-pointer text-[12px] font-medium"
+                title="Adaptive Screen Scaling (14&quot; vs 16&quot; laptops)"
+              >
+                <Laptop className="h-3.5 w-3.5 text-[#4361ee]" />
+                <span className="hidden sm:inline text-[11.5px] font-medium text-[#111827]">
+                  {screenFit === 'auto'
+                    ? `Auto (${Math.round(currentZoom * 100)}%)`
+                    : screenFit === '14-inch'
+                    ? '14" Laptop'
+                    : '16" Display'}
+                </span>
+                <ChevronDown className="h-3 w-3 text-[#9ca3af]" />
+              </button>
+
+              {screenMenuOpen && (
+                <div className="absolute right-0 top-11 z-50 w-72 rounded-[12px] border border-[#e5e7eb] bg-white p-2.5 shadow-[0_8px_24px_rgba(0,0,0,0.12)] animate-drop-in">
+                  <div className="flex items-center justify-between border-b border-[#e5e7eb] pb-2 mb-2 px-1">
+                    <span className="text-[12px] font-bold text-[#111827] flex items-center gap-1.5">
+                      <Monitor className="h-3.5 w-3.5 text-[#4361ee]" />
+                      Screen Fit &amp; Scaling
+                    </span>
+                    <span className="text-[11px] font-mono font-semibold text-[#4361ee] bg-[rgba(67,97,238,0.08)] px-1.5 py-0.5 rounded">
+                      {Math.round(currentZoom * 100)}%
+                    </span>
+                  </div>
+
+                  <div className="space-y-1">
+                    <button
+                      onClick={() => handleSelectScreenFit('auto')}
+                      className={cn(
+                        'flex w-full items-start gap-2.5 rounded-[8px] p-2 text-left transition-colors cursor-pointer',
+                        screenFit === 'auto'
+                          ? 'bg-[rgba(67,97,238,0.08)] text-[#4361ee]'
+                          : 'hover:bg-[#f3f4f6] text-[#6b7280]'
+                      )}
+                    >
+                      <div className="mt-0.5">
+                        <div className={cn("h-2 w-2 rounded-full", screenFit === 'auto' ? "bg-[#4361ee]" : "bg-zinc-300")} />
+                      </div>
+                      <div className="flex-1">
+                        <div className="text-[12px] font-semibold text-[#111827] flex items-center gap-1.5">
+                          Auto Adaptive
+                          <span className="text-[9.5px] uppercase font-bold text-[#10b981] bg-[#ecfdf5] px-1.5 py-0.2 rounded-full">
+                            Active
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-[#6b7280] leading-snug mt-0.5">
+                          Detects 14&quot; vs 16&quot; screen height and auto-scales so workspace cards fit without scrolling.
+                        </p>
+                      </div>
+                    </button>
+
+                    <button
+                      onClick={() => handleSelectScreenFit('14-inch')}
+                      className={cn(
+                        'flex w-full items-start gap-2.5 rounded-[8px] p-2 text-left transition-colors cursor-pointer',
+                        screenFit === '14-inch'
+                          ? 'bg-[rgba(67,97,238,0.08)] text-[#4361ee]'
+                          : 'hover:bg-[#f3f4f6] text-[#6b7280]'
+                      )}
+                    >
+                      <div className="mt-0.5">
+                        <div className={cn("h-2 w-2 rounded-full", screenFit === '14-inch' ? "bg-[#4361ee]" : "bg-zinc-300")} />
+                      </div>
+                      <div className="flex-1">
+                        <div className="text-[12px] font-semibold text-[#111827]">
+                          14&quot; Laptop Compact (88%)
+                        </div>
+                        <p className="text-[11px] text-[#6b7280] leading-snug mt-0.5">
+                          Compact fit for 14-inch laptop screens at 100% browser zoom with zero cutoffs.
+                        </p>
+                      </div>
+                    </button>
+
+                    <button
+                      onClick={() => handleSelectScreenFit('16-inch')}
+                      className={cn(
+                        'flex w-full items-start gap-2.5 rounded-[8px] p-2 text-left transition-colors cursor-pointer',
+                        screenFit === '16-inch'
+                          ? 'bg-[rgba(67,97,238,0.08)] text-[#4361ee]'
+                          : 'hover:bg-[#f3f4f6] text-[#6b7280]'
+                      )}
+                    >
+                      <div className="mt-0.5">
+                        <div className={cn("h-2 w-2 rounded-full", screenFit === '16-inch' ? "bg-[#4361ee]" : "bg-zinc-300")} />
+                      </div>
+                      <div className="flex-1">
+                        <div className="text-[12px] font-semibold text-[#111827]">
+                          16&quot; / Desktop Standard (100%)
+                        </div>
+                        <p className="text-[11px] text-[#6b7280] leading-snug mt-0.5">
+                          Standard spacious view for 15.6&quot;, 16&quot; screens and external monitors.
+                        </p>
+                      </div>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
             {/* Notification Bell (34x34 square button, white, border, radius 8) */}
             {permissions.canViewInternalDelays && (
               <div className="relative">
@@ -540,7 +708,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </header>
 
         {/* Main Content Scroll Area (adaptive padding, pale grey #f5f6fa background) */}
-        <main className="flex-1 overflow-y-auto p-4 sm:p-5 md:p-6 bg-[#f5f6fa]">
+        <main className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-5 lg:p-6 bg-[#f5f6fa]">
           <div className="w-full max-w-[1600px] mx-auto animate-fade-up">
             {children}
           </div>
