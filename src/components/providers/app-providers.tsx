@@ -15,6 +15,7 @@ import type {
   AssetFolderCategory,
   ClientTalkRecord,
   CreateClientTalkInput,
+  CredentialCategory,
   DeliverableItem,
   MeetingOutcome,
   Project,
@@ -139,9 +140,21 @@ export interface CreateTaskInput {
 export interface AddCredentialInput {
   project_id: string;
   service_name: string;
+  category?: CredentialCategory;
   login_url?: string;
   username: string;
   plaintext_secret: string;
+  notes?: string;
+}
+
+export interface UpdateCredentialInput {
+  project_id: string;
+  credential_id: string;
+  service_name: string;
+  category?: CredentialCategory;
+  login_url?: string;
+  username: string;
+  plaintext_secret?: string;
   notes?: string;
 }
 
@@ -215,6 +228,8 @@ interface AuthContextValue {
   }) => void;
   toggleAssetApproval: (projectId: string, assetId: string) => void;
   addCredential: (input: AddCredentialInput) => Promise<void>;
+  updateCredential: (input: UpdateCredentialInput) => Promise<void>;
+  deleteCredential: (projectId: string, credentialId: string) => void;
   revealCredential: (projectId: string, credentialId: string) => Promise<string>;
   createTask: (input: CreateTaskInput) => void;
   updateTaskStatus: (projectId: string, taskId: string, status: TaskStatus) => void;
@@ -1134,6 +1149,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
         id: credId,
         project_id: input.project_id,
         service_name: input.service_name.trim(),
+        category: input.category || 'Other',
         login_url: input.login_url?.trim() || null,
         username: input.username.trim(),
         encrypted_secret,
@@ -1193,6 +1209,89 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
       return plaintext as string;
     },
     [permissions.canRevealCredentials, credentials, currentUser, appendLog]
+  );
+
+  const updateCredential = useCallback(
+    async (input: UpdateCredentialInput) => {
+      const proj = projects.find((p) => p.id === input.project_id);
+      if (!proj || proj.is_archived || !permissions.canManageCredentials) {
+        throw new Error('RBAC: Cannot manage credentials.');
+      }
+
+      const existing = credentials.find(
+        (c) => c.id === input.credential_id && c.project_id === input.project_id
+      );
+      if (!existing) throw new Error('Credential not found');
+
+      let encrypted_secret = existing.encrypted_secret;
+      let iv = existing.iv;
+      let auth_tag = existing.auth_tag;
+
+      if (input.plaintext_secret && input.plaintext_secret.trim().length > 0) {
+        const res = await fetch('/api/vault/encrypt', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ plaintext: input.plaintext_secret }),
+        });
+        if (!res.ok) throw new Error('Encryption failed');
+        const encryptedData = await res.json();
+        encrypted_secret = encryptedData.encrypted_secret;
+        iv = encryptedData.iv;
+        auth_tag = encryptedData.auth_tag;
+      }
+
+      setCredentials((prev) =>
+        prev.map((c) =>
+          c.id === input.credential_id
+            ? {
+                ...c,
+                service_name: input.service_name.trim(),
+                category: input.category || c.category || 'Other',
+                login_url: input.login_url?.trim() || null,
+                username: input.username.trim(),
+                encrypted_secret,
+                iv,
+                auth_tag,
+                notes: input.notes?.trim() || null,
+                updated_by: currentUser.id,
+                updated_at: new Date().toISOString(),
+              }
+            : c
+        )
+      );
+
+      appendLog(
+        input.project_id,
+        'CREDENTIAL_UPDATED',
+        'credential',
+        input.credential_id,
+        `Updated credential for "${input.service_name}"`,
+        { service_name: input.service_name }
+      );
+    },
+    [projects, permissions.canManageCredentials, credentials, currentUser.id, appendLog]
+  );
+
+  const deleteCredential = useCallback(
+    (projectId: string, credentialId: string) => {
+      const proj = projects.find((p) => p.id === projectId);
+      if (!proj || proj.is_archived || !permissions.canManageCredentials) {
+        throw new Error('RBAC: Cannot delete credentials.');
+      }
+      const existing = credentials.find(
+        (c) => c.id === credentialId && c.project_id === projectId
+      );
+      setCredentials((prev) => prev.filter((c) => c.id !== credentialId));
+      appendLog(
+        projectId,
+        'CREDENTIAL_DELETED',
+        'credential',
+        credentialId,
+        `Deleted credential for "${existing?.service_name ?? 'unknown'}"`,
+        { service_name: existing?.service_name }
+      );
+    },
+    [projects, permissions.canManageCredentials, credentials, appendLog]
   );
 
   const createTask = useCallback(
@@ -1436,6 +1535,8 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
     uploadAsset,
     toggleAssetApproval,
     addCredential,
+    updateCredential,
+    deleteCredential,
     revealCredential,
     createTask,
     updateTaskStatus,

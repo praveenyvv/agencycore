@@ -75,6 +75,8 @@ export type ActivityActionType =
   | 'ASSET_APPROVED'
   | 'CREDENTIAL_ADDED'
   | 'CREDENTIAL_REVEALED'
+  | 'CREDENTIAL_UPDATED'
+  | 'CREDENTIAL_DELETED'
   | 'TASK_CREATED'
   | 'TASK_STATUS_CHANGED'
   | 'TASK_DEADLINE_CHANGED'
@@ -251,10 +253,20 @@ export interface ProjectAsset {
   created_at: string;
 }
 
+export type CredentialCategory =
+  | 'Domain'
+  | 'Hosting'
+  | 'Cloud'
+  | 'Email'
+  | 'Social Media'
+  | 'Payment Gateway'
+  | 'Other';
+
 export interface ProjectCredential {
   id: string;
   project_id: string;
   service_name: string;
+  category?: CredentialCategory | null;
   login_url?: string | null;
   username: string;
   encrypted_secret: string;
