@@ -20,6 +20,7 @@ import { useAuth } from '@/components/providers/app-providers';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Modal } from '@/components/ui/modal';
 import { formatTimestamp } from '@/lib/utils';
 import type { ProjectContact } from '@/types/agency';
 
@@ -450,264 +451,247 @@ export default function BusinessContactsPage() {
       )}
 
       {/* Modal: Create / Edit Contact */}
-      {(isCreateOpen || !!editContact) && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-[3px] p-4 animate-fade-up">
-          <div className="w-full max-w-[520px] rounded-[14px] border border-[#e5e7eb] bg-white shadow-[0_4px_16px_rgba(0,0,0,0.08)] overflow-hidden">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-[#e5e7eb] sticky top-0 bg-white z-10">
-              <h2 className="text-[15px] font-bold text-[#111827]">
-                {editContact ? 'Edit Business Contact' : 'New Business Contact'}
-              </h2>
-              <button
-                onClick={() => {
-                  setIsCreateOpen(false);
-                  setEditContact(null);
-                  resetForm();
-                }}
-                className="w-7 h-7 rounded-[6px] text-[#6b7280] hover:bg-[#f3f4f6] hover:text-[#111827] flex items-center justify-center cursor-pointer"
-              >
-                <X className="h-4 w-4" />
-              </button>
+      <Modal
+        isOpen={isCreateOpen || !!editContact}
+        onClose={() => {
+          setIsCreateOpen(false);
+          setEditContact(null);
+          resetForm();
+        }}
+        title={editContact ? 'Edit Business Contact' : 'New Business Contact'}
+        maxWidth="max-w-[520px]"
+        footer={
+          <>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setIsCreateOpen(false);
+                setEditContact(null);
+                resetForm();
+              }}
+              className="h-[36px] px-4 text-[13px]"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              form="contact-form"
+              disabled={countWords(formNotes) > 20}
+              className="h-[36px] px-5 rounded-[8px] bg-[#4361ee] hover:bg-[#3451d1] text-white text-[13px]"
+            >
+              {editContact ? 'Save Changes' : 'Create Contact'}
+            </Button>
+          </>
+        }
+      >
+        <form id="contact-form" onSubmit={handleSaveContact} className="space-y-3.5">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-[12px] font-medium text-[#6b7280] mb-1">
+                Full Name *
+              </label>
+              <Input
+                required
+                value={formName}
+                onChange={(e) => setFormName(e.target.value)}
+                placeholder="e.g. Jane Doe"
+                className="text-[13px] h-[36px]"
+              />
             </div>
-
-            <form onSubmit={handleSaveContact}>
-              <div className="p-6 space-y-3.5">
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-[12px] font-medium text-[#6b7280] mb-1">
-                      Full Name *
-                    </label>
-                    <Input
-                      required
-                      value={formName}
-                      onChange={(e) => setFormName(e.target.value)}
-                      placeholder="e.g. Jane Doe"
-                      className="text-[13px] h-[36px]"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[12px] font-medium text-[#6b7280] mb-1">
-                      Role / Title *
-                    </label>
-                    <Input
-                      required
-                      value={formRole}
-                      onChange={(e) => setFormRole(e.target.value)}
-                      placeholder="e.g. Head of Product"
-                      className="text-[13px] h-[36px]"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-[12px] font-medium text-[#6b7280] mb-1">
-                    Company / Organization
-                  </label>
-                  <Input
-                    value={formCompany}
-                    onChange={(e) => setFormCompany(e.target.value)}
-                    placeholder="e.g. Acme Corp"
-                    className="text-[13px] h-[36px]"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-[12px] font-medium text-[#6b7280] mb-1">
-                      Email Address *
-                    </label>
-                    <Input
-                      required
-                      type="email"
-                      value={formEmail}
-                      onChange={(e) => setFormEmail(e.target.value)}
-                      placeholder="jane@company.com"
-                      className="text-[13px] h-[36px]"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[12px] font-medium text-[#6b7280] mb-1">
-                      Phone (Optional)
-                    </label>
-                    <Input
-                      value={formPhone}
-                      onChange={(e) => setFormPhone(e.target.value)}
-                      placeholder="+1 (555) 000-0000"
-                      className="text-[13px] h-[36px]"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-[12px] font-medium text-[#6b7280] mb-1">
-                    Link to Project (Optional)
-                  </label>
-                  <select
-                    value={formProjectId}
-                    onChange={(e) => setFormProjectId(e.target.value)}
-                    className="w-full rounded-[8px] border border-[#e5e7eb] bg-white p-2 text-[12.5px] text-[#111827] focus:border-[#4361ee] focus:outline-none"
-                  >
-                    <option value="">
-                      Leave Unassigned (Standalone Lead / Prospect)
-                    </option>
-                    {accessibleProjects.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.title} ({p.client_name})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <div className="flex items-center justify-between text-[12px] font-medium text-[#6b7280] mb-1">
-                    <label>Notes (Max 20 words)</label>
-                    <span
-                      className={`font-mono text-[10px] ${
-                        countWords(formNotes) > 20
-                          ? 'text-[#ef4444] font-bold'
-                          : 'text-[#9ca3af]'
-                      }`}
-                    >
-                      {countWords(formNotes)}/20 words
-                    </span>
-                  </div>
-                  <textarea
-                    rows={2}
-                    className={`w-full rounded-[8px] border p-2 text-[12.5px] text-[#111827] focus:outline-none focus:border-[#4361ee] ${
-                      countWords(formNotes) > 20
-                        ? 'border-[#fca5a5] bg-[#fef2f2]'
-                        : 'border-[#e5e7eb]'
-                    }`}
-                    placeholder="Key background context..."
-                    value={formNotes}
-                    onChange={(e) => setFormNotes(e.target.value)}
-                  />
-                </div>
-              </div>
-
-              <div className="px-6 py-3.5 border-t border-[#e5e7eb] bg-[#fafafa] flex justify-end gap-2 sticky bottom-0">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    setIsCreateOpen(false);
-                    setEditContact(null);
-                    resetForm();
-                  }}
-                  className="h-[36px] px-4 text-[13px]"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={countWords(formNotes) > 20}
-                  className="h-[36px] px-5 rounded-[8px] bg-[#4361ee] hover:bg-[#3451d1] text-white text-[13px]"
-                >
-                  {editContact ? 'Save Changes' : 'Create Contact'}
-                </Button>
-              </div>
-            </form>
+            <div>
+              <label className="block text-[12px] font-medium text-[#6b7280] mb-1">
+                Role / Title *
+              </label>
+              <Input
+                required
+                value={formRole}
+                onChange={(e) => setFormRole(e.target.value)}
+                placeholder="e.g. Head of Product"
+                className="text-[13px] h-[36px]"
+              />
+            </div>
           </div>
-        </div>
-      )}
+
+          <div>
+            <label className="block text-[12px] font-medium text-[#6b7280] mb-1">
+              Company / Organization
+            </label>
+            <Input
+              value={formCompany}
+              onChange={(e) => setFormCompany(e.target.value)}
+              placeholder="e.g. Acme Corp"
+              className="text-[13px] h-[36px]"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-[12px] font-medium text-[#6b7280] mb-1">
+                Email Address *
+              </label>
+              <Input
+                required
+                type="email"
+                value={formEmail}
+                onChange={(e) => setFormEmail(e.target.value)}
+                placeholder="jane@company.com"
+                className="text-[13px] h-[36px]"
+              />
+            </div>
+            <div>
+              <label className="block text-[12px] font-medium text-[#6b7280] mb-1">
+                Phone (Optional)
+              </label>
+              <Input
+                value={formPhone}
+                onChange={(e) => setFormPhone(e.target.value)}
+                placeholder="+1 (555) 000-0000"
+                className="text-[13px] h-[36px]"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-[12px] font-medium text-[#6b7280] mb-1">
+              Link to Project (Optional)
+            </label>
+            <select
+              value={formProjectId}
+              onChange={(e) => setFormProjectId(e.target.value)}
+              className="w-full rounded-[8px] border border-[#e5e7eb] bg-white p-2 text-[12.5px] text-[#111827] focus:border-[#4361ee] focus:outline-none"
+            >
+              <option value="">
+                Leave Unassigned (Standalone Lead / Prospect)
+              </option>
+              {accessibleProjects.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.title} ({p.client_name})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <div className="flex items-center justify-between text-[12px] font-medium text-[#6b7280] mb-1">
+              <label>Notes (Max 20 words)</label>
+              <span
+                className={`font-mono text-[10px] ${
+                  countWords(formNotes) > 20
+                    ? 'text-[#ef4444] font-bold'
+                    : 'text-[#9ca3af]'
+                }`}
+              >
+                {countWords(formNotes)}/20 words
+              </span>
+            </div>
+            <textarea
+              rows={2}
+              className={`w-full rounded-[8px] border p-2 text-[12.5px] text-[#111827] focus:outline-none focus:border-[#4361ee] ${
+                countWords(formNotes) > 20
+                  ? 'border-[#fca5a5] bg-[#fef2f2]'
+                  : 'border-[#e5e7eb]'
+              }`}
+              placeholder="Key background context..."
+              value={formNotes}
+              onChange={(e) => setFormNotes(e.target.value)}
+            />
+          </div>
+        </form>
+      </Modal>
 
       {/* Modal: Link Contact to Project */}
-      {linkModalContact && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-[3px] p-4 animate-fade-up">
-          <div className="w-full max-w-[420px] rounded-[14px] border border-[#e5e7eb] bg-white shadow-[0_4px_16px_rgba(0,0,0,0.08)] overflow-hidden">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-[#e5e7eb]">
-              <h2 className="text-[15px] font-bold text-[#111827]">
-                Link Contact to Project
-              </h2>
-              <button
-                onClick={() => setLinkModalContact(null)}
-                className="w-7 h-7 rounded-[6px] text-[#6b7280] hover:bg-[#f3f4f6] hover:text-[#111827] flex items-center justify-center cursor-pointer"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
+      <Modal
+        isOpen={!!linkModalContact}
+        onClose={() => setLinkModalContact(null)}
+        title="Link Contact to Project"
+        maxWidth="max-w-[420px]"
+        footer={
+          <>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setLinkModalContact(null)}
+              className="h-[36px] px-4 text-[13px]"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              disabled={!selectedProjectIdToLink}
+              onClick={handleLinkToProject}
+              className="h-[36px] px-5 rounded-[8px] bg-[#4361ee] hover:bg-[#3451d1] text-white text-[13px]"
+            >
+              Confirm Link
+            </Button>
+          </>
+        }
+      >
+        {linkModalContact && (
+          <div className="space-y-3.5 text-[12.5px]">
+            <p className="text-[#6b7280]">
+              Assign <strong>{linkModalContact.name}</strong> ({linkModalContact.role}) to an active project workspace.
+            </p>
 
-            <div className="p-6 space-y-3.5 text-[12.5px]">
-              <p className="text-[#6b7280]">
-                Assign <strong>{linkModalContact.name}</strong> ({linkModalContact.role}) to an active project workspace.
-              </p>
-
-              <div>
-                <label className="block text-[12px] font-medium text-[#6b7280] mb-1">
-                  Select Target Project
-                </label>
-                <select
-                  value={selectedProjectIdToLink}
-                  onChange={(e) => setSelectedProjectIdToLink(e.target.value)}
-                  className="w-full rounded-[8px] border border-[#e5e7eb] bg-white p-2 text-[12.5px] text-[#111827] focus:border-[#4361ee] focus:outline-none"
-                >
-                  <option value="">-- Choose Project --</option>
-                  {accessibleProjects.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.title} ({p.client_name})
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div className="px-6 py-3.5 border-t border-[#e5e7eb] bg-[#fafafa] flex justify-end gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setLinkModalContact(null)}
-                className="h-[36px] px-4 text-[13px]"
+            <div>
+              <label className="block text-[12px] font-medium text-[#6b7280] mb-1">
+                Select Target Project
+              </label>
+              <select
+                value={selectedProjectIdToLink}
+                onChange={(e) => setSelectedProjectIdToLink(e.target.value)}
+                className="w-full rounded-[8px] border border-[#e5e7eb] bg-white p-2 text-[12.5px] text-[#111827] focus:border-[#4361ee] focus:outline-none"
               >
-                Cancel
-              </Button>
-              <Button
-                type="button"
-                disabled={!selectedProjectIdToLink}
-                onClick={handleLinkToProject}
-                className="h-[36px] px-5 rounded-[8px] bg-[#4361ee] hover:bg-[#3451d1] text-white text-[13px]"
-              >
-                Confirm Link
-              </Button>
+                <option value="">-- Choose Project --</option>
+                {accessibleProjects.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.title} ({p.client_name})
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </Modal>
 
       {/* Delete Confirmation Modal */}
-      {deleteConfirmId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-[3px] p-4 animate-fade-up">
-          <div className="w-full max-w-[400px] rounded-[14px] border border-[#e5e7eb] bg-white p-6 shadow-[0_4px_16px_rgba(0,0,0,0.08)]">
-            <div className="flex items-start gap-4">
-              <div className="w-10 h-10 rounded-[10px] bg-[#fef2f2] text-[#ef4444] flex items-center justify-center shrink-0 border border-[#fca5a5]">
-                <AlertTriangle className="h-5 w-5" />
-              </div>
-              <div className="space-y-1">
-                <h3 className="text-[15px] font-bold text-[#111827]">
-                  Delete Contact?
-                </h3>
-                <p className="text-[12px] text-[#6b7280]">
-                  Are you sure you want to delete this contact? This action cannot be undone.
-                </p>
-              </div>
-            </div>
-
-            <div className="mt-6 flex items-center justify-end gap-2">
-              <Button
-                variant="outline"
-                onClick={() => setDeleteConfirmId(null)}
-                className="h-[34px] px-4 text-[12.5px]"
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleConfirmDelete}
-                className="h-[34px] px-4 rounded-[8px] bg-[#fef2f2] hover:bg-[#fee2e2] text-[#ef4444] border border-[#fca5a5] font-semibold text-[12.5px]"
-              >
-                Delete
-              </Button>
-            </div>
+      <Modal
+        isOpen={!!deleteConfirmId}
+        onClose={() => setDeleteConfirmId(null)}
+        title="Confirm Delete"
+        maxWidth="max-w-[400px]"
+        footer={
+          <>
+            <Button
+              variant="outline"
+              onClick={() => setDeleteConfirmId(null)}
+              className="h-[34px] px-4 text-[12.5px]"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleConfirmDelete}
+              className="h-[34px] px-4 rounded-[8px] bg-[#fef2f2] hover:bg-[#fee2e2] text-[#ef4444] border border-[#fca5a5] font-semibold text-[12.5px]"
+            >
+              Delete
+            </Button>
+          </>
+        }
+      >
+        <div className="flex items-start gap-4">
+          <div className="w-10 h-10 rounded-[10px] bg-[#fef2f2] text-[#ef4444] flex items-center justify-center shrink-0 border border-[#fca5a5]">
+            <AlertTriangle className="h-5 w-5" />
+          </div>
+          <div className="space-y-1">
+            <h3 className="text-[15px] font-bold text-[#111827]">
+              Delete Contact?
+            </h3>
+            <p className="text-[12px] text-[#6b7280]">
+              Are you sure you want to delete this contact? This action cannot be undone.
+            </p>
           </div>
         </div>
-      )}
+      </Modal>
     </div>
   );
 }

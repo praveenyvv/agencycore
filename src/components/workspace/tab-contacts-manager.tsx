@@ -15,6 +15,7 @@ import { useAuth } from '@/components/providers/app-providers';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Modal } from '@/components/ui/modal';
 import type { Project, ProjectContact } from '@/types/agency';
 
 export function TabContactsManager({ project }: { project: Project }) {
@@ -222,98 +223,90 @@ export function TabContactsManager({ project }: { project: Project }) {
 
       {/* Edit Contact Modal */}
       {editingContact && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-lg rounded-xl border border-zinc-200 bg-white p-5 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-zinc-100 pb-2">
-              <h3 className="text-sm font-semibold text-zinc-900">
-                Edit Contact: {editingContact.name}
-              </h3>
-              <button
-                type="button"
-                className="text-zinc-400 hover:text-zinc-700 cursor-pointer"
-                onClick={() => setEditingContact(null)}
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-
-            <form onSubmit={handleEditSubmit} className="space-y-3">
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="space-y-1">
-                  <label className="text-xs font-medium text-zinc-700">Full Name *</label>
-                  <Input
-                    required
-                    value={editName}
-                    onChange={(e) => setEditName(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-medium text-zinc-700">Role / Job Title *</label>
-                  <Input
-                    required
-                    value={editRole}
-                    onChange={(e) => setEditRole(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-medium text-zinc-700">Email Address *</label>
-                  <Input
-                    required
-                    type="email"
-                    value={editEmail}
-                    onChange={(e) => setEditEmail(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-medium text-zinc-700">Phone / WhatsApp</label>
-                  <Input
-                    value={editPhone}
-                    onChange={(e) => setEditPhone(e.target.value)}
-                  />
-                </div>
-              </div>
-
+        <Modal
+          isOpen={!!editingContact}
+          onClose={() => setEditingContact(null)}
+          title={`Edit Contact: ${editingContact.name}`}
+          maxWidth="max-w-lg"
+        >
+          <form onSubmit={handleEditSubmit} className="space-y-4">
+            <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-medium text-zinc-700">Notes (Max 20 words)</label>
-                  <span className="text-[11px] text-zinc-500">{countWords(editNotes)}/20 words</span>
-                </div>
+                <label className="text-xs font-medium text-zinc-700">Full Name *</label>
                 <Input
-                  value={editNotes}
-                  onChange={(e) => handleNotesChange(e.target.value, true)}
+                  required
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
                 />
               </div>
-
-              <div className="flex justify-end gap-2 border-t border-zinc-100 pt-3">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setEditingContact(null)}
-                >
-                  Cancel
-                </Button>
-                <Button type="submit" size="sm">
-                  Save Changes
-                </Button>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-zinc-700">Role / Job Title *</label>
+                <Input
+                  required
+                  value={editRole}
+                  onChange={(e) => setEditRole(e.target.value)}
+                />
               </div>
-            </form>
-          </div>
-        </div>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-zinc-700">Email Address *</label>
+                <Input
+                  required
+                  type="email"
+                  value={editEmail}
+                  onChange={(e) => setEditEmail(e.target.value)}
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-zinc-700">Phone / WhatsApp</label>
+                <Input
+                  value={editPhone}
+                  onChange={(e) => setEditPhone(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-medium text-zinc-700">Notes (Max 20 words)</label>
+                <span className="text-[11px] text-zinc-500">{countWords(editNotes)}/20 words</span>
+              </div>
+              <Input
+                value={editNotes}
+                onChange={(e) => handleNotesChange(e.target.value, true)}
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 border-t border-zinc-100 pt-3">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setEditingContact(null)}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" size="sm">
+                Save Changes
+              </Button>
+            </div>
+          </form>
+        </Modal>
       )}
 
       {/* Delete Confirmation Modal (Protective Pop-up) */}
       {contactToDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-sm rounded-xl border border-zinc-200 bg-white p-5 shadow-2xl space-y-4">
+        <Modal
+          isOpen={!!contactToDelete}
+          onClose={() => setContactToDelete(null)}
+          title="Delete Contact?"
+          maxWidth="max-w-sm"
+        >
+          <div className="space-y-4">
             <div className="flex items-center gap-3 text-red-600">
               <div className="rounded-full bg-red-100 p-2">
                 <AlertTriangle className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="text-sm font-semibold text-zinc-900">
-                  Delete Contact?
-                </h3>
                 <p className="text-xs text-zinc-500">
                   Are you sure you want to remove &quot;{contactToDelete.name}&quot;?
                 </p>
@@ -343,7 +336,7 @@ export function TabContactsManager({ project }: { project: Project }) {
               </Button>
             </div>
           </div>
-        </div>
+        </Modal>
       )}
 
       {/* Contacts Grid */}

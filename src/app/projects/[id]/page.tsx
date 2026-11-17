@@ -95,7 +95,7 @@ export default function ProjectWorkspacePage() {
       },
       {
         id: 'meetings',
-        label: 'Meetings & Discovery',
+        label: 'Meetings',
         icon: MessageSquare,
         visible: !isClient,
       },

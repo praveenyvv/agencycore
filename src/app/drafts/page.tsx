@@ -24,28 +24,25 @@ import { getProjectSimpleStatus, type ProjectStatus } from '@/types/agency';
 export default function DraftsPage() {
   const { accessibleProjects, updateProjectStatus } = useAuth();
 
-  const [activeTab, setActiveTab] = useState<'all' | 'inactive' | 'completed'>('all');
+  const [activeTab, setActiveTab] = useState<'all' | 'active' | 'inactive' | 'completed'>('active');
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Drafts contains Inactive and Completed projects (kept separate from active projects to avoid confusion)
-  const draftsProjects = useMemo(() => {
-    return accessibleProjects.filter((p) => {
-      const status = getProjectSimpleStatus(p);
-      return status === 'Inactive' || status === 'Completed';
-    });
+  const activeProjects = useMemo(() => {
+    return accessibleProjects.filter((p) => getProjectSimpleStatus(p) === 'Active');
   }, [accessibleProjects]);
 
   const inactiveProjects = useMemo(() => {
-    return draftsProjects.filter((p) => getProjectSimpleStatus(p) === 'Inactive');
-  }, [draftsProjects]);
+    return accessibleProjects.filter((p) => getProjectSimpleStatus(p) === 'Inactive');
+  }, [accessibleProjects]);
 
   const completedProjects = useMemo(() => {
-    return draftsProjects.filter((p) => getProjectSimpleStatus(p) === 'Completed');
-  }, [draftsProjects]);
+    return accessibleProjects.filter((p) => getProjectSimpleStatus(p) === 'Completed');
+  }, [accessibleProjects]);
 
   const filteredProjects = useMemo(() => {
-    return draftsProjects.filter((p) => {
+    return accessibleProjects.filter((p) => {
       const status = getProjectSimpleStatus(p);
+      if (activeTab === 'active' && status !== 'Active') return false;
       if (activeTab === 'inactive' && status !== 'Inactive') return false;
       if (activeTab === 'completed' && status !== 'Completed') return false;
 
@@ -58,7 +55,7 @@ export default function DraftsPage() {
       const reasonMatch = (p.draft_reason || '').toLowerCase().includes(q);
       return titleMatch || clientMatch || typeMatch || reasonMatch;
     });
-  }, [draftsProjects, activeTab, searchQuery]);
+  }, [accessibleProjects, activeTab, searchQuery]);
 
   return (
     <div className="space-y-6">
@@ -67,10 +64,10 @@ export default function DraftsPage() {
         <div>
           <h1 className="text-[20px] font-bold tracking-tight text-[#111827] flex items-center gap-2">
             <Archive className="h-5 w-5 text-[#4361ee]" />
-            Drafts &amp; Archives
+            Projects &amp; Drafts Directory
           </h1>
           <p className="text-[13px] text-[#6b7280] mt-0.5">
-            Inactive and completed projects stored safely outside your active projects directory to avoid confusion.
+            Overview of all agency projects: active engagements, inactive drafts, and completed archives.
           </p>
         </div>
 
@@ -78,24 +75,25 @@ export default function DraftsPage() {
           href="/"
           className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-[#4361ee] hover:underline"
         >
-          ← Back to Active Projects
+          ← Back to Dashboard
         </Link>
       </div>
 
       {/* 2. Filter Tabs (Segmented Control) & Search Bar */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-1 bg-[#f3f4f6] p-[3px] rounded-[9px] w-fit">
+        <div className="flex items-center gap-1 bg-[#f3f4f6] p-[3px] rounded-[9px] w-fit flex-wrap">
           <button
             type="button"
-            onClick={() => setActiveTab('all')}
+            onClick={() => setActiveTab('active')}
             className={cn(
-              'px-3.5 py-1.5 rounded-[7px] text-[12.5px] font-medium transition-all cursor-pointer',
-              activeTab === 'all'
+              'flex items-center gap-1.5 px-3.5 py-1.5 rounded-[7px] text-[12.5px] font-medium transition-all cursor-pointer',
+              activeTab === 'active'
                 ? 'bg-white text-[#4361ee] shadow-[0_1px_3px_rgba(0,0,0,0.06)] font-semibold'
                 : 'text-[#6b7280] hover:text-[#111827]'
             )}
           >
-            All Drafts ({draftsProjects.length})
+            <span className="w-2 h-2 rounded-full bg-[#10b981]" />
+            <span>Active ({activeProjects.length})</span>
           </button>
           <button
             type="button"
@@ -107,7 +105,7 @@ export default function DraftsPage() {
                 : 'text-[#6b7280] hover:text-[#111827]'
             )}
           >
-            <PauseCircle className="h-3.5 w-3.5" />
+            <PauseCircle className="h-3.5 w-3.5 text-[#f59e0b]" />
             <span>Inactive ({inactiveProjects.length})</span>
           </button>
           <button
@@ -120,8 +118,20 @@ export default function DraftsPage() {
                 : 'text-[#6b7280] hover:text-[#111827]'
             )}
           >
-            <CheckCircle2 className="h-3.5 w-3.5" />
+            <CheckCircle2 className="h-3.5 w-3.5 text-[#3b82f6]" />
             <span>Completed ({completedProjects.length})</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('all')}
+            className={cn(
+              'px-3.5 py-1.5 rounded-[7px] text-[12.5px] font-medium transition-all cursor-pointer',
+              activeTab === 'all'
+                ? 'bg-white text-[#4361ee] shadow-[0_1px_3px_rgba(0,0,0,0.06)] font-semibold'
+                : 'text-[#6b7280] hover:text-[#111827]'
+            )}
+          >
+            All ({accessibleProjects.length})
           </button>
         </div>
 
@@ -151,13 +161,13 @@ export default function DraftsPage() {
         <div className="rounded-[12px] bg-white border border-[#e5e7eb] p-12 text-center shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
           <FolderArchive className="h-10 w-10 text-[#9ca3af] mx-auto mb-2" />
           <h3 className="text-[15px] font-bold text-[#111827]">
-            {draftsProjects.length === 0
-              ? 'No projects in Drafts'
+            {accessibleProjects.length === 0
+              ? 'No projects available'
               : 'No projects match your filter'}
           </h3>
           <p className="mt-1 max-w-sm mx-auto text-[12px] text-[#6b7280]">
-            {draftsProjects.length === 0
-              ? 'When a project is marked as Inactive or Completed from its workspace, it will appear here so your active workspace stays focused.'
+            {accessibleProjects.length === 0
+              ? 'Create a project or adjust your filters to view projects.'
               : 'Try clearing your search query or switching tabs.'}
           </p>
         </div>
@@ -190,13 +200,15 @@ export default function DraftsPage() {
                         }
                         className={cn(
                           'h-6 rounded-[20px] border px-2.5 pr-6 text-[11px] font-semibold cursor-pointer transition-colors appearance-none focus:outline-none focus:ring-1 focus:ring-[#4361ee]',
-                          simpleStatus === 'Inactive'
+                          simpleStatus === 'Active'
+                            ? 'border-transparent bg-[#d1fae5] text-[#065f46]'
+                            : simpleStatus === 'Inactive'
                             ? 'border-transparent bg-[#fef3c7] text-[#92400e]'
                             : 'border-transparent bg-[#dbeafe] text-[#1d4ed8]'
                         )}
                         aria-label="Project Status"
                       >
-                        <option value="Active">● Move to Active</option>
+                        <option value="Active">● Active</option>
                         <option value="Inactive">● Inactive</option>
                         <option value="Completed">● Completed</option>
                       </select>
@@ -233,16 +245,27 @@ export default function DraftsPage() {
                   </div>
                 </div>
 
-                {/* Actions: Make Active button + Open Workspace */}
+                {/* Actions: Make Active / Pause button + Open Workspace */}
                 <div className="flex items-center justify-between gap-2 pt-3 mt-3 border-t border-[#e5e7eb]">
-                  <button
-                    type="button"
-                    onClick={() => updateProjectStatus(project.id, 'Active')}
-                    className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-[6px] border border-[#bbf7d0] bg-[#ecfdf5] text-[#065f46] text-[11.5px] font-semibold hover:bg-[#d1fae5] transition-colors cursor-pointer"
-                  >
-                    <RotateCcw className="h-3 w-3" />
-                    Make Active
-                  </button>
+                  {simpleStatus === 'Active' ? (
+                    <button
+                      type="button"
+                      onClick={() => updateProjectStatus(project.id, 'Inactive')}
+                      className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-[6px] border border-[#fef3c7] bg-[#fffbeb] text-[#92400e] text-[11.5px] font-semibold hover:bg-[#fef3c7] transition-colors cursor-pointer"
+                    >
+                      <PauseCircle className="h-3 w-3" />
+                      Pause to Draft
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => updateProjectStatus(project.id, 'Active')}
+                      className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-[6px] border border-[#bbf7d0] bg-[#ecfdf5] text-[#065f46] text-[11.5px] font-semibold hover:bg-[#d1fae5] transition-colors cursor-pointer"
+                    >
+                      <RotateCcw className="h-3 w-3" />
+                      Make Active
+                    </button>
+                  )}
 
                   <Link
                     href={`/projects/${project.id}`}

@@ -1,6 +1,7 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -69,7 +70,12 @@ export function NewProjectModal({ open, onClose }: NewProjectModalProps) {
     },
   });
 
-  if (!open || !permissions.canCreateProject) return null;
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted || !open || !permissions.canCreateProject) return null;
 
   const onSubmit = (values: NewProjectFormValues) => {
     const deliverables = (values.deliverables_text ?? '')
@@ -92,11 +98,11 @@ export function NewProjectModal({ open, onClose }: NewProjectModalProps) {
     router.push(`/projects/${created.id}`);
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-[3px] p-4 animate-fade-up">
-      <div className="w-full max-w-[620px] rounded-[14px] border border-[#e5e7eb] bg-white shadow-[0_4px_16px_rgba(0,0,0,0.08)] overflow-hidden">
+  const modalEl = (
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-[3px] p-3 sm:p-4 overflow-y-auto animate-fade-up">
+      <div className="relative w-full my-auto max-w-[620px] max-h-[calc(100vh-2rem)] sm:max-h-[calc(100vh-3.5rem)] rounded-[14px] border border-[#e5e7eb] bg-white shadow-[0_10px_35px_rgba(0,0,0,0.15)] flex flex-col overflow-hidden">
         {/* Sticky Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[#e5e7eb] bg-white sticky top-0 z-10">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[#e5e7eb] bg-white shrink-0">
           <div className="flex items-center gap-2">
             <FolderPlus className="h-4 w-4 text-[#4361ee]" />
             <h2 className="text-[15px] font-bold text-[#111827]">
@@ -112,8 +118,8 @@ export function NewProjectModal({ open, onClose }: NewProjectModalProps) {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <div className="p-6 space-y-4 max-h-[76vh] overflow-y-auto">
+        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+          <div className="p-6 space-y-4 overflow-y-auto flex-1 min-h-0">
             <div className="grid gap-3.5 sm:grid-cols-2">
               <div>
                 <label className="block text-[12px] font-medium text-[#6b7280] mb-1">
@@ -227,7 +233,7 @@ export function NewProjectModal({ open, onClose }: NewProjectModalProps) {
           </div>
 
           {/* Sticky Footer */}
-          <div className="px-6 py-3.5 border-t border-[#e5e7eb] bg-[#fafafa] flex justify-end gap-2 sticky bottom-0">
+          <div className="px-6 py-3.5 border-t border-[#e5e7eb] bg-[#fafafa] flex justify-end gap-2 shrink-0">
             <Button type="button" variant="outline" onClick={onClose} className="h-[36px] px-4 text-[13px]">
               Cancel
             </Button>
@@ -243,4 +249,6 @@ export function NewProjectModal({ open, onClose }: NewProjectModalProps) {
       </div>
     </div>
   );
+
+  return createPortal(modalEl, document.body);
 }

@@ -20,6 +20,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Modal } from '@/components/ui/modal';
 import {
   ModernDateTimePicker,
   getCurrentLocalDateTimeString,
@@ -678,103 +679,98 @@ export function TabProposalBuilder({ project }: { project: Project }) {
       </div>
 
       {/* Proposal Outcome Modal */}
-      {outcomeAction && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-lg rounded-xl border border-zinc-200 bg-white p-5 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-zinc-100 pb-2">
-              <h3 className="text-sm font-semibold text-zinc-900">
-                Confirm Proposal Outcome: {outcomeAction.toUpperCase()}
-              </h3>
-              <Badge variant="outline">{project.title}</Badge>
-            </div>
-
-            <div className="space-y-3 text-xs">
-              <div>
-                <ModernDateTimePicker
-                  label={
-                    outcomeAction === 'approved'
-                      ? 'Contract Signing Date & Time'
-                      : outcomeAction === 'remainder'
-                      ? 'Scheduled Follow-Up Reminder Date'
-                      : 'Decision Date'
-                  }
-                  required
-                  value={outcomeDate}
-                  onChange={(val) => setOutcomeDate(val)}
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="font-medium text-zinc-700">
-                  {outcomeAction === 'approved'
-                    ? 'Kickoff Note (Project will immediately unlock into full execution)'
-                    : outcomeAction === 'denied'
-                    ? 'Denial Reason Note (Saved in drafts for future revision)'
-                    : 'Remainder Note'}
-                </label>
-                <textarea
-                  rows={3}
-                  className="w-full rounded-md border border-zinc-200 p-2 text-xs text-zinc-900"
-                  placeholder="Record note details..."
-                  value={outcomeNote}
-                  onChange={(e) => setOutcomeNote(e.target.value)}
-                />
-              </div>
-
-              {outcomeAction === 'remainder' && (
-                <div className="rounded-lg border border-violet-200 bg-violet-50/50 p-3 space-y-2">
-                  <span className="font-semibold text-violet-900">
-                    Proposal Follow-up Reminders
-                  </span>
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      className="text-[11px]"
-                      onClick={() => {
-                        navigator.clipboard.writeText(
-                          `${emailTemplate.subject}\n\n${emailTemplate.body}`
-                        );
-                        setReminderCopied('email');
-                        setTimeout(() => setReminderCopied(null), 1500);
-                      }}
-                    >
-                      <Send className="h-3 w-3" />
-                      {reminderCopied === 'email' ? 'Copied!' : 'Copy Email'}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      className="text-[11px]"
-                      onClick={() => {
-                        navigator.clipboard.writeText(whatsAppTemplate);
-                        setReminderCopied('whatsapp');
-                        setTimeout(() => setReminderCopied(null), 1500);
-                      }}
-                    >
-                      <MessageSquare className="h-3 w-3" />
-                      {reminderCopied === 'whatsapp' ? 'Copied!' : 'Copy WhatsApp'}
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="flex justify-end gap-2 border-t border-zinc-100 pt-3">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => setOutcomeAction(null)}
-              >
-                Cancel
-              </Button>
-              <Button size="sm" onClick={handleConfirmOutcome}>
-                Confirm &amp; Route Deal
-              </Button>
-            </div>
+      <Modal
+        isOpen={!!outcomeAction}
+        onClose={() => setOutcomeAction(null)}
+        title={`Confirm Proposal Outcome: ${outcomeAction?.toUpperCase()}`}
+        maxWidth="max-w-lg"
+        footer={
+          <>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setOutcomeAction(null)}
+            >
+              Cancel
+            </Button>
+            <Button size="sm" onClick={handleConfirmOutcome} className="bg-[#4361ee] hover:bg-[#3451d1] text-white">
+              Confirm &amp; Route Deal
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-3.5 text-xs">
+          <div>
+            <ModernDateTimePicker
+              label={
+                outcomeAction === 'approved'
+                  ? 'Contract Signing Date & Time'
+                  : outcomeAction === 'remainder'
+                  ? 'Scheduled Follow-Up Reminder Date'
+                  : 'Decision Date'
+              }
+              required
+              value={outcomeDate}
+              onChange={(val) => setOutcomeDate(val)}
+            />
           </div>
+
+          <div className="space-y-1">
+            <label className="font-medium text-zinc-700">
+              {outcomeAction === 'approved'
+                ? 'Kickoff Note (Project will immediately unlock into full execution)'
+                : outcomeAction === 'denied'
+                ? 'Denial Reason Note (Saved in drafts for future revision)'
+                : 'Remainder Note'}
+            </label>
+            <textarea
+              rows={3}
+              className="w-full rounded-md border border-zinc-200 p-2 text-xs text-zinc-900 focus:outline-none focus:border-[#4361ee]"
+              placeholder="Record note details..."
+              value={outcomeNote}
+              onChange={(e) => setOutcomeNote(e.target.value)}
+            />
+          </div>
+
+          {outcomeAction === 'remainder' && (
+            <div className="rounded-lg border border-violet-200 bg-violet-50/50 p-3 space-y-2">
+              <span className="font-semibold text-violet-900">
+                Proposal Follow-up Reminders
+              </span>
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  className="text-[11px]"
+                  onClick={() => {
+                    navigator.clipboard.writeText(
+                      `${emailTemplate.subject}\n\n${emailTemplate.body}`
+                    );
+                    setReminderCopied('email');
+                    setTimeout(() => setReminderCopied(null), 1500);
+                  }}
+                >
+                  <Send className="h-3 w-3" />
+                  {reminderCopied === 'email' ? 'Copied!' : 'Copy Email'}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  className="text-[11px]"
+                  onClick={() => {
+                    navigator.clipboard.writeText(whatsAppTemplate);
+                    setReminderCopied('whatsapp');
+                    setTimeout(() => setReminderCopied(null), 1500);
+                  }}
+                >
+                  <MessageSquare className="h-3 w-3" />
+                  {reminderCopied === 'whatsapp' ? 'Copied!' : 'Copy WhatsApp'}
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
-      )}
+      </Modal>
     </div>
   );
 }

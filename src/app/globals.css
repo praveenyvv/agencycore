@@ -84,22 +84,20 @@ html, body {
   background: #9ca3af;
 }
 
-/* Page entrance animation */
+/* Page entrance animation (pure opacity to avoid creating transform-containing blocks that break fixed modals) */
 @keyframes fadeUp {
   from {
     opacity: 0;
-    transform: translateY(5px);
   }
   to {
     opacity: 1;
-    transform: none;
   }
 }
 
 @keyframes dropIn {
   from {
     opacity: 0;
-    transform: translateY(-6px);
+    transform: translateY(-4px);
   }
   to {
     opacity: 1;
@@ -108,11 +106,27 @@ html, body {
 }
 
 .animate-fade-up {
-  animation: fadeUp 180ms ease forwards;
+  animation: fadeUp 180ms ease-out;
 }
 
 .animate-drop-in {
-  animation: dropIn 150ms ease forwards;
+  animation: dropIn 150ms ease-out;
+}
+
+/* Dynamic adaptive screen adjustments for 14", 15", 16" laptops & scaling */
+@media screen and (max-height: 850px) {
+  .compact-adaptive {
+    padding: 14px !important;
+  }
+  .compact-stat-num {
+    font-size: 26px !important;
+  }
+}
+
+@media screen and (max-width: 1366px) {
+  :root {
+    --sidebar-w: 220px;
+  }
 }
 
 /* Design System Utility Classes */

@@ -22,6 +22,7 @@ import {
   getCurrentLocalDateTimeString,
 } from '@/components/ui/date-time-picker';
 import { Input } from '@/components/ui/input';
+import { Modal } from '@/components/ui/modal';
 import { formatTimestamp } from '@/lib/utils';
 import type { ClientTalkRecord, ClientTalkType, Project } from '@/types/agency';
 
@@ -374,130 +375,123 @@ export function TabClientTalk({ project }: { project: Project }) {
         </div>
       )}
 
-      {/* Modal: Add / Edit Client Talk */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs">
-          <div className="w-full max-w-lg rounded-xl border border-zinc-200 bg-white p-5 shadow-2xl animate-in fade-in zoom-in-95">
-            <div className="flex items-center justify-between border-b border-zinc-200 pb-3">
-              <h3 className="text-sm font-semibold text-zinc-900">
-                {editingTalk ? 'Edit Client Talk' : 'Add Client Talk'}
-              </h3>
-              <button
-                onClick={() => setIsModalOpen(false)}
-                className="text-zinc-400 hover:text-zinc-600 cursor-pointer"
+      {/* Modal: Add / Edit Client Talk (Rendered cleanly via Portal, always centered & adaptive) */}
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title={editingTalk ? 'Edit Client Talk' : 'Add Client Talk'}
+        icon={<MessageCircle className="h-5 w-5 text-[#4361ee]" />}
+        maxWidth="max-w-[540px]"
+        footer={
+          <>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setIsModalOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              form="client-talk-form"
+              size="sm"
+              className="bg-[#4361ee] hover:bg-[#3451d1] text-white"
+            >
+              {editingTalk ? 'Save Changes' : 'Save Talk'}
+            </Button>
+          </>
+        }
+      >
+        <form id="client-talk-form" onSubmit={handleSave} className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
+            <div className="space-y-1.5 sm:col-span-4">
+              <label className="block text-xs font-medium text-zinc-700">
+                Communication Type *
+              </label>
+              <select
+                value={talkType}
+                onChange={(e) => setTalkType(e.target.value as ClientTalkType)}
+                className="w-full h-9 rounded-md border border-zinc-200 bg-white px-2.5 text-xs text-zinc-900 focus:outline-none focus:ring-1 focus:ring-[#4361ee] shadow-xs"
               >
-                <X className="h-4 w-4" />
-              </button>
+                <option value="Call">Call</option>
+                <option value="WhatsApp">WhatsApp</option>
+                <option value="Email">Email</option>
+                <option value="Meeting">Meeting</option>
+              </select>
             </div>
 
-            <form onSubmit={handleSave} className="mt-4 space-y-3.5">
-              <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
-                <div className="space-y-1 sm:col-span-4">
-                  <label className="block text-xs font-medium text-zinc-700">
-                    Communication Type *
-                  </label>
-                  <select
-                    value={talkType}
-                    onChange={(e) => setTalkType(e.target.value as ClientTalkType)}
-                    className="w-full h-9 rounded-md border border-zinc-200 bg-white px-2.5 text-xs text-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900 shadow-xs"
-                  >
-                    <option value="Call">Call</option>
-                    <option value="WhatsApp">WhatsApp</option>
-                    <option value="Email">Email</option>
-                    <option value="Meeting">Meeting</option>
-                  </select>
-                </div>
-
-                <div className="sm:col-span-8">
-                  <ModernDateTimePicker
-                    label="Date & Time"
-                    required
-                    value={talkDate}
-                    onChange={(val) => setTalkDate(val)}
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-zinc-700">
-                  Discussion Notes *
-                </label>
-                <textarea
-                  rows={4}
-                  required
-                  placeholder="What was discussed? (e.g. client feedback, scope agreement, timeline confirmation...)"
-                  value={talkNotes}
-                  onChange={(e) => setTalkNotes(e.target.value)}
-                  className="w-full rounded-md border border-zinc-200 p-2.5 text-xs text-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900 bg-white"
-                />
-              </div>
-
-              {formError && (
-                <div className="rounded-md bg-rose-50 border border-rose-200 p-2 text-xs text-rose-700">
-                  {formError}
-                </div>
-              )}
-
-              <div className="flex items-center justify-end gap-2 pt-2 border-t border-zinc-100">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setIsModalOpen(false)}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  size="sm"
-                  className="bg-zinc-900 text-white hover:bg-zinc-800"
-                >
-                  {editingTalk ? 'Save Changes' : 'Save Talk'}
-                </Button>
-              </div>
-            </form>
+            <div className="sm:col-span-8">
+              <ModernDateTimePicker
+                label="Date & Time"
+                required
+                value={talkDate}
+                onChange={(val) => setTalkDate(val)}
+              />
+            </div>
           </div>
-        </div>
-      )}
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-zinc-700">
+              Discussion Notes *
+            </label>
+            <textarea
+              rows={4}
+              required
+              placeholder="What was discussed? (e.g. client feedback, scope agreement, timeline confirmation...)"
+              value={talkNotes}
+              onChange={(e) => setTalkNotes(e.target.value)}
+              className="w-full rounded-md border border-zinc-200 p-2.5 text-xs text-zinc-900 focus:outline-none focus:ring-1 focus:ring-[#4361ee] bg-white resize-y"
+            />
+          </div>
+
+          {formError && (
+            <div className="rounded-md bg-rose-50 border border-rose-200 p-2.5 text-xs text-rose-700">
+              {formError}
+            </div>
+          )}
+        </form>
+      </Modal>
 
       {/* Modal: Protective Delete Confirmation */}
-      {deleteConfirmId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs">
-          <div className="w-full max-w-sm rounded-lg border border-zinc-200 bg-white p-5 shadow-xl animate-in fade-in zoom-in-95">
-            <div className="flex items-start gap-3">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-rose-100 text-rose-600">
-                <AlertTriangle className="h-5 w-5" />
-              </div>
-              <div className="space-y-1">
-                <h4 className="text-sm font-semibold text-zinc-900">
-                  Delete Client Talk?
-                </h4>
-                <p className="text-xs text-zinc-500">
-                  Are you sure you want to delete this communication record? This
-                  cannot be undone.
-                </p>
-              </div>
-            </div>
-
-            <div className="mt-5 flex items-center justify-end gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setDeleteConfirmId(null)}
-              >
-                Cancel
-              </Button>
-              <Button
-                size="sm"
-                onClick={handleConfirmDelete}
-                className="bg-rose-600 hover:bg-rose-700 text-white"
-              >
-                Delete Record
-              </Button>
-            </div>
+      <Modal
+        isOpen={!!deleteConfirmId}
+        onClose={() => setDeleteConfirmId(null)}
+        title="Confirm Delete"
+        maxWidth="max-w-[420px]"
+        footer={
+          <>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setDeleteConfirmId(null)}
+            >
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              onClick={handleConfirmDelete}
+              className="bg-rose-600 hover:bg-rose-700 text-white"
+            >
+              Delete Record
+            </Button>
+          </>
+        }
+      >
+        <div className="flex items-start gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-rose-50 border border-rose-100 text-rose-600">
+            <AlertTriangle className="h-5 w-5" />
+          </div>
+          <div className="space-y-1">
+            <h4 className="text-sm font-semibold text-zinc-900">
+              Delete Client Talk?
+            </h4>
+            <p className="text-xs text-zinc-500">
+              Are you sure you want to delete this communication record? This cannot be undone.
+            </p>
           </div>
         </div>
-      )}
+      </Modal>
     </div>
   );
 }

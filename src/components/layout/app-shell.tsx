@@ -146,7 +146,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         label: 'Drafts',
         href: '/drafts',
         icon: Archive,
-        badge: draftsCount > 0 ? draftsCount : undefined,
+        badge: undefined,
         visible: true,
       },
       {
@@ -158,7 +158,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       },
     ];
     return items.filter((i) => i.visible);
-  }, [draftsCount]);
+  }, []);
 
   const searchResults = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -539,9 +539,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </header>
 
-        {/* Main Content Scroll Area (24px padding, pale grey #f5f6fa background) */}
-        <main className="flex-1 overflow-y-auto p-6 bg-[#f5f6fa]">
-          <div className="animate-fade-up">
+        {/* Main Content Scroll Area (adaptive padding, pale grey #f5f6fa background) */}
+        <main className="flex-1 overflow-y-auto p-4 sm:p-5 md:p-6 bg-[#f5f6fa]">
+          <div className="w-full max-w-[1600px] mx-auto animate-fade-up">
             {children}
           </div>
         </main>
@@ -549,8 +549,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       {/* Global Cmd+K Search Dialog */}
       {searchOpen && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 bg-black/30 backdrop-blur-[3px] p-4 animate-fade-up">
-          <div className="w-full max-w-lg rounded-[14px] border border-[#e5e7eb] bg-white shadow-[0_4px_16px_rgba(0,0,0,0.08)] overflow-hidden">
+        <div className="fixed inset-0 z-[9999] flex items-start justify-center pt-16 sm:pt-20 bg-black/40 backdrop-blur-[3px] p-4 animate-fade-up">
+          <div className="w-full max-w-lg rounded-[14px] border border-[#e5e7eb] bg-white shadow-[0_8px_30px_rgba(0,0,0,0.15)] overflow-hidden">
             <div className="flex items-center gap-2 border-b border-[#e5e7eb] px-4 py-3">
               <Search className="h-4 w-4 text-[#9ca3af] shrink-0" />
               <input

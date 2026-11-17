@@ -17,6 +17,7 @@ import { useAuth } from '@/components/providers/app-providers';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Modal } from '@/components/ui/modal';
 import { ROLE_LABELS, type User } from '@/types/agency';
 
 export default function TeamPage() {
@@ -209,191 +210,165 @@ export default function TeamPage() {
       </div>
 
       {/* Modal: Add New Founder / Admin */}
-      {isAddOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-[3px] p-4 animate-fade-up">
-          <div className="w-full max-w-[460px] rounded-[14px] border border-[#e5e7eb] bg-white shadow-[0_4px_16px_rgba(0,0,0,0.08)] overflow-hidden">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-[#e5e7eb] sticky top-0 bg-white">
-              <div className="flex items-center gap-2">
-                <ShieldCheck className="h-5 w-5 text-[#4361ee]" />
-                <h3 className="text-[15px] font-bold text-[#111827]">
-                  Add New Founder / Admin
-                </h3>
-              </div>
+      <Modal
+        isOpen={isAddOpen}
+        onClose={() => setIsAddOpen(false)}
+        title="Add New Founder / Admin"
+        icon={<ShieldCheck className="h-5 w-5 text-[#4361ee]" />}
+        maxWidth="max-w-[460px]"
+        footer={
+          <>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsAddOpen(false)}
+              className="h-[36px] px-4 text-[13px]"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              form="add-admin-form"
+              className="h-[36px] px-5 rounded-[8px] bg-[#4361ee] hover:bg-[#3451d1] text-white text-[13px]"
+            >
+              Create Admin
+            </Button>
+          </>
+        }
+      >
+        <form id="add-admin-form" onSubmit={handleCreateAdmin} className="space-y-3.5">
+          <div>
+            <label className="block text-[12px] font-medium text-[#6b7280] mb-1">
+              Full Name *
+            </label>
+            <Input
+              required
+              placeholder="e.g. Ramesh Patel"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="h-[36px] text-[13px]"
+            />
+          </div>
+
+          <div>
+            <label className="block text-[12px] font-medium text-[#6b7280] mb-1">
+              Email Address *
+            </label>
+            <Input
+              required
+              type="email"
+              placeholder="ramesh@holabusiness.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="h-[36px] text-[13px]"
+            />
+          </div>
+
+          <div>
+            <label className="block text-[12px] font-medium text-[#6b7280] mb-1">
+              Title / Position
+            </label>
+            <Input
+              placeholder="Co-Founder & Admin"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="h-[36px] text-[13px]"
+            />
+          </div>
+
+          <div>
+            <label className="block text-[12px] font-medium text-[#6b7280] mb-1">
+              Temporary Password
+            </label>
+            <div className="relative">
+              <Input
+                type={showPass ? 'text' : 'password'}
+                placeholder="Leave blank for default: admin123"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="h-[36px] text-[13px] pr-9"
+              />
               <button
-                onClick={() => setIsAddOpen(false)}
-                className="w-7 h-7 rounded-[6px] text-[#6b7280] hover:bg-[#f3f4f6] hover:text-[#111827] flex items-center justify-center cursor-pointer"
+                type="button"
+                onClick={() => setShowPass((s) => !s)}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#9ca3af] hover:text-[#111827]"
               >
-                <X className="h-4 w-4" />
+                {showPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             </div>
-
-            <form onSubmit={handleCreateAdmin}>
-              <div className="p-6 space-y-3.5">
-                <div>
-                  <label className="block text-[12px] font-medium text-[#6b7280] mb-1">
-                    Full Name *
-                  </label>
-                  <Input
-                    required
-                    placeholder="e.g. Ramesh Patel"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="h-[36px] text-[13px]"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[12px] font-medium text-[#6b7280] mb-1">
-                    Email Address *
-                  </label>
-                  <Input
-                    required
-                    type="email"
-                    placeholder="ramesh@holabusiness.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="h-[36px] text-[13px]"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[12px] font-medium text-[#6b7280] mb-1">
-                    Title / Position
-                  </label>
-                  <Input
-                    placeholder="Co-Founder & Admin"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    className="h-[36px] text-[13px]"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[12px] font-medium text-[#6b7280] mb-1">
-                    Temporary Password
-                  </label>
-                  <div className="relative">
-                    <Input
-                      type={showPass ? 'text' : 'password'}
-                      placeholder="Leave blank for default: admin123"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="h-[36px] text-[13px] pr-9"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPass((s) => !s)}
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#9ca3af] hover:text-[#111827]"
-                    >
-                      {showPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <div className="px-6 py-3.5 border-t border-[#e5e7eb] bg-[#fafafa] flex justify-end gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setIsAddOpen(false)}
-                  className="h-[36px] px-4 text-[13px]"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  className="h-[36px] px-5 rounded-[8px] bg-[#4361ee] hover:bg-[#3451d1] text-white text-[13px]"
-                >
-                  Create Admin
-                </Button>
-              </div>
-            </form>
           </div>
-        </div>
-      )}
+        </form>
+      </Modal>
 
       {/* Modal: Change Password */}
-      {changingPassUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-[3px] p-4 animate-fade-up">
-          <div className="w-full max-w-[420px] rounded-[14px] border border-[#e5e7eb] bg-white shadow-[0_4px_16px_rgba(0,0,0,0.08)] overflow-hidden">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-[#e5e7eb]">
-              <div className="flex items-center gap-2">
-                <KeyRound className="h-4 w-4 text-[#4361ee]" />
-                <h3 className="text-[15px] font-bold text-[#111827]">
-                  Change Password for {changingPassUser.name}
-                </h3>
-              </div>
-              <button
-                onClick={() => setChangingPassUser(null)}
-                className="w-7 h-7 rounded-[6px] text-[#6b7280] hover:bg-[#f3f4f6] hover:text-[#111827] flex items-center justify-center cursor-pointer"
-              >
-                <X className="h-4 w-4" />
-              </button>
+      <Modal
+        isOpen={!!changingPassUser}
+        onClose={() => setChangingPassUser(null)}
+        title={changingPassUser ? `Change Password for ${changingPassUser.name}` : 'Change Password'}
+        icon={<KeyRound className="h-4 w-4 text-[#4361ee]" />}
+        maxWidth="max-w-[420px]"
+        footer={
+          <>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setChangingPassUser(null)}
+              className="h-[36px] px-4 text-[13px]"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              form="change-pass-form"
+              className="h-[36px] px-5 rounded-[8px] bg-[#4361ee] hover:bg-[#3451d1] text-white text-[13px]"
+            >
+              Update Password
+            </Button>
+          </>
+        }
+      >
+        <form id="change-pass-form" onSubmit={handleChangePassword} className="space-y-3.5">
+          {passError && (
+            <div className="rounded-[8px] bg-[#fef2f2] border border-[#fca5a5] p-2 text-[12px] text-[#ef4444]">
+              {passError}
             </div>
+          )}
+          {passSuccess && (
+            <div className="rounded-[8px] bg-[#ecfdf5] border border-[#bbf7d0] p-2 text-[12px] text-[#065f46] flex items-center gap-1.5">
+              <Check className="h-4 w-4" />
+              Password updated successfully!
+            </div>
+          )}
 
-            <form onSubmit={handleChangePassword}>
-              <div className="p-6 space-y-3.5">
-                {passError && (
-                  <div className="rounded-[8px] bg-[#fef2f2] border border-[#fca5a5] p-2 text-[12px] text-[#ef4444]">
-                    {passError}
-                  </div>
-                )}
-                {passSuccess && (
-                  <div className="rounded-[8px] bg-[#ecfdf5] border border-[#bbf7d0] p-2 text-[12px] text-[#065f46] flex items-center gap-1.5">
-                    <Check className="h-4 w-4" />
-                    Password updated successfully!
-                  </div>
-                )}
-
-                <div>
-                  <label className="block text-[12px] font-medium text-[#6b7280] mb-1">
-                    New Password (min 4 characters)
-                  </label>
-                  <Input
-                    required
-                    type="password"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="Enter new password"
-                    className="h-[36px] text-[13px]"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[12px] font-medium text-[#6b7280] mb-1">
-                    Confirm New Password
-                  </label>
-                  <Input
-                    required
-                    type="password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="Re-enter new password"
-                    className="h-[36px] text-[13px]"
-                  />
-                </div>
-              </div>
-
-              <div className="px-6 py-3.5 border-t border-[#e5e7eb] bg-[#fafafa] flex justify-end gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setChangingPassUser(null)}
-                  className="h-[36px] px-4 text-[13px]"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  className="h-[36px] px-5 rounded-[8px] bg-[#4361ee] hover:bg-[#3451d1] text-white text-[13px]"
-                >
-                  Update Password
-                </Button>
-              </div>
-            </form>
+          <div>
+            <label className="block text-[12px] font-medium text-[#6b7280] mb-1">
+              New Password (min 4 characters)
+            </label>
+            <Input
+              required
+              type="password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="Enter new password"
+              className="h-[36px] text-[13px]"
+            />
           </div>
-        </div>
-      )}
+
+          <div>
+            <label className="block text-[12px] font-medium text-[#6b7280] mb-1">
+              Confirm New Password
+            </label>
+            <Input
+              required
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="Re-enter new password"
+              className="h-[36px] text-[13px]"
+            />
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }

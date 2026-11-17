@@ -18,6 +18,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Modal } from '@/components/ui/modal';
 import { formatDate } from '@/lib/utils';
 import type { Project, RenewalItem } from '@/types/agency';
 
@@ -446,263 +447,231 @@ export function TabRenewals({ project }: TabRenewalsProps) {
         </div>
       </div>
 
-      {/* Modal 1: Add / Edit Renewal (Radius 14px, Max-width 520px, Sticky header & footer) */}
-      {isAddEditOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-[3px] p-4 animate-fade-up">
-          <div className="bg-white rounded-[14px] shadow-[0_4px_16px_rgba(0,0,0,0.08)] border border-[#e5e7eb] w-full max-w-[520px] overflow-hidden">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-[#e5e7eb] sticky top-0 bg-white z-10">
-              <h3 className="font-bold text-[15px] text-[#111827]">
-                {editingItem ? 'Edit Renewal' : 'Add Renewal'}
-              </h3>
-              <button
-                onClick={() => setIsAddEditOpen(false)}
-                className="w-7 h-7 rounded-[6px] text-[#6b7280] hover:bg-[#f3f4f6] hover:text-[#111827] flex items-center justify-center cursor-pointer"
-              >
-                <X className="h-4 w-4" />
-              </button>
+      {/* Modal 1: Add / Edit Renewal (Rendered via Portal, always centered & adaptive) */}
+      <Modal
+        isOpen={isAddEditOpen}
+        onClose={() => setIsAddEditOpen(false)}
+        title={editingItem ? 'Edit Renewal' : 'Add Renewal'}
+        maxWidth="max-w-[520px]"
+        footer={
+          <>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsAddEditOpen(false)}
+              className="h-[36px] px-4 text-[13px]"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              form="renewal-form"
+              className="h-[36px] px-5 rounded-[8px] bg-[#4361ee] hover:bg-[#3451d1] text-white text-[13px]"
+            >
+              Save
+            </Button>
+          </>
+        }
+      >
+        <form id="renewal-form" onSubmit={handleSaveRenewal} className="space-y-4">
+          {formError && (
+            <div className="text-[12px] text-[#ef4444] bg-[#fef2f2] border border-[#fca5a5] rounded-[8px] p-2.5">
+              {formError}
             </div>
+          )}
 
-            <form onSubmit={handleSaveRenewal}>
-              <div className="p-6 space-y-4">
-                {formError && (
-                  <div className="text-[12px] text-[#ef4444] bg-[#fef2f2] border border-[#fca5a5] rounded-[8px] p-2.5">
-                    {formError}
-                  </div>
-                )}
-
-                <div>
-                  <label className="block text-[12px] font-medium text-[#6b7280] mb-1.5">
-                    Title *
-                  </label>
-                  <Input
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    placeholder="e.g. Domain – example.com"
-                    className="text-[13px] h-[36px]"
-                    required
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-3.5">
-                  <div>
-                    <label className="block text-[12px] font-medium text-[#6b7280] mb-1.5">
-                      Vendor
-                    </label>
-                    <Input
-                      value={vendor}
-                      onChange={(e) => setVendor(e.target.value)}
-                      placeholder="e.g. GoDaddy"
-                      className="text-[13px] h-[36px]"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[12px] font-medium text-[#6b7280] mb-1.5">
-                      Amount (₹)
-                    </label>
-                    <Input
-                      type="number"
-                      value={amount}
-                      onChange={(e) => setAmount(e.target.value)}
-                      placeholder="1299"
-                      className="text-[13px] h-[36px]"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3.5">
-                  <div>
-                    <label className="block text-[12px] font-medium text-[#6b7280] mb-1.5">
-                      Renewal Date *
-                    </label>
-                    <Input
-                      type="date"
-                      value={renewalDate}
-                      onChange={(e) => setRenewalDate(e.target.value)}
-                      className="text-[13px] h-[36px]"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[12px] font-medium text-[#6b7280] mb-1.5">
-                      Remind (days before)
-                    </label>
-                    <Input
-                      type="number"
-                      value={remindDays}
-                      onChange={(e) => setRemindDays(e.target.value)}
-                      placeholder="7"
-                      className="text-[13px] h-[36px]"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Sticky Footer */}
-              <div className="px-6 py-3.5 border-t border-[#e5e7eb] bg-[#fafafa] flex justify-end gap-2 sticky bottom-0">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setIsAddEditOpen(false)}
-                  className="h-[36px] px-4 text-[13px]"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  className="h-[36px] px-5 rounded-[8px] bg-[#4361ee] hover:bg-[#3451d1] text-white text-[13px]"
-                >
-                  Save
-                </Button>
-              </div>
-            </form>
+          <div>
+            <label className="block text-[12px] font-medium text-[#6b7280] mb-1.5">
+              Title *
+            </label>
+            <Input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="e.g. Domain – example.com"
+              className="text-[13px] h-[36px]"
+              required
+            />
           </div>
-        </div>
-      )}
+
+          <div className="grid grid-cols-2 gap-3.5">
+            <div>
+              <label className="block text-[12px] font-medium text-[#6b7280] mb-1.5">
+                Vendor
+              </label>
+              <Input
+                value={vendor}
+                onChange={(e) => setVendor(e.target.value)}
+                placeholder="e.g. GoDaddy"
+                className="text-[13px] h-[36px]"
+              />
+            </div>
+            <div>
+              <label className="block text-[12px] font-medium text-[#6b7280] mb-1.5">
+                Amount (₹)
+              </label>
+              <Input
+                type="number"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                placeholder="1299"
+                className="text-[13px] h-[36px]"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3.5">
+            <div>
+              <label className="block text-[12px] font-medium text-[#6b7280] mb-1.5">
+                Renewal Date *
+              </label>
+              <Input
+                type="date"
+                value={renewalDate}
+                onChange={(e) => setRenewalDate(e.target.value)}
+                className="text-[13px] h-[36px]"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-[12px] font-medium text-[#6b7280] mb-1.5">
+                Remind (days before)
+              </label>
+              <Input
+                type="number"
+                value={remindDays}
+                onChange={(e) => setRemindDays(e.target.value)}
+                placeholder="7"
+                className="text-[13px] h-[36px]"
+              />
+            </div>
+          </div>
+        </form>
+      </Modal>
 
       {/* Modal 2: Mark as Renewed (Matching Screenshot 3) */}
-      {isMarkRenewedOpen && markingItem && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-[3px] p-4 animate-fade-up">
-          <div className="bg-white rounded-[14px] shadow-[0_4px_16px_rgba(0,0,0,0.08)] border border-[#e5e7eb] w-full max-w-[520px] overflow-hidden">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-[#e5e7eb] sticky top-0 bg-white z-10">
-              <div className="flex items-center gap-2">
-                <RotateCcw className="h-4 w-4 text-[#10b981]" />
-                <h3 className="font-bold text-[15px] text-[#111827]">Mark as Renewed</h3>
+      <Modal
+        isOpen={isMarkRenewedOpen && !!markingItem}
+        onClose={() => setIsMarkRenewedOpen(false)}
+        title="Mark as Renewed"
+        icon={<RotateCcw className="h-4 w-4 text-[#10b981]" />}
+        maxWidth="max-w-[520px]"
+        footer={
+          <>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsMarkRenewedOpen(false)}
+              className="h-[36px] px-4 text-[13px]"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              form="mark-renewed-form"
+              className="h-[36px] px-5 rounded-[8px] bg-[#10b981] hover:bg-[#059669] text-white font-medium text-[13px] gap-1.5 shadow-[0_2px_6px_rgba(16,185,129,0.25)]"
+            >
+              Confirm Renewed
+            </Button>
+          </>
+        }
+      >
+        {markingItem && (
+          <form id="mark-renewed-form" onSubmit={handleConfirmMarkRenewed} className="space-y-4">
+            {/* Top Summary Card (Soft Green) */}
+            <div className="bg-[#ecfdf5] border border-[#bbf7d0] rounded-[10px] p-3.5 flex items-start gap-3">
+              <div className="w-8 h-8 rounded-full bg-[#10b981] text-white flex items-center justify-center shrink-0 font-bold text-[12px]">
+                ✓
               </div>
-              <button
-                onClick={() => setIsMarkRenewedOpen(false)}
-                className="w-7 h-7 rounded-[6px] text-[#6b7280] hover:bg-[#f3f4f6] hover:text-[#111827] flex items-center justify-center cursor-pointer"
-              >
-                <X className="h-4 w-4" />
-              </button>
+              <div>
+                <div className="font-bold text-[13px] text-[#111827]">{markingItem.title}</div>
+                <div className="text-[12px] text-[#6b7280] mt-0.5">
+                  {markingItem.vendor || 'Vendor'} · ₹{Number(markingItem.amount || 0).toLocaleString('en-IN')} · Due {formatDate(markingItem.renewal_date)}
+                </div>
+              </div>
             </div>
 
-            <form onSubmit={handleConfirmMarkRenewed}>
-              <div className="p-6 space-y-4">
-                {/* Top Summary Card (Soft Green) */}
-                <div className="bg-[#ecfdf5] border border-[#bbf7d0] rounded-[10px] p-3.5 flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-full bg-[#10b981] text-white flex items-center justify-center shrink-0 font-bold text-[12px]">
-                    ✓
-                  </div>
-                  <div>
-                    <div className="font-bold text-[13px] text-[#111827]">{markingItem.title}</div>
-                    <div className="text-[12px] text-[#6b7280] mt-0.5">
-                      {markingItem.vendor || 'Vendor'} · ₹{Number(markingItem.amount || 0).toLocaleString('en-IN')} · Due {formatDate(markingItem.renewal_date)}
-                    </div>
-                  </div>
-                </div>
+            <div>
+              <label className="block text-[12px] font-medium text-[#6b7280] mb-1.5">
+                Next Renewal Date *
+              </label>
+              <Input
+                type="date"
+                value={nextRenewalDate}
+                onChange={(e) => setNextRenewalDate(e.target.value)}
+                className="text-[13px] h-[36px]"
+                required
+              />
+              <p className="text-[11px] text-[#6b7280] mt-1.5 flex items-center gap-1">
+                💡 A new renewal entry will be auto-created with this date.
+              </p>
+            </div>
 
-                <div>
-                  <label className="block text-[12px] font-medium text-[#6b7280] mb-1.5">
-                    Next Renewal Date *
-                  </label>
-                  <Input
-                    type="date"
-                    value={nextRenewalDate}
-                    onChange={(e) => setNextRenewalDate(e.target.value)}
-                    className="text-[13px] h-[36px]"
-                    required
-                  />
-                  <p className="text-[11px] text-[#6b7280] mt-1.5 flex items-center gap-1">
-                    💡 A new renewal entry will be auto-created with this date.
-                  </p>
-                </div>
+            <div>
+              <label className="block text-[12px] font-medium text-[#6b7280] mb-1.5">
+                Amount Paid (₹)
+              </label>
+              <Input
+                type="number"
+                value={amountPaid}
+                onChange={(e) => setAmountPaid(e.target.value)}
+                placeholder="1299"
+                className="text-[13px] h-[36px]"
+              />
+            </div>
 
-                <div>
-                  <label className="block text-[12px] font-medium text-[#6b7280] mb-1.5">
-                    Amount Paid (₹)
-                  </label>
-                  <Input
-                    type="number"
-                    value={amountPaid}
-                    onChange={(e) => setAmountPaid(e.target.value)}
-                    placeholder="1299"
-                    className="text-[13px] h-[36px]"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[12px] font-medium text-[#6b7280] mb-1.5">
-                    Notes (optional)
-                  </label>
-                  <Input
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    placeholder="e.g. Renewed for 1 year via GoDaddy"
-                    className="text-[13px] h-[36px]"
-                  />
-                </div>
-              </div>
-
-              {/* Sticky Footer */}
-              <div className="px-6 py-3.5 border-t border-[#e5e7eb] bg-[#fafafa] flex justify-end gap-2 sticky bottom-0">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setIsMarkRenewedOpen(false)}
-                  className="h-[36px] px-4 text-[13px]"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  className="h-[36px] px-5 rounded-[8px] bg-[#10b981] hover:bg-[#059669] text-white font-medium text-[13px] gap-1.5 shadow-[0_2px_6px_rgba(16,185,129,0.25)]"
-                >
-                  Confirm Renewed
-                </Button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+            <div>
+              <label className="block text-[12px] font-medium text-[#6b7280] mb-1.5">
+                Notes (optional)
+              </label>
+              <Input
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="e.g. Renewed for 1 year via GoDaddy"
+                className="text-[13px] h-[36px]"
+              />
+            </div>
+          </form>
+        )}
+      </Modal>
 
       {/* Modal 3: Confirm Delete (Matching Screenshot 4) */}
-      {isDeleteOpen && deletingItem && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-[3px] p-4 animate-fade-up">
-          <div className="bg-white rounded-[14px] shadow-[0_4px_16px_rgba(0,0,0,0.08)] border border-[#e5e7eb] w-full max-w-[420px] overflow-hidden">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-[#e5e7eb]">
-              <h3 className="font-bold text-[15px] text-[#111827]">Confirm Delete</h3>
-              <button
-                onClick={() => setIsDeleteOpen(false)}
-                className="w-7 h-7 rounded-[6px] text-[#6b7280] hover:bg-[#f3f4f6] hover:text-[#111827] flex items-center justify-center cursor-pointer"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-
-            <div className="p-6">
-              <div className="flex items-start gap-3.5">
-                <div className="w-10 h-10 rounded-[10px] bg-[#fef2f2] text-[#ef4444] flex items-center justify-center shrink-0 border border-[#fee2e2]">
-                  <AlertTriangle className="h-5 w-5" />
-                </div>
-                <div>
-                  <h4 className="font-bold text-[14px] text-[#111827]">Delete this item?</h4>
-                  <p className="text-[12px] text-[#6b7280] mt-1">
-                    Delete renewal &ldquo;{deletingItem.title}&rdquo;?
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex justify-end gap-2 mt-6">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setIsDeleteOpen(false)}
-                  className="h-[34px] px-4 text-[12.5px]"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="button"
-                  onClick={handleConfirmDelete}
-                  className="h-[34px] px-4 rounded-[8px] bg-white hover:bg-[#fef2f2] text-[#ef4444] border border-[#fecaca] font-medium text-[12.5px] transition-colors"
-                >
-                  Delete
-                </Button>
-              </div>
-            </div>
+      <Modal
+        isOpen={isDeleteOpen && !!deletingItem}
+        onClose={() => setIsDeleteOpen(false)}
+        title="Confirm Delete"
+        maxWidth="max-w-[420px]"
+        footer={
+          <>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsDeleteOpen(false)}
+              className="h-[34px] px-4 text-[12.5px]"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={handleConfirmDelete}
+              className="h-[34px] px-4 rounded-[8px] bg-white hover:bg-[#fef2f2] text-[#ef4444] border border-[#fecaca] font-medium text-[12.5px] transition-colors"
+            >
+              Delete
+            </Button>
+          </>
+        }
+      >
+        <div className="flex items-start gap-3.5">
+          <div className="w-10 h-10 rounded-[10px] bg-[#fef2f2] text-[#ef4444] flex items-center justify-center shrink-0 border border-[#fee2e2]">
+            <AlertTriangle className="h-5 w-5" />
+          </div>
+          <div>
+            <h4 className="font-bold text-[14px] text-[#111827]">Delete this item?</h4>
+            <p className="text-[12px] text-[#6b7280] mt-1">
+              Delete renewal &ldquo;{deletingItem?.title}&rdquo;?
+            </p>
           </div>
         </div>
-      )}
+      </Modal>
     </div>
   );
 }

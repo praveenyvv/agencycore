@@ -24,6 +24,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Modal } from '@/components/ui/modal';
 import { cn, formatTimestamp } from '@/lib/utils';
 import type { AssetDocType, Project, ProjectAsset } from '@/types/agency';
 
@@ -428,13 +429,19 @@ export function TabAssetRepository({ project }: { project: Project }) {
                     )}
                   </div>
 
-                  {/* Drive Link Box */}
-                  <div className="flex items-center gap-1.5 rounded-md bg-zinc-50 px-2.5 py-1.5 border border-zinc-100">
-                    <Link2 className="h-3.5 w-3.5 shrink-0 text-zinc-400" />
-                    <span className="truncate text-[11px] font-mono text-zinc-600">
+                  {/* Drive Link Box: Minimal attractive link blue */}
+                  <a
+                    href={cleanUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 rounded-lg bg-[rgba(67,97,238,0.06)] hover:bg-[rgba(67,97,238,0.12)] px-2.5 py-1.5 border border-[rgba(67,97,238,0.18)] text-[#4361ee] transition-colors group/link"
+                  >
+                    <Link2 className="h-3.5 w-3.5 shrink-0 text-[#4361ee]" />
+                    <span className="truncate text-[11.5px] font-medium font-mono text-[#4361ee] group-hover/link:underline">
                       {cleanUrl}
                     </span>
-                  </div>
+                    <ExternalLink className="h-3 w-3 shrink-0 ml-auto text-[#4361ee] opacity-70 group-hover/link:opacity-100" />
+                  </a>
 
                   {/* Metadata (Uploader & Date) */}
                   <div className="flex items-center justify-between text-[11px] text-zinc-400 pt-1 border-t border-zinc-100">
@@ -487,292 +494,272 @@ export function TabAssetRepository({ project }: { project: Project }) {
       )}
 
       {/* ADD ASSET MODAL */}
-      {isAddOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between border-b border-zinc-100 pb-3">
-              <div className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700">
-                  <Plus className="h-4 w-4" />
-                </div>
-                <h3 className="text-base font-semibold text-zinc-900">
-                  Add Asset Link
-                </h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsAddOpen(false)}
-                className="text-zinc-400 hover:text-zinc-600"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-
-            <form onSubmit={handleSaveAdd} className="mt-4 space-y-4">
-              {formError && (
-                <div className="rounded-md bg-red-50 p-2.5 text-xs text-red-700 border border-red-200">
-                  {formError}
-                </div>
-              )}
-
-              {/* 1. Name */}
-              <div>
-                <label className="block text-xs font-medium text-zinc-700 mb-1">
-                  Name of Document / Asset <span className="text-red-500">*</span>
-                </label>
-                <Input
-                  value={formData.name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, name: e.target.value })
-                  }
-                  placeholder="e.g. Master Figma Design System, Brand Guidelines PDF"
-                  className="h-9 text-xs"
-                  required
-                />
-              </div>
-
-              {/* 2. DocType */}
-              <div>
-                <label className="block text-xs font-medium text-zinc-700 mb-1">
-                  DocType <span className="text-red-500">*</span>
-                </label>
-                <select
-                  value={formData.doc_type}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      doc_type: e.target.value as AssetDocType,
-                    })
-                  }
-                  className="w-full h-9 rounded-md border border-zinc-300 bg-white px-3 text-xs text-zinc-800 focus:outline-none focus:ring-2 focus:ring-zinc-900"
-                >
-                  {DOC_TYPES.map((type) => (
-                    <option key={type} value={type}>
-                      {type}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* 3. Drive Link */}
-              <div>
-                <label className="block text-xs font-medium text-zinc-700 mb-1">
-                  Drive / Cloud Link <span className="text-red-500">*</span>
-                </label>
-                <Input
-                  value={formData.drive_link}
-                  onChange={(e) =>
-                    setFormData({ ...formData, drive_link: e.target.value })
-                  }
-                  placeholder="https://drive.google.com/drive/folders/... or Figma URL"
-                  className="h-9 text-xs font-mono"
-                  required
-                />
-                <p className="mt-1 text-[11px] text-zinc-400">
-                  Google Drive, Figma, Dropbox, OneDrive, or Notion links.
-                </p>
-              </div>
-
-              {/* 4. Notes */}
-              <div>
-                <label className="block text-xs font-medium text-zinc-700 mb-1">
-                  Notes
-                </label>
-                <textarea
-                  value={formData.notes}
-                  onChange={(e) =>
-                    setFormData({ ...formData, notes: e.target.value })
-                  }
-                  rows={3}
-                  placeholder="e.g. Contains high-res vector logos, font files, and dark mode variations. Anyone with link has view permission."
-                  className="w-full rounded-md border border-zinc-300 p-2 text-xs text-zinc-800 focus:outline-none focus:ring-2 focus:ring-zinc-900"
-                />
-              </div>
-
-              <div className="flex items-center justify-end gap-2 pt-2 border-t border-zinc-100">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setIsAddOpen(false)}
-                  className="h-8 text-xs"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  className="h-8 bg-zinc-900 text-xs text-white hover:bg-zinc-800"
-                >
-                  Save Asset Link
-                </Button>
-              </div>
-            </form>
+      <Modal
+        isOpen={isAddOpen}
+        onClose={() => setIsAddOpen(false)}
+        title="Add Asset Link"
+        icon={
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[rgba(67,97,238,0.1)] text-[#4361ee]">
+            <Plus className="h-4 w-4" />
           </div>
-        </div>
-      )}
+        }
+        maxWidth="max-w-[500px]"
+        footer={
+          <>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsAddOpen(false)}
+              className="h-8 text-xs"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              form="add-asset-form"
+              className="h-8 bg-[#4361ee] hover:bg-[#3451d1] text-xs text-white"
+            >
+              Save Asset Link
+            </Button>
+          </>
+        }
+      >
+        <form id="add-asset-form" onSubmit={handleSaveAdd} className="space-y-4">
+          {formError && (
+            <div className="rounded-md bg-red-50 p-2.5 text-xs text-red-700 border border-red-200">
+              {formError}
+            </div>
+          )}
+
+          {/* 1. Name */}
+          <div>
+            <label className="block text-xs font-medium text-zinc-700 mb-1">
+              Name of Document / Asset <span className="text-red-500">*</span>
+            </label>
+            <Input
+              value={formData.name}
+              onChange={(e) =>
+                setFormData({ ...formData, name: e.target.value })
+              }
+              placeholder="e.g. Master Figma Design System, Brand Guidelines PDF"
+              className="h-9 text-xs"
+              required
+            />
+          </div>
+
+          {/* 2. DocType */}
+          <div>
+            <label className="block text-xs font-medium text-zinc-700 mb-1">
+              DocType <span className="text-red-500">*</span>
+            </label>
+            <select
+              value={formData.doc_type}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  doc_type: e.target.value as AssetDocType,
+                })
+              }
+              className="w-full h-9 rounded-md border border-zinc-300 bg-white px-3 text-xs text-zinc-800 focus:outline-none focus:ring-2 focus:ring-[#4361ee]"
+            >
+              {DOC_TYPES.map((type) => (
+                <option key={type} value={type}>
+                  {type}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* 3. Drive Link */}
+          <div>
+            <label className="block text-xs font-medium text-zinc-700 mb-1">
+              Drive / Cloud Link <span className="text-red-500">*</span>
+            </label>
+            <Input
+              value={formData.drive_link}
+              onChange={(e) =>
+                setFormData({ ...formData, drive_link: e.target.value })
+              }
+              placeholder="https://drive.google.com/drive/folders/... or Figma URL"
+              className="h-9 text-xs font-mono"
+              required
+            />
+            <p className="mt-1 text-[11px] text-zinc-400">
+              Google Drive, Figma, Dropbox, OneDrive, or Notion links.
+            </p>
+          </div>
+
+          {/* 4. Notes */}
+          <div>
+            <label className="block text-xs font-medium text-zinc-700 mb-1">
+              Notes
+            </label>
+            <textarea
+              value={formData.notes}
+              onChange={(e) =>
+                setFormData({ ...formData, notes: e.target.value })
+              }
+              rows={3}
+              placeholder="e.g. Contains high-res vector logos, font files, and dark mode variations. Anyone with link has view permission."
+              className="w-full rounded-md border border-zinc-300 p-2 text-xs text-zinc-800 focus:outline-none focus:ring-2 focus:ring-[#4361ee]"
+            />
+          </div>
+        </form>
+      </Modal>
 
       {/* EDIT ASSET MODAL */}
-      {editingAsset && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between border-b border-zinc-100 pb-3">
-              <div className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-blue-700">
-                  <Edit3 className="h-4 w-4" />
-                </div>
-                <h3 className="text-base font-semibold text-zinc-900">
-                  Edit Asset Link
-                </h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setEditingAsset(null)}
-                className="text-zinc-400 hover:text-zinc-600"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-
-            <form onSubmit={handleSaveEdit} className="mt-4 space-y-4">
-              {formError && (
-                <div className="rounded-md bg-red-50 p-2.5 text-xs text-red-700 border border-red-200">
-                  {formError}
-                </div>
-              )}
-
-              {/* 1. Name */}
-              <div>
-                <label className="block text-xs font-medium text-zinc-700 mb-1">
-                  Name of Document / Asset <span className="text-red-500">*</span>
-                </label>
-                <Input
-                  value={formData.name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, name: e.target.value })
-                  }
-                  placeholder="e.g. Master Figma Design System"
-                  className="h-9 text-xs"
-                  required
-                />
-              </div>
-
-              {/* 2. DocType */}
-              <div>
-                <label className="block text-xs font-medium text-zinc-700 mb-1">
-                  DocType <span className="text-red-500">*</span>
-                </label>
-                <select
-                  value={formData.doc_type}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      doc_type: e.target.value as AssetDocType,
-                    })
-                  }
-                  className="w-full h-9 rounded-md border border-zinc-300 bg-white px-3 text-xs text-zinc-800 focus:outline-none focus:ring-2 focus:ring-zinc-900"
-                >
-                  {DOC_TYPES.map((type) => (
-                    <option key={type} value={type}>
-                      {type}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* 3. Drive Link */}
-              <div>
-                <label className="block text-xs font-medium text-zinc-700 mb-1">
-                  Drive / Cloud Link <span className="text-red-500">*</span>
-                </label>
-                <Input
-                  value={formData.drive_link}
-                  onChange={(e) =>
-                    setFormData({ ...formData, drive_link: e.target.value })
-                  }
-                  placeholder="https://drive.google.com/..."
-                  className="h-9 text-xs font-mono"
-                  required
-                />
-              </div>
-
-              {/* 4. Notes */}
-              <div>
-                <label className="block text-xs font-medium text-zinc-700 mb-1">
-                  Notes
-                </label>
-                <textarea
-                  value={formData.notes}
-                  onChange={(e) =>
-                    setFormData({ ...formData, notes: e.target.value })
-                  }
-                  rows={3}
-                  placeholder="Notes about access or version info..."
-                  className="w-full rounded-md border border-zinc-300 p-2 text-xs text-zinc-800 focus:outline-none focus:ring-2 focus:ring-zinc-900"
-                />
-              </div>
-
-              <div className="flex items-center justify-end gap-2 pt-2 border-t border-zinc-100">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setEditingAsset(null)}
-                  className="h-8 text-xs"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  className="h-8 bg-zinc-900 text-xs text-white hover:bg-zinc-800"
-                >
-                  Save Changes
-                </Button>
-              </div>
-            </form>
+      <Modal
+        isOpen={!!editingAsset}
+        onClose={() => setEditingAsset(null)}
+        title="Edit Asset Link"
+        icon={
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[rgba(67,97,238,0.1)] text-[#4361ee]">
+            <Edit3 className="h-4 w-4" />
           </div>
-        </div>
-      )}
+        }
+        maxWidth="max-w-[500px]"
+        footer={
+          <>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setEditingAsset(null)}
+              className="h-8 text-xs"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              form="edit-asset-form"
+              className="h-8 bg-[#4361ee] hover:bg-[#3451d1] text-xs text-white"
+            >
+              Save Changes
+            </Button>
+          </>
+        }
+      >
+        <form id="edit-asset-form" onSubmit={handleSaveEdit} className="space-y-4">
+          {formError && (
+            <div className="rounded-md bg-red-50 p-2.5 text-xs text-red-700 border border-red-200">
+              {formError}
+            </div>
+          )}
+
+          {/* 1. Name */}
+          <div>
+            <label className="block text-xs font-medium text-zinc-700 mb-1">
+              Name of Document / Asset <span className="text-red-500">*</span>
+            </label>
+            <Input
+              value={formData.name}
+              onChange={(e) =>
+                setFormData({ ...formData, name: e.target.value })
+              }
+              placeholder="e.g. Master Figma Design System"
+              className="h-9 text-xs"
+              required
+            />
+          </div>
+
+          {/* 2. DocType */}
+          <div>
+            <label className="block text-xs font-medium text-zinc-700 mb-1">
+              DocType <span className="text-red-500">*</span>
+            </label>
+            <select
+              value={formData.doc_type}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  doc_type: e.target.value as AssetDocType,
+                })
+              }
+              className="w-full h-9 rounded-md border border-zinc-300 bg-white px-3 text-xs text-zinc-800 focus:outline-none focus:ring-2 focus:ring-[#4361ee]"
+            >
+              {DOC_TYPES.map((type) => (
+                <option key={type} value={type}>
+                  {type}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* 3. Drive Link */}
+          <div>
+            <label className="block text-xs font-medium text-zinc-700 mb-1">
+              Drive / Cloud Link <span className="text-red-500">*</span>
+            </label>
+            <Input
+              value={formData.drive_link}
+              onChange={(e) =>
+                setFormData({ ...formData, drive_link: e.target.value })
+              }
+              placeholder="https://drive.google.com/..."
+              className="h-9 text-xs font-mono"
+              required
+            />
+          </div>
+
+          {/* 4. Notes */}
+          <div>
+            <label className="block text-xs font-medium text-zinc-700 mb-1">
+              Notes
+            </label>
+            <textarea
+              value={formData.notes}
+              onChange={(e) =>
+                setFormData({ ...formData, notes: e.target.value })
+              }
+              rows={3}
+              placeholder="Notes about access or version info..."
+              className="w-full rounded-md border border-zinc-300 p-2 text-xs text-zinc-800 focus:outline-none focus:ring-2 focus:ring-[#4361ee]"
+            />
+          </div>
+        </form>
+      </Modal>
 
       {/* DELETE CONFIRMATION POPUP MODAL */}
-      {deletingAsset && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-sm rounded-xl bg-white p-6 shadow-xl animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center gap-3 text-red-600 mb-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-100">
-                <AlertTriangle className="h-5 w-5" />
-              </div>
-              <div>
-                <h3 className="text-sm font-semibold text-zinc-900">
-                  Delete Asset Link?
-                </h3>
-                <p className="text-xs text-zinc-500">This action cannot be undone.</p>
-              </div>
-            </div>
-
-            <p className="text-xs text-zinc-600 mb-4 bg-zinc-50 p-3 rounded-lg border border-zinc-100">
-              Are you sure you want to remove <span className="font-semibold text-zinc-900">&ldquo;{deletingAsset.name || deletingAsset.file_name}&rdquo;</span> from this project&apos;s asset repository?
+      <Modal
+        isOpen={!!deletingAsset}
+        onClose={() => setDeletingAsset(null)}
+        title="Confirm Delete"
+        maxWidth="max-w-[420px]"
+        footer={
+          <>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setDeletingAsset(null)}
+              className="h-8 text-xs"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              onClick={handleConfirmDelete}
+              className="h-8 bg-red-600 text-xs text-white hover:bg-red-700"
+            >
+              Yes, Delete
+            </Button>
+          </>
+        }
+      >
+        <div className="flex items-start gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-red-50 border border-red-100 text-red-600">
+            <AlertTriangle className="h-5 w-5" />
+          </div>
+          <div>
+            <h3 className="text-sm font-semibold text-zinc-900">
+              Delete Asset Link?
+            </h3>
+            <p className="text-xs text-zinc-500 mt-1">
+              Are you sure you want to remove <span className="font-semibold text-zinc-900">&ldquo;{deletingAsset?.name || deletingAsset?.file_name}&rdquo;</span> from this project&apos;s asset repository?
             </p>
-
-            <div className="flex items-center justify-end gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setDeletingAsset(null)}
-                className="h-8 text-xs"
-              >
-                Cancel
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                onClick={handleConfirmDelete}
-                className="h-8 bg-red-600 text-xs text-white hover:bg-red-700"
-              >
-                Yes, Delete
-              </Button>
-            </div>
           </div>
         </div>
-      )}
+      </Modal>
     </div>
   );
 }

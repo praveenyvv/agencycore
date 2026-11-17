@@ -23,6 +23,7 @@ import {
   getCurrentLocalDateTimeString,
 } from '@/components/ui/date-time-picker';
 import { Input } from '@/components/ui/input';
+import { Modal } from '@/components/ui/modal';
 import {
   getEmailReminderTemplate,
   getWhatsAppReminderTemplate,
@@ -191,12 +192,12 @@ export function TabMeetingsPreSales({ project }: { project: Project }) {
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-base font-semibold text-zinc-900">
-            Meetings &amp; Discussion Records ({projectMeetings.length})
+            Meetings ({projectMeetings.length})
           </h2>
           <p className="text-xs text-zinc-500">
             {hasApprovedDiscovery
-              ? 'Discovery approved! Any subsequent sessions logged here are general insight / review meetings without traditional approval gates.'
-              : 'Initial Discovery stage: record client pain points, solutions, and choose deal progression (Approved, Denied, Rescheduled, Remainder).'}
+              ? 'Discovery approved! Discussion records and review meetings.'
+              : 'Record client pain points, solutions, and choose meeting outcomes.'}
           </p>
         </div>
         {permissions.canManageMeetingsAndProposals && (
@@ -347,107 +348,98 @@ export function TabMeetingsPreSales({ project }: { project: Project }) {
       )}
 
       {/* Edit Meeting Modal */}
-      {editingMeeting && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-lg rounded-xl border border-zinc-200 bg-white p-5 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-zinc-100 pb-2">
-              <h3 className="text-sm font-semibold text-zinc-900">
-                Edit Meeting: {editingMeeting.title}
-              </h3>
-              <button
-                type="button"
-                className="text-zinc-400 hover:text-zinc-700 cursor-pointer"
-                onClick={() => setEditingMeeting(null)}
-              >
-                <X className="h-4 w-4" />
-              </button>
+      <Modal
+        isOpen={!!editingMeeting}
+        onClose={() => setEditingMeeting(null)}
+        title={editingMeeting ? `Edit Meeting: ${editingMeeting.title}` : 'Edit Meeting'}
+        maxWidth="max-w-lg"
+        footer={
+          <>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setEditingMeeting(null)}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" form="edit-meeting-form" size="sm" className="bg-[#4361ee] hover:bg-[#3451d1] text-white">
+              Save Changes
+            </Button>
+          </>
+        }
+      >
+        {editingMeeting && (
+          <form id="edit-meeting-form" onSubmit={handleEditSubmit} className="space-y-3">
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-zinc-700">Meeting Title *</label>
+              <Input
+                required
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+              />
             </div>
 
-            <form onSubmit={handleEditSubmit} className="space-y-3">
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-zinc-700">Meeting Title *</label>
-                <Input
-                  required
-                  value={editTitle}
-                  onChange={(e) => setEditTitle(e.target.value)}
-                />
-              </div>
+            <ModernDateTimePicker
+              label="Meeting Date & Time"
+              required
+              value={editScheduledAt}
+              onChange={(val) => setEditScheduledAt(val)}
+            />
 
-              <ModernDateTimePicker
-                label="Meeting Date & Time"
-                required
-                value={editScheduledAt}
-                onChange={(val) => setEditScheduledAt(val)}
-              />
-
-              {!editingMeeting.is_general_session ? (
-                <>
-                  <div className="space-y-1">
-                    <label className="text-xs font-medium text-zinc-700">Pain Points</label>
-                    <textarea
-                      rows={2}
-                      className="w-full rounded-md border border-zinc-200 p-2 text-xs text-zinc-900"
-                      value={editPainPoints}
-                      onChange={(e) => setEditPainPoints(e.target.value)}
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-xs font-medium text-zinc-700">Solution Approach</label>
-                    <textarea
-                      rows={2}
-                      className="w-full rounded-md border border-zinc-200 p-2 text-xs text-zinc-900"
-                      value={editSolutionNotes}
-                      onChange={(e) => setEditSolutionNotes(e.target.value)}
-                    />
-                  </div>
-
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <div className="space-y-1">
-                      <label className="text-xs font-medium text-zinc-700">Goals</label>
-                      <Input
-                        value={editGoals}
-                        onChange={(e) => setEditGoals(e.target.value)}
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <label className="text-xs font-medium text-zinc-700">Notes</label>
-                      <Input
-                        value={editNotes}
-                        onChange={(e) => setEditNotes(e.target.value)}
-                      />
-                    </div>
-                  </div>
-                </>
-              ) : (
+            {!editingMeeting.is_general_session ? (
+              <>
                 <div className="space-y-1">
-                  <label className="text-xs font-medium text-zinc-700">Session Notes</label>
+                  <label className="text-xs font-medium text-zinc-700">Pain Points</label>
                   <textarea
-                    rows={3}
+                    rows={2}
                     className="w-full rounded-md border border-zinc-200 p-2 text-xs text-zinc-900"
-                    value={editNotes}
-                    onChange={(e) => setEditNotes(e.target.value)}
+                    value={editPainPoints}
+                    onChange={(e) => setEditPainPoints(e.target.value)}
                   />
                 </div>
-              )}
 
-              <div className="flex justify-end gap-2 border-t border-zinc-100 pt-3">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setEditingMeeting(null)}
-                >
-                  Cancel
-                </Button>
-                <Button type="submit" size="sm">
-                  Save Changes
-                </Button>
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-zinc-700">Solution Approach</label>
+                  <textarea
+                    rows={2}
+                    className="w-full rounded-md border border-zinc-200 p-2 text-xs text-zinc-900"
+                    value={editSolutionNotes}
+                    onChange={(e) => setEditSolutionNotes(e.target.value)}
+                  />
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium text-zinc-700">Goals</label>
+                    <Input
+                      value={editGoals}
+                      onChange={(e) => setEditGoals(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium text-zinc-700">Notes</label>
+                    <Input
+                      value={editNotes}
+                      onChange={(e) => setEditNotes(e.target.value)}
+                    />
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-zinc-700">Session Notes</label>
+                <textarea
+                  rows={3}
+                  className="w-full rounded-md border border-zinc-200 p-2 text-xs text-zinc-900"
+                  value={editNotes}
+                  onChange={(e) => setEditNotes(e.target.value)}
+                />
               </div>
-            </form>
-          </div>
-        </div>
-      )}
+            )}
+          </form>
+        )}
+      </Modal>
 
       {/* Meetings List */}
       <div className="space-y-3">
@@ -665,143 +657,140 @@ export function TabMeetingsPreSales({ project }: { project: Project }) {
       </div>
 
       {/* Outcome Confirmation Modal */}
-      {outcomeAction && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-lg rounded-xl border border-zinc-200 bg-white p-5 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-zinc-100 pb-2">
-              <h3 className="text-sm font-semibold text-zinc-900">
-                {isChangingDecision ? 'Change Decision: ' : 'Record Outcome: '}
-                {outcomeAction.toUpperCase()}
-              </h3>
-              <Badge variant="outline">{project.title}</Badge>
-            </div>
+      <Modal
+        isOpen={!!outcomeAction}
+        onClose={() => {
+          setOutcomeAction(null);
+          setIsChangingDecision(false);
+        }}
+        title={`${isChangingDecision ? 'Change Decision: ' : 'Record Outcome: '}${outcomeAction?.toUpperCase()}`}
+        maxWidth="max-w-lg"
+        footer={
+          <>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                setOutcomeAction(null);
+                setIsChangingDecision(false);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button size="sm" onClick={handleConfirmOutcome} className="bg-[#4361ee] hover:bg-[#3451d1] text-white">
+              {isChangingDecision ? 'Update Decision' : 'Save Outcome & Route Deal'}
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-3.5 text-xs">
+          <ModernDateTimePicker
+            label={
+              outcomeAction === 'rescheduled'
+                ? 'New Rescheduled Meeting Date & Time'
+                : outcomeAction === 'remainder'
+                ? 'Target Follow-up Reminder Date'
+                : 'Decision Date & Time'
+            }
+            required
+            value={outcomeDate}
+            onChange={(val) => setOutcomeDate(val)}
+          />
 
-            <div className="space-y-3 text-xs">
-              <ModernDateTimePicker
-                label={
-                  outcomeAction === 'rescheduled'
-                    ? 'New Rescheduled Meeting Date & Time'
-                    : outcomeAction === 'remainder'
-                    ? 'Target Follow-up Reminder Date'
-                    : 'Decision Date & Time'
-                }
-                required
-                value={outcomeDate}
-                onChange={(val) => setOutcomeDate(val)}
-              />
+          <div className="space-y-1">
+            <label className="font-medium text-zinc-700">
+              {outcomeAction === 'approved'
+                ? 'Acceptance Note (What agreed terms moved this to proposals?)'
+                : outcomeAction === 'denied'
+                ? 'Reason for Denial (Helps identify mistakes & future improvements) *'
+                : outcomeAction === 'rescheduled'
+                ? 'Reschedule Reason & Prep Notes for Next Session'
+                : 'Remainder Context & Notes'}
+            </label>
+            <textarea
+              rows={3}
+              className="w-full rounded-md border border-zinc-200 p-2 text-xs text-zinc-900 focus:outline-none focus:border-[#4361ee]"
+              placeholder="Record detailed notes here..."
+              value={outcomeNote}
+              onChange={(e) => setOutcomeNote(e.target.value)}
+            />
+          </div>
 
-              <div className="space-y-1">
-                <label className="font-medium text-zinc-700">
-                  {outcomeAction === 'approved'
-                    ? 'Acceptance Note (What agreed terms moved this to proposals?)'
-                    : outcomeAction === 'denied'
-                    ? 'Reason for Denial (Helps identify mistakes & future improvements) *'
-                    : outcomeAction === 'rescheduled'
-                    ? 'Reschedule Reason & Prep Notes for Next Session'
-                    : 'Remainder Context & Notes'}
-                </label>
-                <textarea
-                  rows={3}
-                  className="w-full rounded-md border border-zinc-200 p-2 text-xs text-zinc-900"
-                  placeholder="Record detailed notes here..."
-                  value={outcomeNote}
-                  onChange={(e) => setOutcomeNote(e.target.value)}
-                />
+          {/* Remainder Template Helper (Email + WhatsApp) */}
+          {outcomeAction === 'remainder' && (
+            <div className="rounded-lg border border-violet-200 bg-violet-50/50 p-3 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="font-semibold text-violet-900">
+                  Automated Client Remainder Templates
+                </span>
+                {projectContacts.length > 0 && (
+                  <select
+                    className="rounded border border-violet-200 bg-white px-2 py-1 text-[11px]"
+                    value={reminderContactId}
+                    onChange={(e) => setReminderContactId(e.target.value)}
+                  >
+                    {projectContacts.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name} ({c.role})
+                      </option>
+                    ))}
+                  </select>
+                )}
               </div>
 
-              {/* Remainder Template Helper (Email + WhatsApp) */}
-              {outcomeAction === 'remainder' && (
-                <div className="rounded-lg border border-violet-200 bg-violet-50/50 p-3 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="font-semibold text-violet-900">
-                      Automated Client Remainder Templates
+              <div className="space-y-2">
+                <div className="rounded bg-white p-2 border border-violet-100">
+                  <div className="flex items-center justify-between pb-1">
+                    <span className="font-medium text-zinc-800 flex items-center gap-1">
+                      <Send className="h-3 w-3 text-blue-600" /> Email Follow-up
                     </span>
-                    {projectContacts.length > 0 && (
-                      <select
-                        className="rounded border border-violet-200 bg-white px-2 py-1 text-[11px]"
-                        value={reminderContactId}
-                        onChange={(e) => setReminderContactId(e.target.value)}
-                      >
-                        {projectContacts.map((c) => (
-                          <option key={c.id} value={c.id}>
-                            {c.name} ({c.role})
-                          </option>
-                        ))}
-                      </select>
-                    )}
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      className="h-6 text-[10px]"
+                      onClick={() => {
+                        navigator.clipboard.writeText(
+                          `${emailTemplate.subject}\n\n${emailTemplate.body}`
+                        );
+                        setReminderCopied('email');
+                        setTimeout(() => setReminderCopied(null), 1500);
+                      }}
+                    >
+                      {reminderCopied === 'email' ? 'Copied!' : 'Copy Email'}
+                    </Button>
                   </div>
-
-                  <div className="space-y-2">
-                    <div className="rounded bg-white p-2 border border-violet-100">
-                      <div className="flex items-center justify-between pb-1">
-                        <span className="font-medium text-zinc-800 flex items-center gap-1">
-                          <Send className="h-3 w-3 text-blue-600" /> Email Follow-up
-                        </span>
-                        <Button
-                          size="sm"
-                          variant="secondary"
-                          className="h-6 text-[10px]"
-                          onClick={() => {
-                            navigator.clipboard.writeText(
-                              `${emailTemplate.subject}\n\n${emailTemplate.body}`
-                            );
-                            setReminderCopied('email');
-                            setTimeout(() => setReminderCopied(null), 1500);
-                          }}
-                        >
-                          {reminderCopied === 'email' ? 'Copied!' : 'Copy Email'}
-                        </Button>
-                      </div>
-                      <p className="text-[11px] text-zinc-600 whitespace-pre-line line-clamp-3">
-                        {emailTemplate.body}
-                      </p>
-                    </div>
-
-                    <div className="rounded bg-white p-2 border border-violet-100">
-                      <div className="flex items-center justify-between pb-1">
-                        <span className="font-medium text-zinc-800 flex items-center gap-1">
-                          <MessageSquare className="h-3 w-3 text-emerald-600" /> WhatsApp Template
-                        </span>
-                        <Button
-                          size="sm"
-                          variant="secondary"
-                          className="h-6 text-[10px]"
-                          onClick={() => {
-                            navigator.clipboard.writeText(whatsAppTemplate);
-                            setReminderCopied('whatsapp');
-                            setTimeout(() => setReminderCopied(null), 1500);
-                          }}
-                        >
-                          {reminderCopied === 'whatsapp' ? 'Copied!' : 'Copy WhatsApp'}
-                        </Button>
-                      </div>
-                      <p className="text-[11px] text-zinc-600 line-clamp-2">
-                        {whatsAppTemplate}
-                      </p>
-                    </div>
-                  </div>
+                  <p className="text-[11px] text-zinc-600 whitespace-pre-line line-clamp-3">
+                    {emailTemplate.body}
+                  </p>
                 </div>
-              )}
-            </div>
 
-            <div className="flex justify-end gap-2 border-t border-zinc-100 pt-3">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => {
-                  setOutcomeAction(null);
-                  setIsChangingDecision(false);
-                }}
-              >
-                Cancel
-              </Button>
-              <Button size="sm" onClick={handleConfirmOutcome}>
-                {isChangingDecision ? 'Update Decision' : 'Save Outcome & Route Deal'}
-              </Button>
+                <div className="rounded bg-white p-2 border border-violet-100">
+                  <div className="flex items-center justify-between pb-1">
+                    <span className="font-medium text-zinc-800 flex items-center gap-1">
+                      <MessageSquare className="h-3 w-3 text-emerald-600" /> WhatsApp Template
+                    </span>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      className="h-6 text-[10px]"
+                      onClick={() => {
+                        navigator.clipboard.writeText(whatsAppTemplate);
+                        setReminderCopied('whatsapp');
+                        setTimeout(() => setReminderCopied(null), 1500);
+                      }}
+                    >
+                      {reminderCopied === 'whatsapp' ? 'Copied!' : 'Copy WhatsApp'}
+                    </Button>
+                  </div>
+                  <p className="text-[11px] text-zinc-600 line-clamp-2">
+                    {whatsAppTemplate}
+                  </p>
+                </div>
+              </div>
             </div>
-          </div>
+          )}
         </div>
-      )}
+      </Modal>
     </div>
   );
 }

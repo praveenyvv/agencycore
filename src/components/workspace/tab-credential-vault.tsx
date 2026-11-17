@@ -27,6 +27,7 @@ import { useAuth } from '@/components/providers/app-providers';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Modal } from '@/components/ui/modal';
 import { maskSecret } from '@/lib/crypto-client';
 import type { Project, ProjectCredential, CredentialCategory } from '@/types/agency';
 
@@ -484,313 +485,307 @@ export function TabCredentialVault({ project }: { project: Project }) {
       )}
 
       {/* ── Modal: Add Credential ── */}
-      {isAddOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs">
-          <div className="w-full max-w-md rounded-xl border border-zinc-200 bg-white p-5 shadow-2xl animate-in fade-in zoom-in-95">
-            <div className="flex items-center justify-between border-b border-zinc-200 pb-3">
-              <div className="flex items-center gap-2">
-                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
-                  <KeyRound className="h-4 w-4" />
-                </div>
-                <h3 className="text-sm font-semibold text-zinc-900">
-                  Add Credential
-                </h3>
-              </div>
-              <button
-                onClick={() => setIsAddOpen(false)}
-                className="text-zinc-400 hover:text-zinc-600 cursor-pointer"
+      <Modal
+        isOpen={isAddOpen}
+        onClose={() => setIsAddOpen(false)}
+        title="Add Credential"
+        icon={
+          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+            <KeyRound className="h-4 w-4" />
+          </div>
+        }
+        maxWidth="max-w-[500px]"
+        footer={
+          <>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setIsAddOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              form="add-cred-form"
+              size="sm"
+              disabled={isSubmitting}
+              className="bg-[#4361ee] hover:bg-[#3451d1] text-white"
+            >
+              <ShieldCheck className="h-3.5 w-3.5 mr-1" />
+              {isSubmitting ? 'Encrypting...' : 'Encrypt & Save'}
+            </Button>
+          </>
+        }
+      >
+        <form id="add-cred-form" onSubmit={handleSaveAdd} className="space-y-3.5">
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-zinc-700">
+              Service / Platform Name *
+            </label>
+            <Input
+              required
+              placeholder="e.g. AWS Production, Hostinger cPanel, Stripe API"
+              value={formService}
+              onChange={(e) => setFormService(e.target.value)}
+              className="h-9 text-xs"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-2.5">
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-zinc-700">
+                Category *
+              </label>
+              <select
+                value={formCategory}
+                onChange={(e) => setFormCategory(e.target.value as CredentialCategory)}
+                className="h-9 w-full rounded-md border border-zinc-200 bg-white px-2.5 text-xs text-zinc-900 focus:outline-none focus:ring-1 focus:ring-[#4361ee]"
               >
-                <X className="h-4 w-4" />
-              </button>
+                {CATEGORIES.map((c) => (
+                  <option key={c.label} value={c.label}>
+                    {c.label}
+                  </option>
+                ))}
+              </select>
             </div>
 
-            <form onSubmit={handleSaveAdd} className="mt-4 space-y-3">
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-zinc-700">
-                  Service / Platform Name *
-                </label>
-                <Input
-                  required
-                  placeholder="e.g. AWS Production, Hostinger cPanel, Stripe API"
-                  value={formService}
-                  onChange={(e) => setFormService(e.target.value)}
-                  className="h-9 text-xs"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-2.5">
-                <div className="space-y-1">
-                  <label className="text-xs font-medium text-zinc-700">
-                    Category *
-                  </label>
-                  <select
-                    value={formCategory}
-                    onChange={(e) => setFormCategory(e.target.value as CredentialCategory)}
-                    className="h-9 w-full rounded-md border border-zinc-200 bg-white px-2.5 text-xs text-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
-                  >
-                    {CATEGORIES.map((c) => (
-                      <option key={c.label} value={c.label}>
-                        {c.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-xs font-medium text-zinc-700">
-                    Username / Email *
-                  </label>
-                  <Input
-                    required
-                    placeholder="admin@agency.com"
-                    value={formUsername}
-                    onChange={(e) => setFormUsername(e.target.value)}
-                    className="h-9 text-xs"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-zinc-700 flex items-center justify-between">
-                  <span>Password / API Token *</span>
-                  <span className="text-[10px] text-zinc-400 font-mono">Encrypted with AES-256</span>
-                </label>
-                <div className="relative">
-                  <Input
-                    required
-                    type={formShowSecret ? 'text' : 'password'}
-                    placeholder="••••••••••••"
-                    value={formSecret}
-                    onChange={(e) => setFormSecret(e.target.value)}
-                    className="h-9 pr-8 text-xs font-mono"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setFormShowSecret(!formShowSecret)}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 cursor-pointer"
-                  >
-                    {formShowSecret ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-                  </button>
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-zinc-700">
-                  Login URL (Optional)
-                </label>
-                <Input
-                  type="url"
-                  placeholder="https://console.aws.amazon.com"
-                  value={formUrl}
-                  onChange={(e) => setFormUrl(e.target.value)}
-                  className="h-9 text-xs"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-zinc-700">
-                  Notes (Optional)
-                </label>
-                <Input
-                  placeholder="2FA codes in 1Password vault, VPN required..."
-                  value={formNotes}
-                  onChange={(e) => setFormNotes(e.target.value)}
-                  className="h-9 text-xs"
-                />
-              </div>
-
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-zinc-100">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setIsAddOpen(false)}
-                >
-                  Cancel
-                </Button>
-                <Button type="submit" size="sm" disabled={isSubmitting}>
-                  <ShieldCheck className="h-3.5 w-3.5 mr-1" />
-                  {isSubmitting ? 'Encrypting...' : 'Encrypt & Save'}
-                </Button>
-              </div>
-            </form>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-zinc-700">
+                Username / Email *
+              </label>
+              <Input
+                required
+                placeholder="admin@agency.com"
+                value={formUsername}
+                onChange={(e) => setFormUsername(e.target.value)}
+                className="h-9 text-xs"
+              />
+            </div>
           </div>
-        </div>
-      )}
+
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-zinc-700 flex items-center justify-between">
+              <span>Password / API Token *</span>
+              <span className="text-[10px] text-zinc-400 font-mono">Encrypted with AES-256</span>
+            </label>
+            <div className="relative">
+              <Input
+                required
+                type={formShowSecret ? 'text' : 'password'}
+                placeholder="••••••••••••"
+                value={formSecret}
+                onChange={(e) => setFormSecret(e.target.value)}
+                className="h-9 pr-8 text-xs font-mono"
+              />
+              <button
+                type="button"
+                onClick={() => setFormShowSecret(!formShowSecret)}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 cursor-pointer"
+              >
+                {formShowSecret ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+              </button>
+            </div>
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-zinc-700">
+              Login URL (Optional)
+            </label>
+            <Input
+              type="url"
+              placeholder="https://console.aws.amazon.com"
+              value={formUrl}
+              onChange={(e) => setFormUrl(e.target.value)}
+              className="h-9 text-xs"
+            />
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-zinc-700">
+              Notes (Optional)
+            </label>
+            <Input
+              placeholder="2FA codes in 1Password vault, VPN required..."
+              value={formNotes}
+              onChange={(e) => setFormNotes(e.target.value)}
+              className="h-9 text-xs"
+            />
+          </div>
+        </form>
+      </Modal>
 
       {/* ── Modal: Edit Credential ── */}
-      {editingCred && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs">
-          <div className="w-full max-w-md rounded-xl border border-zinc-200 bg-white p-5 shadow-2xl animate-in fade-in zoom-in-95">
-            <div className="flex items-center justify-between border-b border-zinc-200 pb-3">
-              <div className="flex items-center gap-2">
-                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
-                  <Pencil className="h-4 w-4" />
-                </div>
-                <h3 className="text-sm font-semibold text-zinc-900">
-                  Edit Credential
-                </h3>
-              </div>
-              <button
-                onClick={() => setEditingCred(null)}
-                className="text-zinc-400 hover:text-zinc-600 cursor-pointer"
+      <Modal
+        isOpen={!!editingCred}
+        onClose={() => setEditingCred(null)}
+        title="Edit Credential"
+        icon={
+          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
+            <Pencil className="h-4 w-4" />
+          </div>
+        }
+        maxWidth="max-w-[500px]"
+        footer={
+          <>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setEditingCred(null)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              form="edit-cred-form"
+              size="sm"
+              disabled={isSubmitting}
+              className="bg-[#4361ee] hover:bg-[#3451d1] text-white"
+            >
+              <ShieldCheck className="h-3.5 w-3.5 mr-1" />
+              {isSubmitting ? 'Saving...' : 'Update Credential'}
+            </Button>
+          </>
+        }
+      >
+        <form id="edit-cred-form" onSubmit={handleSaveEdit} className="space-y-3.5">
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-zinc-700">
+              Service / Platform Name *
+            </label>
+            <Input
+              required
+              value={formService}
+              onChange={(e) => setFormService(e.target.value)}
+              className="h-9 text-xs"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-2.5">
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-zinc-700">
+                Category *
+              </label>
+              <select
+                value={formCategory}
+                onChange={(e) => setFormCategory(e.target.value as CredentialCategory)}
+                className="h-9 w-full rounded-md border border-zinc-200 bg-white px-2.5 text-xs text-zinc-900 focus:outline-none focus:ring-1 focus:ring-[#4361ee]"
               >
-                <X className="h-4 w-4" />
+                {CATEGORIES.map((c) => (
+                  <option key={c.label} value={c.label}>
+                    {c.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-zinc-700">
+                Username / Email *
+              </label>
+              <Input
+                required
+                value={formUsername}
+                onChange={(e) => setFormUsername(e.target.value)}
+                className="h-9 text-xs"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-zinc-700 flex items-center justify-between">
+              <span>Rotate Password (Optional)</span>
+              <span className="text-[10px] text-zinc-400">Leave blank to keep current</span>
+            </label>
+            <div className="relative">
+              <Input
+                type={formShowSecret ? 'text' : 'password'}
+                placeholder="Enter new password to rotate..."
+                value={formSecret}
+                onChange={(e) => setFormSecret(e.target.value)}
+                className="h-9 pr-8 text-xs font-mono"
+              />
+              <button
+                type="button"
+                onClick={() => setFormShowSecret(!formShowSecret)}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 cursor-pointer"
+              >
+                {formShowSecret ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
               </button>
             </div>
-
-            <form onSubmit={handleSaveEdit} className="mt-4 space-y-3">
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-zinc-700">
-                  Service / Platform Name *
-                </label>
-                <Input
-                  required
-                  value={formService}
-                  onChange={(e) => setFormService(e.target.value)}
-                  className="h-9 text-xs"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-2.5">
-                <div className="space-y-1">
-                  <label className="text-xs font-medium text-zinc-700">
-                    Category *
-                  </label>
-                  <select
-                    value={formCategory}
-                    onChange={(e) => setFormCategory(e.target.value as CredentialCategory)}
-                    className="h-9 w-full rounded-md border border-zinc-200 bg-white px-2.5 text-xs text-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
-                  >
-                    {CATEGORIES.map((c) => (
-                      <option key={c.label} value={c.label}>
-                        {c.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-xs font-medium text-zinc-700">
-                    Username / Email *
-                  </label>
-                  <Input
-                    required
-                    value={formUsername}
-                    onChange={(e) => setFormUsername(e.target.value)}
-                    className="h-9 text-xs"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-zinc-700 flex items-center justify-between">
-                  <span>Rotate Password (Optional)</span>
-                  <span className="text-[10px] text-zinc-400">Leave blank to keep current</span>
-                </label>
-                <div className="relative">
-                  <Input
-                    type={formShowSecret ? 'text' : 'password'}
-                    placeholder="Enter new password to rotate..."
-                    value={formSecret}
-                    onChange={(e) => setFormSecret(e.target.value)}
-                    className="h-9 pr-8 text-xs font-mono"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setFormShowSecret(!formShowSecret)}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 cursor-pointer"
-                  >
-                    {formShowSecret ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-                  </button>
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-zinc-700">
-                  Login URL (Optional)
-                </label>
-                <Input
-                  type="url"
-                  placeholder="https://console.aws.amazon.com"
-                  value={formUrl}
-                  onChange={(e) => setFormUrl(e.target.value)}
-                  className="h-9 text-xs"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-zinc-700">
-                  Notes (Optional)
-                </label>
-                <Input
-                  placeholder="Additional access notes..."
-                  value={formNotes}
-                  onChange={(e) => setFormNotes(e.target.value)}
-                  className="h-9 text-xs"
-                />
-              </div>
-
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-zinc-100">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setEditingCred(null)}
-                >
-                  Cancel
-                </Button>
-                <Button type="submit" size="sm" disabled={isSubmitting}>
-                  <ShieldCheck className="h-3.5 w-3.5 mr-1" />
-                  {isSubmitting ? 'Saving...' : 'Update Credential'}
-                </Button>
-              </div>
-            </form>
           </div>
-        </div>
-      )}
+
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-zinc-700">
+              Login URL (Optional)
+            </label>
+            <Input
+              type="url"
+              placeholder="https://console.aws.amazon.com"
+              value={formUrl}
+              onChange={(e) => setFormUrl(e.target.value)}
+              className="h-9 text-xs"
+            />
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-zinc-700">
+              Notes (Optional)
+            </label>
+            <Input
+              placeholder="Additional access notes..."
+              value={formNotes}
+              onChange={(e) => setFormNotes(e.target.value)}
+              className="h-9 text-xs"
+            />
+          </div>
+        </form>
+      </Modal>
 
       {/* ── Modal: Delete Confirmation ── */}
-      {deletingCred && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs">
-          <div className="w-full max-w-sm rounded-xl border border-zinc-200 bg-white p-5 shadow-2xl animate-in fade-in zoom-in-95">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-50 text-red-600">
-                <Trash2 className="h-5 w-5" />
-              </div>
-              <div>
-                <h3 className="text-sm font-semibold text-zinc-900">
-                  Delete Credential?
-                </h3>
-                <p className="text-xs text-zinc-500 mt-0.5">
-                  Are you sure you want to delete{' '}
-                  <span className="font-semibold text-zinc-700">
-                    "{deletingCred.service_name}"
-                  </span>
-                  ? This deletion will be permanently recorded in the audit trail.
-                </p>
-              </div>
-            </div>
-
-            <div className="mt-5 flex items-center justify-end gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setDeletingCred(null)}
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={handleDeleteConfirm}
-              >
-                Delete
-              </Button>
-            </div>
+      <Modal
+        isOpen={!!deletingCred}
+        onClose={() => setDeletingCred(null)}
+        title="Confirm Delete"
+        maxWidth="max-w-[420px]"
+        footer={
+          <>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setDeletingCred(null)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={handleDeleteConfirm}
+            >
+              Delete
+            </Button>
+          </>
+        }
+      >
+        <div className="flex items-start gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-red-50 border border-red-100 text-red-600">
+            <Trash2 className="h-5 w-5" />
+          </div>
+          <div>
+            <h3 className="text-sm font-semibold text-zinc-900">
+              Delete Credential?
+            </h3>
+            <p className="text-xs text-zinc-500 mt-1">
+              Are you sure you want to delete{' '}
+              <span className="font-semibold text-zinc-700">
+                "{deletingCred?.service_name}"
+              </span>
+              ? This deletion will be permanently recorded in the audit trail.
+            </p>
           </div>
         </div>
-      )}
+      </Modal>
     </div>
   );
 }
