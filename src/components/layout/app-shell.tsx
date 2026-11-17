@@ -131,7 +131,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         visible: true,
       },
       {
-        label: 'Drafts & Deals',
+        label: 'Drafts',
         href: '/drafts',
         icon: Archive,
         visible: true,

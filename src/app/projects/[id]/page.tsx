@@ -3,6 +3,7 @@
 import React, { useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
 import {
+  ChevronDown,
   FileCheck,
   FileSpreadsheet,
   FileText,
@@ -31,8 +32,8 @@ import { TabMeetingsPreSales } from '@/components/workspace/tab-meetings-presale
 import { TabOverviewScope } from '@/components/workspace/tab-overview-scope';
 import { TabProposalBuilder } from '@/components/workspace/tab-proposal-builder';
 import { TabTeamContributions } from '@/components/workspace/tab-team-contributions';
-import { ProjectStageBanner } from '@/components/workspace/project-stage-banner';
 import { cn, formatDate } from '@/lib/utils';
+import { getProjectSimpleStatus, type ProjectStatus } from '@/types/agency';
 
 type WorkspaceTab =
   | 'overview'
@@ -49,7 +50,7 @@ type WorkspaceTab =
 
 export default function ProjectWorkspacePage() {
   const params = useParams<{ id: string }>();
-  const { accessibleProjects, currentUser, permissions, meetings, proposals, contacts } = useAuth();
+  const { accessibleProjects, currentUser, permissions, updateProjectStatus } = useAuth();
   const [activeTab, setActiveTab] = useState<WorkspaceTab>('overview');
 
   const project = accessibleProjects.find((p) => p.id === params.id);
@@ -151,6 +152,8 @@ export default function ProjectWorkspacePage() {
     ? activeTab
     : 'overview';
 
+  const simpleStatus = getProjectSimpleStatus(project);
+
   return (
     <div className="mx-auto max-w-7xl space-y-5">
       {/* Project Header */}
@@ -162,24 +165,32 @@ export default function ProjectWorkspacePage() {
               {project.title}
             </h1>
             <Badge variant="outline">{project.project_type}</Badge>
-            <Badge
-              variant={
-                project.is_archived
-                  ? 'secondary'
-                  : project.status === 'In Execution'
-                  ? 'info'
-                  : project.status === 'QA & Handover'
-                  ? 'warning'
-                  : project.status === 'Maintenance'
-                  ? 'success'
-                  : project.status === 'Draft / On Hold'
-                  ? 'purple'
-                  : 'secondary'
-              }
-            >
-              {project.status}
-            </Badge>
-            {project.is_archived && (
+            <div className="relative inline-flex items-center">
+              <select
+                value={simpleStatus}
+                onChange={(e) =>
+                  updateProjectStatus(
+                    project.id,
+                    e.target.value as ProjectStatus
+                  )
+                }
+                className={cn(
+                  'h-6 rounded-full border px-2.5 pr-6 text-xs font-semibold cursor-pointer transition-colors appearance-none focus:outline-none focus:ring-1 focus:ring-zinc-900',
+                  simpleStatus === 'Active'
+                    ? 'border-emerald-300 bg-emerald-50 text-emerald-800 hover:bg-emerald-100'
+                    : simpleStatus === 'Inactive'
+                    ? 'border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100'
+                    : 'border-blue-300 bg-blue-50 text-blue-800 hover:bg-blue-100'
+                )}
+                aria-label="Project Status"
+              >
+                <option value="Active">● Active</option>
+                <option value="Inactive">● Inactive</option>
+                <option value="Completed">● Completed</option>
+              </select>
+              <ChevronDown className="pointer-events-none absolute right-2 h-3 w-3 text-zinc-500" />
+            </div>
+            {project.is_archived && simpleStatus !== 'Completed' && (
               <Badge variant="secondary">
                 <Lock className="h-3 w-3" /> Read-Only Archive
               </Badge>
@@ -197,15 +208,6 @@ export default function ProjectWorkspacePage() {
           </p>
         </div>
       </div>
-
-      {/* Crystal-Clear Stage Tracker Banner: Exactly where are we and what to do next */}
-      <ProjectStageBanner
-        project={project}
-        meetings={meetings}
-        proposals={proposals}
-        contacts={contacts}
-        onNavigateTab={(tab) => setActiveTab(tab as WorkspaceTab)}
-      />
 
       {/* Navigation Tab Bar */}
       <div className="flex items-center gap-1 overflow-x-auto border-b border-zinc-200 pb-px">

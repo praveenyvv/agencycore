@@ -24,7 +24,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getTaskDelayInfo } from '@/lib/rbac';
 import { cn, formatDate } from '@/lib/utils';
-import type { ProjectStatus, ProjectType } from '@/types/agency';
+import { getProjectSimpleStatus, type ProjectStatus, type ProjectType } from '@/types/agency';
 
 const PROJECT_TYPES: Array<'All' | ProjectType> = [
   'All',
@@ -78,37 +78,19 @@ function NewProjectUrlModal({
 export default function CommandCenterPage() {
   const { currentUser, permissions, accessibleProjects, accessibleTasks, todayDate } =
     useAuth();
-  const [pipelineSection, setPipelineSection] = useState<'all' | 'presales' | 'active' | 'drafts'>('all');
   const [typeFilter, setTypeFilter] = useState<'All' | ProjectType>('All');
-  const [statusFilter, setStatusFilter] = useState<'All' | ProjectStatus>(
-    'All'
-  );
   const [newModalOpen, setNewModalOpen] = useState(false);
 
+  // Active projects only on command center; Inactive & Completed are in Drafts
+  const activeProjectsList = useMemo(() => {
+    return accessibleProjects.filter((p) => getProjectSimpleStatus(p) === 'Active');
+  }, [accessibleProjects]);
+
+  const draftsCount = useMemo(() => {
+    return accessibleProjects.filter((p) => getProjectSimpleStatus(p) !== 'Active').length;
+  }, [accessibleProjects]);
+
   const metrics = useMemo(() => {
-    const preSalesCount = accessibleProjects.filter(
-      (p) =>
-        p.status === 'Lead/Discovery' ||
-        p.status === 'Meeting Scheduled' ||
-        p.status === 'Proposal Drafted' ||
-        p.status === 'Proposal Review'
-    ).length;
-
-    const activeProjects = accessibleProjects.filter(
-      (p) =>
-        !p.is_archived &&
-        p.status !== 'Completed/Archived' &&
-        p.status !== 'Draft / On Hold' &&
-        p.status !== 'Lead/Discovery' &&
-        p.status !== 'Meeting Scheduled' &&
-        p.status !== 'Proposal Drafted' &&
-        p.status !== 'Proposal Review'
-    ).length;
-
-    const onHoldDraftsCount = accessibleProjects.filter(
-      (p) => p.status === 'Draft / On Hold'
-    ).length;
-
     let dueToday = 0;
     let overdue = 0;
     for (const task of accessibleTasks) {
@@ -117,36 +99,20 @@ export default function CommandCenterPage() {
       if (info.isDelayed) overdue += 1;
     }
 
-    return { preSalesCount, activeProjects, onHoldDraftsCount, dueToday, overdue };
-  }, [accessibleProjects, accessibleTasks, todayDate]);
+    return {
+      activeProjectsCount: activeProjectsList.length,
+      draftsCount,
+      dueToday,
+      overdue,
+    };
+  }, [activeProjectsList.length, draftsCount, accessibleTasks, todayDate]);
 
   const filteredProjects = useMemo(() => {
-    return accessibleProjects.filter((p) => {
-      // Pipeline section filter
-      if (pipelineSection === 'presales') {
-        const isPre =
-          p.status === 'Lead/Discovery' ||
-          p.status === 'Meeting Scheduled' ||
-          p.status === 'Proposal Drafted' ||
-          p.status === 'Proposal Review';
-        if (!isPre) return false;
-      } else if (pipelineSection === 'active') {
-        const isAct =
-          p.status === 'Intake' ||
-          p.status === 'Scoping' ||
-          p.status === 'In Execution' ||
-          p.status === 'QA & Handover' ||
-          p.status === 'Maintenance';
-        if (!isAct) return false;
-      } else if (pipelineSection === 'drafts') {
-        if (p.status !== 'Draft / On Hold') return false;
-      }
-
+    return activeProjectsList.filter((p) => {
       if (typeFilter !== 'All' && p.project_type !== typeFilter) return false;
-      if (statusFilter !== 'All' && p.status !== statusFilter) return false;
       return true;
     });
-  }, [accessibleProjects, pipelineSection, typeFilter, statusFilter]);
+  }, [activeProjectsList, typeFilter]);
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
@@ -161,7 +127,7 @@ export default function CommandCenterPage() {
           <p className="text-xs text-zinc-500">
             {currentUser.role === 'client'
               ? 'Read-only client portal for inspecting project milestones and approved deliverables.'
-              : 'Live operational health across active retainers, delivery pipelines, and task deadlines.'}
+              : 'Live operational health across active projects. Inactive & completed projects are kept in Drafts.'}
           </p>
         </div>
         {permissions.canCreateProject && (
@@ -179,198 +145,96 @@ export default function CommandCenterPage() {
         />
       </Suspense>
 
-      {/* 4 Crystal-Clear Stage Metrics Cards */}
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        {/* Metric 1: Pre-Sales Pipeline */}
-        <Card
-          onClick={() => setPipelineSection(pipelineSection === 'presales' ? 'all' : 'presales')}
-          className={`cursor-pointer transition-all hover:border-blue-400 ${
-            pipelineSection === 'presales' ? 'border-blue-500 bg-blue-50/40 ring-1 ring-blue-500' : ''
-          }`}
-        >
+      {/* 3 Clean Metrics Cards */}
+      <div className="grid gap-3 sm:grid-cols-3">
+        {/* Metric 1: Active Projects */}
+        <Card className="border-emerald-200 bg-emerald-50/30">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-xs font-semibold text-blue-700">
-              1. Pre-Sales &amp; Discovery
-            </CardTitle>
-            <CalendarClock className="h-4 w-4 text-blue-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold tracking-tight text-blue-900">
-              {metrics.preSalesCount}
-            </div>
-            <p className="mt-0.5 text-[11px] text-blue-700/80">
-              Meetings &amp; Proposals in negotiation
-            </p>
-          </CardContent>
-        </Card>
-
-        {/* Metric 2: Active Working Projects */}
-        <Card
-          onClick={() => setPipelineSection(pipelineSection === 'active' ? 'all' : 'active')}
-          className={`cursor-pointer transition-all hover:border-emerald-400 ${
-            pipelineSection === 'active' ? 'border-emerald-500 bg-emerald-50/40 ring-1 ring-emerald-500' : ''
-          }`}
-        >
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-xs font-semibold text-emerald-700">
-              2. Confirmed &amp; In Execution
+            <CardTitle className="text-xs font-semibold text-emerald-800">
+              Active Projects
             </CardTitle>
             <FolderKanban className="h-4 w-4 text-emerald-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold tracking-tight text-emerald-900">
-              {metrics.activeProjects}
+            <div className="text-2xl font-bold tracking-tight text-emerald-950">
+              {metrics.activeProjectsCount}
             </div>
-            <p className="mt-0.5 text-[11px] text-emerald-700/80">
-              Approved projects actively being delivered
+            <p className="mt-0.5 text-[11px] text-emerald-700">
+              Projects currently in active execution &amp; pre-sales
             </p>
           </CardContent>
         </Card>
 
-        {/* Metric 3: Overdue / Delayed Tasks */}
-        {permissions.canViewInternalDelays ? (
-          <Card
-            className={cn(
-              metrics.overdue > 0 && 'border-red-200 bg-red-50/40'
-            )}
-          >
+        {/* Metric 2: Drafts (Inactive & Completed) */}
+        <Link href="/drafts" className="block group">
+          <Card className="h-full border-zinc-200 hover:border-zinc-400 hover:bg-zinc-50/50 transition-all cursor-pointer">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle
-                className={cn(
-                  'text-xs font-semibold',
-                  metrics.overdue > 0 ? 'text-red-700' : 'text-zinc-500'
-                )}
-              >
-                Overdue Sprints
+              <CardTitle className="text-xs font-semibold text-zinc-700 group-hover:text-zinc-900">
+                Drafts (Inactive &amp; Completed)
               </CardTitle>
-              <AlertTriangle
-                className={cn(
-                  'h-4 w-4',
-                  metrics.overdue > 0 ? 'text-red-600' : 'text-zinc-400'
-                )}
-              />
+              <Wrench className="h-4 w-4 text-zinc-500 group-hover:text-zinc-800" />
             </CardHeader>
             <CardContent>
-              <div
-                className={cn(
-                  'text-2xl font-bold tracking-tight',
-                  metrics.overdue > 0 ? 'text-red-700' : 'text-zinc-900'
-                )}
-              >
-                {metrics.overdue}
+              <div className="text-2xl font-bold tracking-tight text-zinc-900">
+                {metrics.draftsCount}
               </div>
-              <p className="mt-0.5 text-[11px] text-red-600/80">
-                Auto-flagged past hard deadline
-              </p>
-            </CardContent>
-          </Card>
-        ) : (
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-xs font-medium text-zinc-500">
-                Portal Access
-              </CardTitle>
-              <ShieldAlert className="h-4 w-4 text-violet-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold tracking-tight">Client</div>
               <p className="mt-0.5 text-[11px] text-zinc-500">
-                Internal delays &amp; credentials hidden
+                Stored separately outside to avoid confusion →
               </p>
             </CardContent>
           </Card>
-        )}
+        </Link>
 
-        {/* Metric 4: Drafts & On-Hold */}
+        {/* Metric 3: Overdue / Delayed Tasks */}
         <Card
-          onClick={() => setPipelineSection(pipelineSection === 'drafts' ? 'all' : 'drafts')}
-          className={`cursor-pointer transition-all hover:border-purple-400 ${
-            pipelineSection === 'drafts' ? 'border-purple-500 bg-purple-50/40 ring-1 ring-purple-500' : ''
-          }`}
+          className={cn(
+            metrics.overdue > 0 ? 'border-red-200 bg-red-50/40' : 'border-zinc-200 bg-white'
+          )}
         >
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-xs font-semibold text-purple-700">
-              3. On-Hold &amp; Drafts
+            <CardTitle
+              className={cn(
+                'text-xs font-semibold',
+                metrics.overdue > 0 ? 'text-red-700' : 'text-zinc-500'
+              )}
+            >
+              Task Deadlines
             </CardTitle>
-            <Wrench className="h-4 w-4 text-purple-600" />
+            <AlertTriangle
+              className={cn(
+                'h-4 w-4',
+                metrics.overdue > 0 ? 'text-red-600' : 'text-zinc-400'
+              )}
+            />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold tracking-tight text-purple-900">
-              {metrics.onHoldDraftsCount}
+            <div
+              className={cn(
+                'text-2xl font-bold tracking-tight',
+                metrics.overdue > 0 ? 'text-red-700' : 'text-zinc-900'
+              )}
+            >
+              {metrics.overdue} Overdue
             </div>
-            <p className="mt-0.5 text-[11px] text-purple-700/80">
-              Postponed / reminders / never lost
+            <p className="mt-0.5 text-[11px] text-zinc-500">
+              {metrics.dueToday} task(s) due today
             </p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Project Pipeline Overview */}
+      {/* Project Directory */}
       <div className="space-y-3">
         <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-2">
             <h2 className="text-sm font-semibold text-zinc-900">
-              Agency Project Directory &amp; Pipeline
+              Active Projects Directory
             </h2>
             <Badge variant="outline">
-              {pipelineSection === 'all'
-                ? `All Projects (${filteredProjects.length})`
-                : pipelineSection === 'presales'
-                ? `Pre-Sales Discovery (${filteredProjects.length})`
-                : pipelineSection === 'active'
-                ? `Confirmed Active (${filteredProjects.length})`
-                : `Drafts / On-Hold (${filteredProjects.length})`}
+              {filteredProjects.length} Active
             </Badge>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            {/* Quick Filter Pill Buttons */}
-            <div className="flex rounded-lg border border-zinc-200 bg-white p-0.5 text-xs">
-              <button
-                type="button"
-                onClick={() => setPipelineSection('all')}
-                className={`rounded px-2.5 py-1 font-medium cursor-pointer ${
-                  pipelineSection === 'all'
-                    ? 'bg-zinc-900 text-white'
-                    : 'text-zinc-600 hover:text-zinc-900'
-                }`}
-              >
-                All
-              </button>
-              <button
-                type="button"
-                onClick={() => setPipelineSection('presales')}
-                className={`rounded px-2.5 py-1 font-medium cursor-pointer ${
-                  pipelineSection === 'presales'
-                    ? 'bg-blue-600 text-white'
-                    : 'text-blue-700 hover:bg-blue-50'
-                }`}
-              >
-                Pre-Sales (Meetings/Proposals)
-              </button>
-              <button
-                type="button"
-                onClick={() => setPipelineSection('active')}
-                className={`rounded px-2.5 py-1 font-medium cursor-pointer ${
-                  pipelineSection === 'active'
-                    ? 'bg-emerald-600 text-white'
-                    : 'text-emerald-700 hover:bg-emerald-50'
-                }`}
-              >
-                Active Execution
-              </button>
-              <button
-                type="button"
-                onClick={() => setPipelineSection('drafts')}
-                className={`rounded px-2.5 py-1 font-medium cursor-pointer ${
-                  pipelineSection === 'drafts'
-                    ? 'bg-purple-600 text-white'
-                    : 'text-purple-700 hover:bg-purple-50'
-                }`}
-              >
-                Drafts &amp; On-Hold
-              </button>
-            </div>
-
             <select
               value={typeFilter}
               onChange={(e) =>
@@ -388,31 +252,28 @@ export default function CommandCenterPage() {
           </div>
         </div>
 
+        {/* Notice Banner */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 rounded-lg border border-zinc-200 bg-zinc-50/80 px-4 py-2.5 text-xs text-zinc-600">
+          <span>
+            Showing <strong>{filteredProjects.length} Active Projects</strong>.
+          </span>
+          <Link
+            href="/drafts"
+            className="font-medium text-zinc-900 hover:underline flex items-center gap-1"
+          >
+            View Inactive &amp; Completed in Drafts ({metrics.draftsCount}) →
+          </Link>
+        </div>
+
         <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
           {filteredProjects.map((project) => {
-            const isPreSale =
-              project.status === 'Lead/Discovery' ||
-              project.status === 'Meeting Scheduled' ||
-              project.status === 'Proposal Drafted' ||
-              project.status === 'Proposal Review';
-
-            const isOnHold = project.status === 'Draft / On Hold';
-
             return (
               <Link
                 key={project.id}
                 href={`/projects/${project.id}`}
                 className="group block"
               >
-                <Card
-                  className={`h-full transition-all hover:border-zinc-400 hover:shadow-xs ${
-                    isPreSale
-                      ? 'border-blue-200 bg-blue-50/15'
-                      : isOnHold
-                      ? 'border-purple-200 bg-purple-50/20'
-                      : 'border-zinc-200 bg-white'
-                  }`}
-                >
+                <Card className="h-full border-zinc-200 bg-white transition-all hover:border-zinc-400 hover:shadow-xs">
                   <CardHeader className="pb-2">
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex items-center gap-2">
@@ -421,24 +282,8 @@ export default function CommandCenterPage() {
                           {project.project_type}
                         </span>
                       </div>
-                      <Badge
-                        variant={
-                          isPreSale
-                            ? 'info'
-                            : isOnHold
-                            ? 'purple'
-                            : project.status === 'In Execution'
-                            ? 'success'
-                            : project.status === 'QA & Handover'
-                            ? 'warning'
-                            : 'secondary'
-                        }
-                      >
-                        {isPreSale
-                          ? `PRE-SALES: ${project.status}`
-                          : isOnHold
-                          ? 'ON-HOLD / DRAFT'
-                          : `ACTIVE: ${project.status}`}
+                      <Badge variant="success">
+                        ● Active
                       </Badge>
                     </div>
                     <CardTitle className="pt-2 flex items-center justify-between text-sm group-hover:text-zinc-700">
@@ -454,30 +299,9 @@ export default function CommandCenterPage() {
                       </span>
                     </div>
 
-                    {/* Pre-Sales vs Active Clarity Indicator */}
-                    <div
-                      className={`rounded px-2 py-1 text-[11px] font-medium ${
-                        isPreSale
-                          ? 'bg-blue-100/70 text-blue-900'
-                          : isOnHold
-                          ? 'bg-purple-100/70 text-purple-900'
-                          : 'bg-emerald-100/70 text-emerald-900'
-                      }`}
-                    >
-                      {isPreSale
-                        ? '⚡ In Meetings / Proposal Phase'
-                        : isOnHold
-                        ? `⏸ On Hold: ${project.draft_reason || 'Awaiting response'}`
-                        : '🚀 Confirmed Deal In Delivery'}
-                    </div>
-
                     <div className="flex items-center justify-between border-t border-zinc-100 pt-2 text-[11px] text-zinc-500">
                       <span>Target: {formatDate(project.target_end_date)}</span>
-                      {project.is_archived && (
-                        <span className="inline-flex items-center gap-1 text-zinc-600 font-medium">
-                          <Lock className="h-3 w-3" /> Archived
-                        </span>
-                      )}
+                      <span>Start: {formatDate(project.start_date)}</span>
                     </div>
                   </CardContent>
                 </Card>

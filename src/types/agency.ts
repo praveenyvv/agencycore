@@ -6,7 +6,13 @@ export type ProjectType =
   | 'Mobile App'
   | 'Digital Marketing';
 
+export type SimpleProjectStatus = 'Active' | 'Inactive' | 'Completed';
+
 export type ProjectStatus =
+  // Simple founder statuses
+  | 'Active'
+  | 'Inactive'
+  | 'Completed'
   // Pre-sales lifecycle
   | 'Lead/Discovery'
   | 'Meeting Scheduled'
@@ -20,6 +26,23 @@ export type ProjectStatus =
   | 'QA & Handover'
   | 'Completed/Archived'
   | 'Maintenance';
+
+export function getProjectSimpleStatus(project: {
+  status: ProjectStatus | string;
+  is_archived?: boolean;
+}): SimpleProjectStatus {
+  if (project.status === 'Active') return 'Active';
+  if (project.status === 'Inactive') return 'Inactive';
+  if (project.status === 'Completed') return 'Completed';
+
+  if (project.is_archived || project.status === 'Completed/Archived') {
+    return 'Completed';
+  }
+  if (project.status === 'Draft / On Hold') {
+    return 'Inactive';
+  }
+  return 'Active';
+}
 
 export type PipelineStageCategory =
   | 'presales' // Leads, Meetings, Proposals

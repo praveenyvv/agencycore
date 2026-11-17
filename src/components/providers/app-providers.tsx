@@ -27,6 +27,7 @@ import type {
   ProjectMeeting,
   ProjectProposal,
   ProjectRequirement,
+  ProjectStatus,
   ProjectType,
   ProposalOutcome,
   ProposalPricingItem,
@@ -207,6 +208,7 @@ interface AuthContextValue {
   updateProposal: (proposalId: string, updates: Partial<ProjectProposal>) => void;
   deleteProposal: (proposalId: string) => void;
   recordProposalOutcome: (input: RecordProposalOutcomeInput) => void;
+  updateProjectStatus: (projectId: string, status: ProjectStatus) => void;
   reopenDraftProject: (projectId: string, targetStage: 'Meeting Scheduled' | 'Proposal Review' | 'Intake' | 'In Execution', note?: string) => void;
   uploadDocument: (input: UploadDocumentInput) => ProjectDocument;
   toggleDocumentSignOff: (docId: string) => void;
@@ -980,6 +982,36 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
     [appendLog]
   );
 
+  const updateProjectStatus = useCallback(
+    (projectId: string, newStatus: ProjectStatus) => {
+      const now = new Date().toISOString();
+      const isCompleted = newStatus === 'Completed' || newStatus === 'Completed/Archived';
+      setProjects((prev) =>
+        prev.map((p) =>
+          p.id === projectId
+            ? {
+                ...p,
+                status: newStatus,
+                is_archived: isCompleted,
+                actual_end_date: isCompleted ? p.actual_end_date || now.split('T')[0] : p.actual_end_date,
+                updated_at: now,
+              }
+            : p
+        )
+      );
+
+      appendLog(
+        projectId,
+        'PROJECT_STATUS_CHANGED',
+        'project',
+        projectId,
+        `Project status changed to "${newStatus}"`,
+        { status: newStatus }
+      );
+    },
+    [appendLog]
+  );
+
   // 6. Documents Management (Mandatory proposals, contracts, SOWs, NDAs)
   const uploadDocument = useCallback(
     (input: UploadDocumentInput): ProjectDocument => {
@@ -1641,6 +1673,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
     updateProposal,
     deleteProposal,
     recordProposalOutcome,
+    updateProjectStatus,
     reopenDraftProject,
     uploadDocument,
     toggleDocumentSignOff,
