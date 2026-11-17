@@ -391,9 +391,9 @@ export function TabClientTalk({ project }: { project: Project }) {
             </div>
 
             <form onSubmit={handleSave} className="mt-4 space-y-3.5">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="text-xs font-medium text-zinc-700">
+              <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
+                <div className="space-y-1 sm:col-span-4">
+                  <label className="block text-xs font-medium text-zinc-700">
                     Communication Type *
                   </label>
                   <select
@@ -408,9 +408,9 @@ export function TabClientTalk({ project }: { project: Project }) {
                   </select>
                 </div>
 
-                <div>
+                <div className="sm:col-span-8">
                   <ModernDateTimePicker
-                    label="Date &amp; Time"
+                    label="Date & Time"
                     required
                     value={talkDate}
                     onChange={(val) => setTalkDate(val)}

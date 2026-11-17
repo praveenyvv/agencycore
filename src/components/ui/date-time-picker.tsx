@@ -71,10 +71,10 @@ export function ModernDateTimePicker({
         </label>
       )}
 
-      <div className="grid grid-cols-12 gap-1.5 w-full">
+      <div className="flex items-center gap-2 w-full">
         {/* Date Selector */}
-        <div className="relative col-span-7 min-w-0">
-          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2 text-zinc-400">
+        <div className="relative flex-1 min-w-0">
+          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2.5 text-zinc-400">
             <CalendarIcon className="h-3.5 w-3.5" />
           </div>
           <Input
@@ -82,20 +82,20 @@ export function ModernDateTimePicker({
             required={required}
             value={datePart}
             onChange={(e) => handleDateChange(e.target.value)}
-            className="pl-7 pr-1 h-9 text-xs font-medium bg-white w-full"
+            className="pl-8 pr-2 h-9 text-xs font-medium bg-white w-full"
           />
         </div>
 
         {/* Time Selector */}
-        <div className="relative col-span-5 min-w-0">
-          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2 text-zinc-400">
+        <div className="relative w-32 shrink-0">
+          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2.5 text-zinc-400">
             <Clock className="h-3.5 w-3.5" />
           </div>
           <Input
             type="time"
             value={timePart}
             onChange={(e) => handleTimeChange(e.target.value)}
-            className="pl-7 pr-1 h-9 text-xs font-mono bg-white w-full"
+            className="pl-8 pr-2 h-9 text-xs font-mono bg-white w-full"
           />
         </div>
       </div>
