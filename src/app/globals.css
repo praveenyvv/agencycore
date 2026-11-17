@@ -1,27 +1,255 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f5f6fa;
-  --foreground: #111827;
+  /* Colors */
+  --bg: #f5f6fa;
+  --sidebar-bg: #ffffff;
+  --header-bg: #ffffff;
+  --card-bg: #ffffff;
+  --border: #e5e7eb;
+  --text: #111827;
+  --text2: #6b7280;
+  --text3: #9ca3af;
+  --accent: #4361ee;
+  --accent2: #3451d1;
+  --accent-bg: rgba(67, 97, 238, 0.08);
+
+  /* Status Colors */
+  --green: #10b981;
+  --green-bg: #ecfdf5;
+  --amber: #f59e0b;
+  --amber-bg: #fffbeb;
+  --red: #ef4444;
+  --red-bg: #fef2f2;
+  --purple: #8b5cf6;
+  --purple-bg: #f5f3ff;
+  --cyan: #06b6d4;
+  --cyan-bg: #ecfeff;
+  --pink: #ec4899;
+  --pink-bg: #fdf2f8;
+
+  /* Dimensions & Radius */
+  --sidebar-w: 232px;
+  --header-h: 60px;
+  --radius: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 14px;
+  --radius-pill: 20px;
+
+  /* Shadows */
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+
+  /* Theme tokens */
+  --background: var(--bg);
+  --foreground: var(--text);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans), 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-mono: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --font-sans: 'Inter', var(--font-sans), system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', var(--font-mono), monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  background-color: #f5f6fa;
+  color: #111827;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Thin Scrollbars */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 2px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+/* Page entrance animation */
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-sans), 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  -webkit-font-smoothing: antialiased;
+@keyframes dropIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.animate-fade-up {
+  animation: fadeUp 180ms ease forwards;
+}
+
+.animate-drop-in {
+  animation: dropIn 150ms ease forwards;
+}
+
+/* Design System Utility Classes */
+.btn-primary {
+  background: var(--accent);
+  color: #ffffff;
+  box-shadow: 0 2px 6px rgba(67, 97, 238, 0.25);
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 150ms;
+}
+.btn-primary:hover {
+  background: var(--accent2);
+}
+.btn-primary:active {
+  transform: scale(0.97);
+}
+
+.btn-ghost {
+  background: #ffffff;
+  color: var(--text2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 150ms;
+}
+.btn-ghost:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-bg);
+}
+.btn-ghost:active {
+  transform: scale(0.97);
+}
+
+.btn-danger {
+  background: var(--red-bg);
+  color: var(--red);
+  border: 1px solid #fca5a5;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 150ms;
+}
+.btn-danger:hover {
+  background: #fee2e2;
+}
+.btn-danger:active {
+  transform: scale(0.97);
+}
+
+/* Stat Cards */
+.dash-stat {
+  border-radius: 14px;
+  padding: 18px 16px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  box-shadow: var(--shadow);
+}
+.stat-purple {
+  background: #eef0fd;
+}
+.stat-purple .ds-label {
+  color: #4361ee;
+}
+.stat-purple .ds-icon {
+  background: rgba(67, 97, 238, 0.13);
+  color: #4361ee;
+}
+
+.stat-orange {
+  background: #fff4e6;
+}
+.stat-orange .ds-label {
+  color: #c2410c;
+}
+.stat-orange .ds-icon {
+  background: rgba(245, 158, 11, 0.15);
+  color: #d97706;
+}
+
+.stat-green {
+  background: #edfcf3;
+}
+.stat-green .ds-label {
+  color: #059669;
+}
+.stat-green .ds-icon {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+}
+
+.stat-blue {
+  background: #eef4ff;
+}
+.stat-blue .ds-label {
+  color: #1d4ed8;
+}
+.stat-blue .ds-icon {
+  background: rgba(37, 99, 235, 0.12);
+  color: #2563eb;
+}
+
+/* Badges */
+.badge-green { background: #d1fae5; color: #065f46; }
+.badge-amber { background: #fef3c7; color: #92400e; }
+.badge-red   { background: #fee2e2; color: #991b1b; }
+.badge-blue  { background: #dbeafe; color: #1d4ed8; }
+.badge-purple{ background: #ede9fe; color: #5b21b6; }
+.badge-cyan  { background: #cffafe; color: #155e75; }
+.badge-gray  { background: #f3f4f6; color: #4b5563; }
+.badge-orange{ background: #ffedd5; color: #c2410c; }
+.badge-pink  { background: #fce7f3; color: #9d174d; }
+
+/* Segmented Tabs */
+.tabs-pill-container {
+  display: inline-flex;
+  gap: 2px;
+  background: #f3f4f6;
+  border-radius: 9px;
+  padding: 3px;
+}
+.tab-pill {
+  padding: 6px 14px;
+  border-radius: 7px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 150ms;
+}
+.tab-pill.active {
+  background: #ffffff;
+  color: #4361ee;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  font-weight: 600;
 }

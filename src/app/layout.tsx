@@ -20,9 +20,9 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'AgencyCore — Agency Operations & Project Lifecycle Hub',
+  title: 'HolaBusiness — Operations & Project Lifecycle Hub',
   description:
-    'Internal agency operations hub for client intake, encrypted credentials, task execution, and immutable project archives.',
+    'Internal operations hub for client intake, encrypted credentials, task execution, and project workflows.',
 };
 
 export default function RootLayout({

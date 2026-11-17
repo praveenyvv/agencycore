@@ -15,6 +15,7 @@ import {
   Lock,
   MessageCircle,
   MessageSquare,
+  RotateCcw,
   ShieldAlert,
   Users,
 } from 'lucide-react';
@@ -31,6 +32,7 @@ import { TabExecutionBoard } from '@/components/workspace/tab-execution-board';
 import { TabMeetingsPreSales } from '@/components/workspace/tab-meetings-presales';
 import { TabOverviewScope } from '@/components/workspace/tab-overview-scope';
 import { TabProposalBuilder } from '@/components/workspace/tab-proposal-builder';
+import { TabRenewals } from '@/components/workspace/tab-renewals';
 import { TabTeamContributions } from '@/components/workspace/tab-team-contributions';
 import { cn, formatDate } from '@/lib/utils';
 import { getProjectSimpleStatus, type ProjectStatus } from '@/types/agency';
@@ -44,16 +46,30 @@ type WorkspaceTab =
   | 'documents'
   | 'assets'
   | 'vault'
+  | 'renewals'
   | 'board'
   | 'contributions'
   | 'audit';
 
 export default function ProjectWorkspacePage() {
   const params = useParams<{ id: string }>();
-  const { accessibleProjects, currentUser, permissions, updateProjectStatus } = useAuth();
+  const { accessibleProjects, currentUser, permissions, renewals, updateProjectStatus } = useAuth();
   const [activeTab, setActiveTab] = useState<WorkspaceTab>('overview');
 
   const project = accessibleProjects.find((p) => p.id === params.id);
+
+  const projectUpcomingRenewals = useMemo(() => {
+    if (!project) return 0;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return renewals.filter((r) => {
+      if (r.project_id !== project.id || r.renewed) return false;
+      const target = new Date(r.renewal_date);
+      target.setHours(0, 0, 0, 0);
+      const diff = Math.ceil((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+      return diff <= 7;
+    }).length;
+  }, [renewals, project]);
 
   const tabs = useMemo(() => {
     const isClient = currentUser.role === 'client';
@@ -108,26 +124,21 @@ export default function ProjectWorkspacePage() {
         visible: permissions.canViewCredentials,
       },
       {
+        id: 'renewals',
+        label: 'Renewals',
+        icon: RotateCcw,
+        visible: !isClient,
+        badge: projectUpcomingRenewals > 0 ? String(projectUpcomingRenewals) : undefined,
+      },
+      {
         id: 'board',
         label: isClient ? 'Approved Deliverables' : 'Task Board',
         icon: Kanban,
         visible: true,
       },
-      {
-        id: 'contributions',
-        label: 'Team Contributions',
-        icon: Users,
-        visible: !isClient,
-      },
-      {
-        id: 'audit',
-        label: 'Audit Timeline',
-        icon: History,
-        visible: true,
-      },
     ];
     return allTabs.filter((t) => t.visible);
-  }, [permissions.canViewCredentials, currentUser.role]);
+  }, [permissions.canViewCredentials, currentUser.role, projectUpcomingRenewals]);
 
   if (!project) {
     return (
@@ -209,8 +220,8 @@ export default function ProjectWorkspacePage() {
         </div>
       </div>
 
-      {/* Navigation Tab Bar */}
-      <div className="flex items-center gap-1 overflow-x-auto border-b border-zinc-200 pb-px">
+      {/* Navigation Tab Bar (Segmented Control Pill Container) */}
+      <div className="flex items-center gap-1 overflow-x-auto bg-[#f3f4f6] p-[3px] rounded-[9px] w-fit max-w-full">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = resolvedTab === tab.id;
@@ -220,14 +231,19 @@ export default function ProjectWorkspacePage() {
               type="button"
               onClick={() => setActiveTab(tab.id)}
               className={cn(
-                'flex items-center gap-1.5 whitespace-nowrap border-b-2 px-3 py-2 text-xs font-medium transition-colors cursor-pointer',
+                'flex items-center gap-1.5 whitespace-nowrap px-3.5 py-1.5 rounded-[7px] text-[12.5px] font-medium transition-all cursor-pointer',
                 isActive
-                  ? 'border-zinc-900 text-zinc-900 font-semibold'
-                  : 'border-transparent text-zinc-500 hover:border-zinc-300 hover:text-zinc-800'
+                  ? 'bg-white text-[#4361ee] font-semibold shadow-[0_1px_3px_rgba(0,0,0,0.06)]'
+                  : 'text-[#6b7280] hover:text-[#111827] hover:bg-white/60'
               )}
             >
               <Icon className="h-3.5 w-3.5" />
-              {tab.label}
+              <span>{tab.label}</span>
+              {tab.badge && (
+                <span className="ml-1 rounded-[10px] bg-[#ef4444] text-white px-1.5 py-0.2 text-[10px] font-bold">
+                  {tab.badge}
+                </span>
+              )}
             </button>
           );
         })}
@@ -243,11 +259,8 @@ export default function ProjectWorkspacePage() {
         {resolvedTab === 'documents' && <TabDocuments project={project} />}
         {resolvedTab === 'assets' && <TabAssetRepository project={project} />}
         {resolvedTab === 'vault' && <TabCredentialVault project={project} />}
+        {resolvedTab === 'renewals' && <TabRenewals project={project} />}
         {resolvedTab === 'board' && <TabExecutionBoard project={project} />}
-        {resolvedTab === 'contributions' && (
-          <TabTeamContributions project={project} />
-        )}
-        {resolvedTab === 'audit' && <TabAuditTimeline project={project} />}
       </div>
     </div>
   );

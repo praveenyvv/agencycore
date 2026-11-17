@@ -23,7 +23,7 @@ export function generateProposalPdf(
   doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(10);
-  doc.text('AGENCYCORE · PROJECT SCOPE & PROPOSAL SPECIFICATION', margin, 11);
+  doc.text('HOLABUSINESS · PROJECT SCOPE & PROPOSAL SPECIFICATION', margin, 11);
 
   // Document Title & Project Name
   cursorY = 28;

@@ -93,141 +93,149 @@ export function NewProjectModal({ open, onClose }: NewProjectModalProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-xl rounded-xl border border-zinc-200 bg-white shadow-2xl overflow-hidden">
-        <div className="flex items-center justify-between border-b border-zinc-100 px-5 py-3.5">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-[3px] p-4 animate-fade-up">
+      <div className="w-full max-w-[620px] rounded-[14px] border border-[#e5e7eb] bg-white shadow-[0_4px_16px_rgba(0,0,0,0.08)] overflow-hidden">
+        {/* Sticky Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[#e5e7eb] bg-white sticky top-0 z-10">
           <div className="flex items-center gap-2">
-            <FolderPlus className="h-4 w-4 text-zinc-700" />
-            <h2 className="text-sm font-semibold text-zinc-900">
+            <FolderPlus className="h-4 w-4 text-[#4361ee]" />
+            <h2 className="text-[15px] font-bold text-[#111827]">
               New Project &amp; Requirements Intake
             </h2>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="rounded p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 cursor-pointer"
+            className="w-7 h-7 rounded-[6px] text-[#6b7280] hover:bg-[#f3f4f6] hover:text-[#111827] flex items-center justify-center cursor-pointer"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="p-5 space-y-4 max-h-[82vh] overflow-y-auto">
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-zinc-700">
-                Project Title *
-              </label>
-              <Input
-                placeholder="e.g. NovaPay Mobile Wallet"
-                {...register('title')}
-              />
-              {errors.title && (
-                <p className="text-[11px] text-red-600">{errors.title.message}</p>
-              )}
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <div className="p-6 space-y-4 max-h-[76vh] overflow-y-auto">
+            <div className="grid gap-3.5 sm:grid-cols-2">
+              <div>
+                <label className="block text-[12px] font-medium text-[#6b7280] mb-1">
+                  Project Title *
+                </label>
+                <Input
+                  placeholder="e.g. NovaPay Mobile Wallet"
+                  className="h-[36px] text-[13px]"
+                  {...register('title')}
+                />
+                {errors.title && (
+                  <p className="text-[11px] text-[#ef4444] mt-1">{errors.title.message}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-[12px] font-medium text-[#6b7280] mb-1">
+                  Client Name *
+                </label>
+                <Input
+                  placeholder="e.g. NovaPay Inc."
+                  className="h-[36px] text-[13px]"
+                  {...register('client_name')}
+                />
+                {errors.client_name && (
+                  <p className="text-[11px] text-[#ef4444] mt-1">
+                    {errors.client_name.message}
+                  </p>
+                )}
+              </div>
             </div>
 
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-zinc-700">
-                Client Name *
+            <div className="grid gap-3.5 sm:grid-cols-2">
+              <div>
+                <label className="block text-[12px] font-medium text-[#6b7280] mb-1">
+                  Project Type *
+                </label>
+                <select
+                  {...register('project_type')}
+                  className="flex h-[36px] w-full rounded-[8px] border border-[#e5e7eb] bg-white px-3 text-[13px] text-[#111827] focus:border-[#4361ee] focus:outline-none"
+                >
+                  {PROJECT_TYPES.map((t) => (
+                    <option key={t} value={t}>
+                      {t}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-[12px] font-medium text-[#6b7280] mb-1">
+                  Initial Pipeline Stage *
+                </label>
+                <select
+                  {...register('initial_stage')}
+                  className="flex h-[36px] w-full rounded-[8px] border border-[#e5e7eb] bg-white px-3 text-[13px] text-[#111827] focus:border-[#4361ee] focus:outline-none"
+                >
+                  <option value="Lead/Discovery">Lead / Initial Discovery</option>
+                  <option value="Meeting Scheduled">Meeting Scheduled</option>
+                  <option value="Intake">Intake (Confirmed Deal)</option>
+                  <option value="In Execution">Directly In Execution</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-[12px] font-medium text-[#6b7280] mb-1">
+                Initial Scope Summary *
               </label>
-              <Input
-                placeholder="e.g. NovaPay Inc."
-                {...register('client_name')}
+              <textarea
+                rows={3}
+                placeholder="Describe the core project objectives, technical stack, and success criteria..."
+                className="w-full rounded-[8px] border border-[#e5e7eb] bg-white px-3 py-2 text-[13px] text-[#111827] placeholder:text-[#9ca3af] focus:border-[#4361ee] focus:outline-none focus:ring-3 focus:ring-[rgba(67,97,238,0.1)]"
+                {...register('scope_summary')}
               />
-              {errors.client_name && (
-                <p className="text-[11px] text-red-600">
-                  {errors.client_name.message}
+              {errors.scope_summary && (
+                <p className="text-[11px] text-[#ef4444] mt-1">
+                  {errors.scope_summary.message}
                 </p>
               )}
             </div>
-          </div>
 
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-zinc-700">
-                Project Type *
-              </label>
-              <select
-                {...register('project_type')}
-                className="flex h-9 w-full rounded-md border border-zinc-200 bg-white px-2.5 text-xs text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900/15"
-              >
-                {PROJECT_TYPES.map((t) => (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
-                ))}
-              </select>
+            <div className="grid gap-3.5 sm:grid-cols-2">
+              <div>
+                <label className="block text-[12px] font-medium text-[#6b7280] mb-1">
+                  Initial Deliverables (one per line)
+                </label>
+                <textarea
+                  rows={3}
+                  className="w-full rounded-[8px] border border-[#e5e7eb] bg-white px-3 py-2 text-[12.5px] text-[#111827] placeholder:text-[#9ca3af] focus:border-[#4361ee] focus:outline-none"
+                  {...register('deliverables_text')}
+                />
+              </div>
+
+              <div>
+                <label className="block text-[12px] font-medium text-[#6b7280] mb-1">
+                  Out-of-Scope Boundaries
+                </label>
+                <textarea
+                  rows={3}
+                  placeholder="Explicitly list what is excluded from this SOW..."
+                  className="w-full rounded-[8px] border border-[#e5e7eb] bg-white px-3 py-2 text-[12.5px] text-[#111827] placeholder:text-[#9ca3af] focus:border-[#4361ee] focus:outline-none"
+                  {...register('out_of_scope_notes')}
+                />
+              </div>
             </div>
 
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-zinc-700">
-                Initial Pipeline Stage *
-              </label>
-              <select
-                {...register('initial_stage')}
-                className="flex h-9 w-full rounded-md border border-zinc-200 bg-white px-2.5 text-xs text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900/15"
-              >
-                <option value="Lead/Discovery">Lead / Initial Discovery</option>
-                <option value="Meeting Scheduled">Meeting Scheduled</option>
-                <option value="Intake">Intake (Confirmed Deal)</option>
-                <option value="In Execution">Directly In Execution</option>
-              </select>
+            <div className="rounded-[8px] border border-[rgba(67,97,238,0.18)] bg-[#eef0fd] px-3.5 py-2.5 text-[11.5px] text-[#4361ee] font-medium">
+              Initializing this project will automatically provision the 5 Asset Repository folders, Credential Vault, and the 5-column Kanban Board.
             </div>
           </div>
 
-          <div className="space-y-1">
-            <label className="text-xs font-medium text-zinc-700">
-              Initial Scope Summary *
-            </label>
-            <textarea
-              rows={3}
-              placeholder="Describe the core project objectives, technical stack, and success criteria..."
-              className="w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900/15"
-              {...register('scope_summary')}
-            />
-            {errors.scope_summary && (
-              <p className="text-[11px] text-red-600">
-                {errors.scope_summary.message}
-              </p>
-            )}
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-zinc-700">
-                Initial Deliverables (one per line)
-              </label>
-              <textarea
-                rows={3}
-                className="w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-xs text-zinc-900 placeholder:text-zinc-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900/15"
-                {...register('deliverables_text')}
-              />
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-zinc-700">
-                Out-of-Scope Boundaries
-              </label>
-              <textarea
-                rows={3}
-                placeholder="Explicitly list what is excluded from this SOW..."
-                className="w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-xs text-zinc-900 placeholder:text-zinc-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900/15"
-                {...register('out_of_scope_notes')}
-              />
-            </div>
-          </div>
-
-          <div className="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-[11px] text-zinc-600">
-            Initializing this project will automatically provision the 5 Asset
-            Repository folders, an empty AES-256 Credential Vault, and the
-            5-column Execution Kanban Board.
-          </div>
-
-          <div className="flex items-center justify-end gap-2 border-t border-zinc-100 pt-3">
-            <Button type="button" variant="outline" onClick={onClose}>
+          {/* Sticky Footer */}
+          <div className="px-6 py-3.5 border-t border-[#e5e7eb] bg-[#fafafa] flex justify-end gap-2 sticky bottom-0">
+            <Button type="button" variant="outline" onClick={onClose} className="h-[36px] px-4 text-[13px]">
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+              className="h-[36px] px-5 rounded-[8px] bg-[#4361ee] hover:bg-[#3451d1] text-white text-[13px]"
+            >
               Create Project Workspace
             </Button>
           </div>

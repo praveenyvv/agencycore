@@ -6,14 +6,15 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import {
   AlertTriangle,
   ArrowUpRight,
-  CalendarClock,
+  CalendarCheck,
   FolderKanban,
+  FolderOpen,
   Globe,
   Layers,
   Lock,
   Megaphone,
   Plus,
-  ShieldAlert,
+  RotateCcw,
   Smartphone,
   Wrench,
 } from 'lucide-react';
@@ -21,7 +22,6 @@ import { NewProjectModal } from '@/components/projects/new-project-modal';
 import { useAuth } from '@/components/providers/app-providers';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getTaskDelayInfo } from '@/lib/rbac';
 import { cn, formatDate } from '@/lib/utils';
 import { getProjectSimpleStatus, type ProjectStatus, type ProjectType } from '@/types/agency';
@@ -34,21 +34,11 @@ const PROJECT_TYPES: Array<'All' | ProjectType> = [
   'Digital Marketing',
 ];
 
-const PROJECT_STATUSES: Array<'All' | ProjectStatus> = [
-  'All',
-  'Intake',
-  'Scoping',
-  'In Execution',
-  'QA & Handover',
-  'Completed/Archived',
-  'Maintenance',
-];
-
 const TYPE_ICON: Record<ProjectType, React.ReactNode> = {
-  Website: <Globe className="h-4 w-4 text-blue-600" />,
-  'Web App': <Layers className="h-4 w-4 text-violet-600" />,
-  'Mobile App': <Smartphone className="h-4 w-4 text-emerald-600" />,
-  'Digital Marketing': <Megaphone className="h-4 w-4 text-amber-600" />,
+  Website: <Globe className="h-4 w-4 text-[#4361ee]" />,
+  'Web App': <Layers className="h-4 w-4 text-[#8b5cf6]" />,
+  'Mobile App': <Smartphone className="h-4 w-4 text-[#10b981]" />,
+  'Digital Marketing': <Megaphone className="h-4 w-4 text-[#f59e0b]" />,
 };
 
 function NewProjectUrlModal({
@@ -75,13 +65,13 @@ function NewProjectUrlModal({
   );
 }
 
-export default function CommandCenterPage() {
-  const { currentUser, permissions, accessibleProjects, accessibleTasks, todayDate } =
+export default function DashboardPage() {
+  const { currentUser, permissions, accessibleProjects, accessibleTasks, renewals, todayDate } =
     useAuth();
   const [typeFilter, setTypeFilter] = useState<'All' | ProjectType>('All');
   const [newModalOpen, setNewModalOpen] = useState(false);
 
-  // Active projects only on command center; Inactive & Completed are in Drafts
+  // Active projects only on dashboard; Inactive & Completed are in Drafts
   const activeProjectsList = useMemo(() => {
     return accessibleProjects.filter((p) => getProjectSimpleStatus(p) === 'Active');
   }, [accessibleProjects]);
@@ -99,13 +89,33 @@ export default function CommandCenterPage() {
       if (info.isDelayed) overdue += 1;
     }
 
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    const upcomingRenewals = renewals.filter((r) => {
+      if (r.renewed) return false;
+      const d = new Date(r.renewal_date);
+      d.setHours(0, 0, 0, 0);
+      const diff = Math.ceil((d.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+      return diff >= 0 && diff <= 7;
+    }).length;
+
+    const overdueRenewals = renewals.filter((r) => {
+      if (r.renewed) return false;
+      const d = new Date(r.renewal_date);
+      d.setHours(0, 0, 0, 0);
+      const diff = Math.ceil((d.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+      return diff < 0;
+    }).length;
+
     return {
       activeProjectsCount: activeProjectsList.length,
       draftsCount,
       dueToday,
       overdue,
+      upcomingRenewals,
+      overdueRenewals,
     };
-  }, [activeProjectsList.length, draftsCount, accessibleTasks, todayDate]);
+  }, [activeProjectsList.length, draftsCount, accessibleTasks, todayDate, renewals]);
 
   const filteredProjects = useMemo(() => {
     return activeProjectsList.filter((p) => {
@@ -115,24 +125,27 @@ export default function CommandCenterPage() {
   }, [activeProjectsList, typeFilter]);
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+    <div className="space-y-6">
+      {/* 1. Page Header Row: Title (20px / 700) + Subtitle (13px) + Action Buttons */}
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-lg font-semibold tracking-tight text-zinc-900">
+          <h1 className="text-[20px] font-bold text-[#111827] tracking-tight">
             {currentUser.role === 'client'
-              ? `Welcome, ${currentUser.name}`
-              : 'Agency Command Center'}
+              ? `Welcome back, ${currentUser.name}`
+              : 'HolaBusiness Dashboard'}
           </h1>
-          <p className="text-xs text-zinc-500">
+          <p className="text-[13px] text-[#6b7280] mt-0.5">
             {currentUser.role === 'client'
-              ? 'Read-only client portal for inspecting project milestones and approved deliverables.'
-              : 'Live operational health across active projects. Inactive & completed projects are kept in Drafts.'}
+              ? 'Client portal for inspecting project milestones and approved deliverables.'
+              : 'Live operational health across active projects. Inactive & completed projects are in Drafts.'}
           </p>
         </div>
         {permissions.canCreateProject && (
-          <Button size="sm" onClick={() => setNewModalOpen(true)}>
-            <Plus className="h-3.5 w-3.5" />
+          <Button
+            onClick={() => setNewModalOpen(true)}
+            className="h-[36px] px-4 rounded-[8px] bg-[#4361ee] hover:bg-[#3451d1] text-white shadow-[0_2px_6px_rgba(67,97,238,0.25)] text-[13px] font-medium gap-1.5"
+          >
+            <Plus className="h-4 w-4" />
             New Project
           </Button>
         )}
@@ -145,102 +158,108 @@ export default function CommandCenterPage() {
         />
       </Suspense>
 
-      {/* 3 Clean Metrics Cards */}
-      <div className="grid gap-3 sm:grid-cols-3">
-        {/* Metric 1: Active Projects */}
-        <Card className="border-emerald-200 bg-emerald-50/30">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-xs font-semibold text-emerald-800">
-              Active Projects
-            </CardTitle>
-            <FolderKanban className="h-4 w-4 text-emerald-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold tracking-tight text-emerald-950">
+      {/* 2. Stat Cards (Dashboard): 4 across, radius 14px, padding 18px 16px, pastel tinted backgrounds */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {/* Stat 1: Active Projects (Purple #eef0fd) */}
+        <div className="rounded-[14px] p-[18px_16px] bg-[#eef0fd] flex items-start justify-between shadow-[0_1px_3px_rgba(0,0,0,0.06),0_1px_2px_rgba(0,0,0,0.04)]">
+          <div>
+            <div className="text-[13px] font-semibold text-[#4361ee]">Active Projects</div>
+            <div className="text-[32px] font-bold text-[#111827] leading-none my-1.5">
               {metrics.activeProjectsCount}
             </div>
-            <p className="mt-0.5 text-[11px] text-emerald-700">
-              Projects currently in active execution &amp; pre-sales
-            </p>
-          </CardContent>
-        </Card>
+            <div className="text-[12px] text-[#6b7280]">
+              In active execution
+            </div>
+          </div>
+          <div className="w-[46px] h-[46px] rounded-[12px] bg-[rgba(67,97,238,0.13)] text-[#4361ee] flex items-center justify-center shrink-0">
+            <FolderKanban className="h-5 w-5" />
+          </div>
+        </div>
 
-        {/* Metric 2: Drafts (Inactive & Completed) */}
+        {/* Stat 2: Task Deadlines (Orange #fff4e6) */}
+        <div className="rounded-[14px] p-[18px_16px] bg-[#fff4e6] flex items-start justify-between shadow-[0_1px_3px_rgba(0,0,0,0.06),0_1px_2px_rgba(0,0,0,0.04)]">
+          <div>
+            <div className="text-[13px] font-semibold text-[#c2410c]">Task Deadlines</div>
+            <div className="text-[32px] font-bold text-[#111827] leading-none my-1.5">
+              {metrics.overdue}
+            </div>
+            <div className="text-[12px] text-[#6b7280]">
+              {metrics.dueToday} task(s) due today
+            </div>
+          </div>
+          <div className="w-[46px] h-[46px] rounded-[12px] bg-[rgba(245,158,11,0.15)] text-[#d97706] flex items-center justify-center shrink-0">
+            <AlertTriangle className="h-5 w-5" />
+          </div>
+        </div>
+
+        {/* Stat 3: Upcoming Renewals (Green #edfcf3) */}
+        <div className="rounded-[14px] p-[18px_16px] bg-[#edfcf3] flex items-start justify-between shadow-[0_1px_3px_rgba(0,0,0,0.06),0_1px_2px_rgba(0,0,0,0.04)]">
+          <div>
+            <div className="text-[13px] font-semibold text-[#059669]">Upcoming Renewals</div>
+            <div className="text-[32px] font-bold text-[#111827] leading-none my-1.5">
+              {metrics.upcomingRenewals}
+            </div>
+            <div className="text-[12px] text-[#6b7280]">
+              Due in next 7 days{metrics.overdueRenewals > 0 ? ` · ${metrics.overdueRenewals} overdue` : ''}
+            </div>
+          </div>
+          <div className="w-[46px] h-[46px] rounded-[12px] bg-[rgba(16,185,129,0.15)] text-[#10b981] flex items-center justify-center shrink-0">
+            <CalendarCheck className="h-5 w-5" />
+          </div>
+        </div>
+
+        {/* Stat 4: Drafts (Blue #eef4ff) */}
         <Link href="/drafts" className="block group">
-          <Card className="h-full border-zinc-200 hover:border-zinc-400 hover:bg-zinc-50/50 transition-all cursor-pointer">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-xs font-semibold text-zinc-700 group-hover:text-zinc-900">
-                Drafts (Inactive &amp; Completed)
-              </CardTitle>
-              <Wrench className="h-4 w-4 text-zinc-500 group-hover:text-zinc-800" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold tracking-tight text-zinc-900">
+          <div className="rounded-[14px] p-[18px_16px] bg-[#eef4ff] flex items-start justify-between shadow-[0_1px_3px_rgba(0,0,0,0.06),0_1px_2px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.08)] transition-all cursor-pointer">
+            <div>
+              <div className="text-[13px] font-semibold text-[#1d4ed8]">Drafts &amp; Archives</div>
+              <div className="text-[32px] font-bold text-[#111827] leading-none my-1.5">
                 {metrics.draftsCount}
               </div>
-              <p className="mt-0.5 text-[11px] text-zinc-500">
-                Stored separately outside to avoid confusion →
-              </p>
-            </CardContent>
-          </Card>
-        </Link>
-
-        {/* Metric 3: Overdue / Delayed Tasks */}
-        <Card
-          className={cn(
-            metrics.overdue > 0 ? 'border-red-200 bg-red-50/40' : 'border-zinc-200 bg-white'
-          )}
-        >
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle
-              className={cn(
-                'text-xs font-semibold',
-                metrics.overdue > 0 ? 'text-red-700' : 'text-zinc-500'
-              )}
-            >
-              Task Deadlines
-            </CardTitle>
-            <AlertTriangle
-              className={cn(
-                'h-4 w-4',
-                metrics.overdue > 0 ? 'text-red-600' : 'text-zinc-400'
-              )}
-            />
-          </CardHeader>
-          <CardContent>
-            <div
-              className={cn(
-                'text-2xl font-bold tracking-tight',
-                metrics.overdue > 0 ? 'text-red-700' : 'text-zinc-900'
-              )}
-            >
-              {metrics.overdue} Overdue
+              <div className="text-[12px] text-[#6b7280]">
+                Stored separately →
+              </div>
             </div>
-            <p className="mt-0.5 text-[11px] text-zinc-500">
-              {metrics.dueToday} task(s) due today
-            </p>
-          </CardContent>
-        </Card>
+            <div className="w-[46px] h-[46px] rounded-[12px] bg-[rgba(37,99,235,0.12)] text-[#2563eb] flex items-center justify-center shrink-0">
+              <Wrench className="h-5 w-5" />
+            </div>
+          </div>
+        </Link>
       </div>
 
-      {/* Project Directory */}
-      <div className="space-y-3">
-        <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+      {/* 3. Tinted Info Banner (Subtle Light Blue Gradient) */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 rounded-[12px] bg-gradient-to-r from-[#eef0fd] to-[#e8f0fe] border border-[rgba(67,97,238,0.18)] px-4 py-3 text-[12px] text-[#111827]">
+        <span className="font-medium">
+          Showing <strong>{filteredProjects.length} Active Projects</strong>. Inactive and completed client projects are safely stored in Drafts.
+        </span>
+        <Link
+          href="/drafts"
+          className="font-semibold text-[#4361ee] hover:underline flex items-center gap-1 shrink-0"
+        >
+          View Drafts ({metrics.draftsCount}) →
+        </Link>
+      </div>
+
+      {/* 4. Active Projects Directory */}
+      <div className="space-y-4">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2">
-            <h2 className="text-sm font-semibold text-zinc-900">
+            <h2 className="text-[15px] font-bold text-[#111827]">
               Active Projects Directory
             </h2>
-            <Badge variant="outline">
+            <span className="inline-flex items-center px-2 py-0.5 rounded-[20px] text-[11px] font-medium bg-[#f3f4f6] text-[#4b5563]">
               {filteredProjects.length} Active
-            </Badge>
+            </span>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
+
+          {/* Type Filter Select */}
+          <div className="flex items-center gap-2">
             <select
               value={typeFilter}
               onChange={(e) =>
                 setTypeFilter(e.target.value as 'All' | ProjectType)
               }
-              className="h-8 rounded-md border border-zinc-200 bg-white px-2.5 text-xs text-zinc-700 focus:outline-none"
+              className="h-[32px] rounded-[7px] border border-[#e5e7eb] bg-white px-2.5 text-[12.5px] text-[#111827] focus:border-[#4361ee] focus:outline-none cursor-pointer"
               aria-label="Filter by project type"
             >
               {PROJECT_TYPES.map((t) => (
@@ -252,20 +271,8 @@ export default function CommandCenterPage() {
           </div>
         </div>
 
-        {/* Notice Banner */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 rounded-lg border border-zinc-200 bg-zinc-50/80 px-4 py-2.5 text-xs text-zinc-600">
-          <span>
-            Showing <strong>{filteredProjects.length} Active Projects</strong>.
-          </span>
-          <Link
-            href="/drafts"
-            className="font-medium text-zinc-900 hover:underline flex items-center gap-1"
-          >
-            View Inactive &amp; Completed in Drafts ({metrics.draftsCount}) →
-          </Link>
-        </div>
-
-        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+        {/* Project Cards Grid */}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {filteredProjects.map((project) => {
             return (
               <Link
@@ -273,38 +280,33 @@ export default function CommandCenterPage() {
                 href={`/projects/${project.id}`}
                 className="group block"
               >
-                <Card className="h-full border-zinc-200 bg-white transition-all hover:border-zinc-400 hover:shadow-xs">
-                  <CardHeader className="pb-2">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex items-center gap-2">
-                        {TYPE_ICON[project.project_type]}
-                        <span className="text-[11px] font-medium text-zinc-500">
-                          {project.project_type}
-                        </span>
-                      </div>
-                      <Badge variant="success">
-                        ● Active
-                      </Badge>
-                    </div>
-                    <CardTitle className="pt-2 flex items-center justify-between text-sm group-hover:text-zinc-700">
-                      <span className="truncate">{project.title}</span>
-                      <ArrowUpRight className="h-3.5 w-3.5 shrink-0 text-zinc-400 group-hover:text-zinc-900 transition-colors" />
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-2 text-xs">
-                    <div className="text-zinc-500">
-                      Client:{' '}
-                      <span className="font-semibold text-zinc-800">
-                        {project.client_name}
+                <div className="h-full rounded-[12px] bg-white border border-[#e5e7eb] p-5 shadow-[0_1px_3px_rgba(0,0,0,0.06),0_1px_2px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.08)] hover:-translate-y-0.5 transition-all">
+                  <div className="flex items-start justify-between gap-2 mb-3">
+                    <div className="flex items-center gap-2">
+                      {TYPE_ICON[project.project_type]}
+                      <span className="text-[11px] font-semibold text-[#6b7280]">
+                        {project.project_type}
                       </span>
                     </div>
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-[20px] text-[11px] font-semibold bg-[#d1fae5] text-[#065f46]">
+                      ● Active
+                    </span>
+                  </div>
 
-                    <div className="flex items-center justify-between border-t border-zinc-100 pt-2 text-[11px] text-zinc-500">
-                      <span>Target: {formatDate(project.target_end_date)}</span>
-                      <span>Start: {formatDate(project.start_date)}</span>
-                    </div>
-                  </CardContent>
-                </Card>
+                  <h3 className="text-[15px] font-bold text-[#111827] group-hover:text-[#4361ee] transition-colors flex items-center justify-between">
+                    <span className="truncate">{project.title}</span>
+                    <ArrowUpRight className="h-4 w-4 shrink-0 text-[#9ca3af] group-hover:text-[#4361ee] transition-colors" />
+                  </h3>
+
+                  <div className="text-[12px] text-[#6b7280] mt-1.5">
+                    Client: <span className="font-semibold text-[#111827]">{project.client_name}</span>
+                  </div>
+
+                  <div className="mt-4 pt-3 border-t border-[#e5e7eb] flex items-center justify-between text-[11px] text-[#9ca3af]">
+                    <span>Stage: <strong className="text-[#111827] font-semibold">{project.status}</strong></span>
+                    <span>Target: {formatDate(project.target_end_date)}</span>
+                  </div>
+                </div>
               </Link>
             );
           })}

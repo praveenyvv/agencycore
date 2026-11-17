@@ -14,7 +14,7 @@ function getEncryptionKey(): Buffer {
   // Local development fallback key
   return crypto
     .createHash('sha256')
-    .update('agencycore-local-dev-vault-key-do-not-use-in-prod')
+    .update('holabusiness-local-dev-vault-key-do-not-use-in-prod')
     .digest();
 }
 

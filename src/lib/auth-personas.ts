@@ -4,7 +4,7 @@ export const DEMO_USERS: User[] = [
   {
     id: 'usr-admin-1',
     name: 'Elena Vance',
-    email: 'elena@agencycore.io',
+    email: 'elena@holabusiness.io',
     role: 'admin',
     title: 'Managing Partner & Co-Founder',
     password: 'admin',
@@ -13,7 +13,7 @@ export const DEMO_USERS: User[] = [
   {
     id: 'usr-admin-2',
     name: 'Marcus Chen',
-    email: 'marcus@agencycore.io',
+    email: 'marcus@holabusiness.io',
     role: 'admin',
     title: 'Technical Co-Founder & CTO',
     password: 'admin',

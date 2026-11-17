@@ -9,11 +9,9 @@ import {
   Bell,
   CheckSquare,
   ChevronDown,
-  ChevronLeft,
-  ChevronRight,
   Command,
   Contact,
-  FolderKanban,
+  FolderOpen,
   Globe,
   Layers,
   LayoutDashboard,
@@ -22,7 +20,9 @@ import {
   Megaphone,
   Menu,
   Plus,
+  RotateCcw,
   Search,
+  Settings,
   ShieldCheck,
   Smartphone,
   Users,
@@ -36,20 +36,10 @@ import { cn, formatDate } from '@/lib/utils';
 import { ROLE_LABELS, getProjectSimpleStatus, type ProjectType, type UserRole } from '@/types/agency';
 
 const PROJECT_TYPE_ICONS: Record<ProjectType, React.ReactNode> = {
-  Website: <Globe className="h-3.5 w-3.5 text-blue-600" />,
-  'Web App': <Layers className="h-3.5 w-3.5 text-violet-600" />,
-  'Mobile App': <Smartphone className="h-3.5 w-3.5 text-emerald-600" />,
-  'Digital Marketing': <Megaphone className="h-3.5 w-3.5 text-amber-600" />,
-};
-
-const ROLE_BADGE_VARIANT: Record<
-  UserRole,
-  'default' | 'info' | 'success' | 'purple'
-> = {
-  admin: 'default',
-  pm: 'info',
-  member: 'success',
-  client: 'purple',
+  Website: <Globe className="h-3.5 w-3.5 text-[#4361ee]" />,
+  'Web App': <Layers className="h-3.5 w-3.5 text-[#8b5cf6]" />,
+  'Mobile App': <Smartphone className="h-3.5 w-3.5 text-[#10b981]" />,
+  'Digital Marketing': <Megaphone className="h-3.5 w-3.5 text-[#f59e0b]" />,
 };
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -61,15 +51,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     permissions,
     accessibleProjects,
     accessibleTasks,
+    renewals,
     todayDate,
     switchPersona,
     isAuthenticated,
     signOut,
   } = useAuth();
 
-  const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [switcherOpen, setSwitcherOpen] = useState(false);
+  const [projectSearch, setProjectSearch] = useState('');
   const [personaMenuOpen, setPersonaMenuOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -124,47 +115,50 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     return accessibleProjects.filter((p) => getProjectSimpleStatus(p) !== 'Active').length;
   }, [accessibleProjects]);
 
+  // Filter projects for the switcher dropdown
+  const filteredSwitcherProjects = useMemo(() => {
+    const q = projectSearch.trim().toLowerCase();
+    return activeProjects.filter(
+      (p) =>
+        !q ||
+        p.title.toLowerCase().includes(q) ||
+        p.client_name.toLowerCase().includes(q)
+    );
+  }, [activeProjects, projectSearch]);
+
   const navItems = useMemo(() => {
     const items = [
       {
-        label: 'Command Center',
+        label: 'Dashboard',
         href: '/',
         icon: LayoutDashboard,
+        badge: undefined,
         visible: true,
       },
       {
         label: 'Business Contacts',
         href: '/contacts',
         icon: Contact,
+        badge: undefined,
         visible: true,
       },
       {
         label: 'Drafts',
         href: '/drafts',
         icon: Archive,
-        visible: true,
-      },
-      {
-        label: 'My Tasks',
-        href: '/tasks',
-        icon: CheckSquare,
+        badge: draftsCount > 0 ? draftsCount : undefined,
         visible: true,
       },
       {
         label: 'Founders & Admins',
         href: '/team',
         icon: Users,
-        visible: true,
-      },
-      {
-        label: 'Audit & Archive',
-        href: '/audit',
-        icon: ShieldCheck,
+        badge: undefined,
         visible: true,
       },
     ];
     return items.filter((i) => i.visible);
-  }, []);
+  }, [draftsCount]);
 
   const searchResults = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -188,387 +182,299 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     return <>{children}</>;
   }
 
+  const userInitials = (currentUser.name || 'User')
+    .split(' ')
+    .map((s) => s[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
+
   const sidebarContent = (
-    <div className="flex h-full flex-col bg-zinc-950 text-zinc-200 select-none">
-      {/* Brand Header */}
-      <div className="flex h-14 items-center justify-between border-b border-zinc-800/80 px-3">
-        <Link href="/" className="flex items-center gap-2.5 overflow-hidden">
-          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-white text-zinc-950 font-bold text-xs tracking-tight">
-            AC
+    <div className="flex h-full flex-col bg-white text-[#111827] select-none border-r border-[#e5e7eb] w-[232px]">
+      {/* 1. Top Logo Block (60px tall, bottom border) */}
+      <div className="flex h-[60px] items-center px-[18px] border-b border-[#e5e7eb] shrink-0 gap-2.5">
+        <Link href="/" className="flex items-center gap-2.5 min-w-0">
+          <div className="w-[32px] h-[32px] rounded-[8px] bg-[#4361ee] text-white font-bold text-[14px] flex items-center justify-center shrink-0">
+            HB
           </div>
-          {!collapsed && (
-            <div className="flex flex-col leading-none">
-              <span className="text-sm font-semibold tracking-tight text-white">
-                AgencyCore
-              </span>
-              <span className="text-[10px] text-zinc-400">
-                Lifecycle OS v1.0
-              </span>
-            </div>
-          )}
+          <div className="flex flex-col min-w-0 leading-tight">
+            <span className="text-[13px] font-bold text-[#111827] truncate">
+              HolaBusiness
+            </span>
+            <span className="text-[10px] text-[#6b7280]">
+              Project Operations
+            </span>
+          </div>
         </Link>
-        <button
-          onClick={() => setCollapsed((c) => !c)}
-          className="hidden lg:flex h-6 w-6 items-center justify-center rounded text-zinc-400 hover:bg-zinc-800 hover:text-white transition-colors cursor-pointer"
-          title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-        >
-          {collapsed ? (
-            <ChevronRight className="h-3.5 w-3.5" />
-          ) : (
-            <ChevronLeft className="h-3.5 w-3.5" />
-          )}
-        </button>
       </div>
 
-      {/* Quick Project Switcher */}
-      {!collapsed && (
-        <div className="relative px-3 pt-3 pb-2">
+      {/* 2. Navigation & Project Selector */}
+      <div className="flex-1 overflow-y-auto px-2.5 py-2 space-y-1">
+        {/* Dashboard Nav Item */}
+        <Link
+          href="/"
+          onClick={() => setMobileOpen(false)}
+          className={cn(
+            'flex items-center gap-2.5 px-2.5 py-2 rounded-[8px] text-[13px] font-medium transition-colors cursor-pointer',
+            pathname === '/'
+              ? 'bg-[rgba(67,97,238,0.08)] text-[#4361ee] font-semibold'
+              : 'text-[#6b7280] hover:bg-[#f3f4f6] hover:text-[#111827]'
+          )}
+        >
+          <LayoutDashboard className={cn('h-4 w-4 shrink-0', pathname === '/' ? 'text-[#4361ee]' : 'text-[#9ca3af]')} />
+          <span className="flex-1 truncate">Dashboard</span>
+        </Link>
+
+        {/* Project Selector Button */}
+        <div className="relative">
           <button
             onClick={() => setSwitcherOpen((o) => !o)}
-            className="flex w-full items-center justify-between rounded-md border border-zinc-800 bg-zinc-900/90 px-2.5 py-2 text-left text-xs hover:border-zinc-700 hover:bg-zinc-900 transition-colors cursor-pointer"
+            className={cn(
+              'flex w-full items-center gap-2.5 px-2.5 py-2 rounded-[8px] text-left transition-colors cursor-pointer',
+              activeProject
+                ? 'bg-[rgba(67,97,238,0.08)] text-[#4361ee]'
+                : 'text-[#6b7280] hover:bg-[#f3f4f6] hover:text-[#111827]'
+            )}
           >
-            <div className="flex items-center gap-2 truncate">
-              <FolderKanban className="h-3.5 w-3.5 shrink-0 text-zinc-400" />
-              <span className="truncate font-medium text-zinc-100">
-                {activeProject ? activeProject.title : 'Switch Project...'}
-              </span>
+            <FolderOpen
+              className={cn(
+                'h-4 w-4 shrink-0',
+                activeProject ? 'text-[#4361ee]' : 'text-[#9ca3af]'
+              )}
+            />
+            <div className="flex-1 min-w-0">
+              <div className="text-[13px] font-medium leading-none">Projects</div>
+              {activeProject && (
+                <div className="text-[11px] font-semibold text-[#4361ee] truncate mt-1">
+                  {activeProject.title}
+                </div>
+              )}
             </div>
-            <ChevronDown className="h-3.5 w-3.5 shrink-0 text-zinc-500" />
+            <ChevronDown
+              className={cn(
+                'h-3.5 w-3.5 shrink-0 transition-transform duration-200',
+                switcherOpen ? 'rotate-180 text-[#4361ee]' : 'text-[#9ca3af]'
+              )}
+            />
           </button>
 
+          {/* Project Dropdown Panel (240px wide, floating) */}
           {switcherOpen && (
-            <div className="absolute left-3 right-3 top-14 z-50 rounded-md border border-zinc-800 bg-zinc-900 p-1 shadow-xl">
-              <div className="px-2 py-1 text-[10px] font-medium uppercase tracking-wider text-zinc-500">
-                Active Projects ({activeProjects.length})
+            <div className="absolute left-0 top-[46px] z-50 w-[240px] rounded-[12px] border border-[#e5e7eb] bg-white shadow-[0_8px_24px_rgba(0,0,0,0.12)] p-2.5 space-y-2 animate-drop-in">
+              <div className="text-[10px] font-semibold text-[#9ca3af] uppercase tracking-[0.06em]">
+                Select Project
               </div>
-              {activeProjects.length === 0 ? (
-                <div className="px-2 py-2 text-xs text-zinc-500">
-                  No active projects.
-                </div>
-              ) : (
-                activeProjects.map((project) => (
-                  <button
-                    key={project.id}
-                    onClick={() => {
-                      setSwitcherOpen(false);
-                      setMobileOpen(false);
-                      router.push(`/projects/${project.id}`);
-                    }}
-                    className={cn(
-                      'flex w-full items-center justify-between rounded px-2 py-1.5 text-left text-xs transition-colors cursor-pointer',
-                      activeProjectId === project.id
-                        ? 'bg-zinc-800 text-white font-medium'
-                        : 'text-zinc-300 hover:bg-zinc-800/60 hover:text-white'
-                    )}
-                  >
-                    <div className="flex items-center gap-2 truncate">
-                      {PROJECT_TYPE_ICONS[project.project_type]}
-                      <span className="truncate">{project.title}</span>
-                    </div>
-                  </button>
-                ))
-              )}
-              {draftsCount > 0 && (
+              <div className="flex items-center gap-1.5 bg-[#f5f6fa] border border-[#e5e7eb] rounded-[7px] px-2.5 py-1.5">
+                <Search className="h-3.5 w-3.5 text-[#9ca3af] shrink-0" />
+                <input
+                  type="text"
+                  placeholder="Search projects..."
+                  value={projectSearch}
+                  onChange={(e) => setProjectSearch(e.target.value)}
+                  className="bg-transparent border-none text-[12px] text-[#111827] outline-none w-full placeholder:text-[#9ca3af]"
+                  autoFocus
+                />
+              </div>
+
+              {permissions.canCreateProject && (
                 <Link
-                  href="/drafts"
-                  onClick={() => {
-                    setSwitcherOpen(false);
-                    setMobileOpen(false);
-                  }}
-                  className="mt-1 flex items-center justify-between border-t border-zinc-800 px-2 py-1.5 text-[11px] text-zinc-400 hover:text-zinc-200"
+                  href="/?newProject=1"
+                  onClick={() => setSwitcherOpen(false)}
+                  className="flex items-center gap-2 px-2 py-1.5 rounded-[7px] text-[12px] font-medium text-[#4361ee] hover:bg-[rgba(67,97,238,0.08)] transition-colors"
                 >
-                  <span>Drafts ({draftsCount} Inactive/Completed)</span>
-                  <Archive className="h-3 w-3" />
+                  <Plus className="h-3.5 w-3.5" />
+                  <span>+ New Project</span>
                 </Link>
               )}
+
+              <div className="max-h-[220px] overflow-y-auto space-y-0.5 pt-1">
+                {filteredSwitcherProjects.length === 0 ? (
+                  <div className="p-3 text-center text-[12px] text-[#9ca3af]">
+                    No matching projects
+                  </div>
+                ) : (
+                  filteredSwitcherProjects.map((p) => {
+                    const isSelected = activeProjectId === p.id;
+                    return (
+                      <button
+                        key={p.id}
+                        onClick={() => {
+                          setSwitcherOpen(false);
+                          router.push(`/projects/${p.id}`);
+                        }}
+                        className={cn(
+                          'flex w-full items-center gap-2 px-2 py-1.5 rounded-[7px] text-left text-[12.5px] transition-colors cursor-pointer',
+                          isSelected
+                            ? 'bg-[rgba(67,97,238,0.08)] text-[#4361ee] font-semibold'
+                            : 'text-[#6b7280] hover:bg-[#f3f4f6] hover:text-[#111827]'
+                        )}
+                      >
+                        <span className="w-2 h-2 rounded-full bg-[#10b981] shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <div className="truncate font-medium">{p.title}</div>
+                          <div className="text-[10px] text-[#9ca3af] truncate">{p.project_type}</div>
+                        </div>
+                      </button>
+                    );
+                  })
+                )}
+              </div>
             </div>
           )}
         </div>
-      )}
 
-      {/* Primary Navigation */}
-      <nav className="flex-1 space-y-1 overflow-y-auto px-2 py-2">
-        {!collapsed && (
-          <div className="px-2 pb-1 text-[10px] font-medium uppercase tracking-wider text-zinc-500">
-            Workspace
-          </div>
-        )}
-        {navItems.map((item) => {
-          const Icon = item.icon;
-          const isActive =
-            item.href === '/'
-              ? pathname === '/'
-              : pathname.startsWith(item.href);
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={() => setMobileOpen(false)}
-              className={cn(
-                'flex items-center gap-2.5 rounded-md px-2.5 py-2 text-xs font-medium transition-colors',
-                isActive
-                  ? 'bg-zinc-800 text-white'
-                  : 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100',
-                collapsed && 'justify-center px-0'
-              )}
-              title={collapsed ? item.label : undefined}
-            >
-              <Icon className="h-4 w-4 shrink-0" />
-              {!collapsed && <span>{item.label}</span>}
-            </Link>
-          );
-        })}
+        {/* Section: Modules */}
+        <div className="text-[10px] font-semibold text-[#9ca3af] uppercase tracking-[0.08em] px-2 pt-3 pb-1">
+          Modules
+        </div>
 
-        {/* Active Projects List */}
-        {!collapsed && (
-          <div className="pt-5">
-            <div className="flex items-center justify-between px-2 pb-1.5">
-              <span className="text-[10px] font-medium uppercase tracking-wider text-zinc-500">
-                Projects
-              </span>
-              <span className="text-[10px] font-semibold text-zinc-400">
-                {activeProjects.length}
-              </span>
-            </div>
-            <div className="space-y-0.5">
-              {activeProjects.length === 0 ? (
-                <div className="px-2.5 py-2 text-[11px] text-zinc-500">
-                  No active projects.
-                </div>
-              ) : (
-                activeProjects.map((project) => {
-                  const isSelected = activeProjectId === project.id;
-                  return (
-                    <Link
-                      key={project.id}
-                      href={`/projects/${project.id}`}
-                      onClick={() => setMobileOpen(false)}
-                      className={cn(
-                        'flex items-center justify-between rounded-md px-2.5 py-1.5 text-xs transition-colors',
-                        isSelected
-                          ? 'bg-zinc-800 text-white font-medium'
-                          : 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200'
-                      )}
-                    >
-                      <div className="flex items-center gap-2 truncate">
-                        <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-400" />
-                        <span className="truncate">{project.title}</span>
-                      </div>
-                    </Link>
-                  );
-                })
-              )}
-            </div>
-          </div>
-        )}
-      </nav>
+        {navItems
+          .filter((i) => i.href !== '/')
+          .map((item) => {
+            const Icon = item.icon;
+            const isActive = pathname === item.href;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={() => setMobileOpen(false)}
+                className={cn(
+                  'flex items-center gap-2.5 px-2.5 py-2 rounded-[8px] text-[13px] font-medium transition-colors cursor-pointer',
+                  isActive
+                    ? 'bg-[rgba(67,97,238,0.08)] text-[#4361ee] font-semibold'
+                    : 'text-[#6b7280] hover:bg-[#f3f4f6] hover:text-[#111827]'
+                )}
+              >
+                <Icon
+                  className={cn(
+                    'h-4 w-4 shrink-0',
+                    isActive ? 'text-[#4361ee]' : 'text-[#9ca3af]'
+                  )}
+                />
+                <span className="flex-1 truncate">{item.label}</span>
+                {item.badge !== undefined && (
+                  <span className="bg-[#ef4444] text-white text-[10px] font-bold px-1.5 py-0.2 rounded-[10px] min-w-[18px] text-center">
+                    {item.badge}
+                  </span>
+                )}
+              </Link>
+            );
+          })}
+      </div>
 
-      {/* User & RBAC Role Switcher Footer */}
-      <div className="relative border-t border-zinc-800/80 p-2.5">
+      {/* 3. Bottom Sidebar (Settings & Logout) */}
+      <div className="p-2.5 border-t border-[#e5e7eb] shrink-0 space-y-0.5">
         <button
-          onClick={() => setPersonaMenuOpen((o) => !o)}
-          className={cn(
-            'flex w-full items-center gap-2.5 rounded-md p-1.5 text-left hover:bg-zinc-900 transition-colors cursor-pointer',
-            collapsed && 'justify-center'
-          )}
+          onClick={() => setPersonaMenuOpen(true)}
+          className="flex w-full items-center gap-2.5 px-2.5 py-2 rounded-[8px] text-[13px] font-medium text-[#6b7280] hover:bg-[#f3f4f6] hover:text-[#111827] transition-colors cursor-pointer"
         >
-          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-zinc-800 text-xs font-semibold text-zinc-100 border border-zinc-700">
-            {currentUser.name
-              .split(' ')
-              .map((n) => n[0])
-              .join('')
-              .slice(0, 2)}
-          </div>
-          {!collapsed && (
-            <div className="min-w-0 flex-1">
-              <div className="truncate text-xs font-medium text-zinc-100">
-                {currentUser.name}
-              </div>
-              <div className="truncate text-[10px] text-zinc-400">
-                {ROLE_LABELS[currentUser.role]}
-              </div>
-            </div>
-          )}
+          <Settings className="h-4 w-4 text-[#9ca3af]" />
+          <span>Switch Account</span>
         </button>
 
-        {personaMenuOpen && (
-          <div className="absolute bottom-14 left-2 right-2 z-50 rounded-lg border border-zinc-800 bg-zinc-900 p-1.5 shadow-2xl">
-            <div className="px-2 py-1 text-[10px] font-medium uppercase tracking-wider text-zinc-400 flex items-center justify-between">
-              <span className="flex items-center gap-1.5">
-                <ShieldCheck className="h-3 w-3 text-emerald-400" />
-                Switch Founder / Admin
-              </span>
-              <Link
-                href="/team"
-                onClick={() => setPersonaMenuOpen(false)}
-                className="text-[10px] text-blue-400 hover:underline"
-              >
-                + Add
-              </Link>
-            </div>
-            <div className="space-y-0.5 mt-1 max-h-56 overflow-y-auto">
-              {users.map((u) => (
-                <button
-                  key={u.id}
-                  onClick={() => {
-                    switchPersona(u.id);
-                    setPersonaMenuOpen(false);
-                  }}
-                  className={cn(
-                    'flex w-full items-center justify-between rounded px-2 py-1.5 text-left text-xs transition-colors cursor-pointer',
-                    u.id === currentUser.id
-                      ? 'bg-zinc-800 text-white'
-                      : 'text-zinc-300 hover:bg-zinc-800/60'
-                  )}
-                >
-                  <div className="truncate">
-                    <div className="font-medium truncate">{u.name}</div>
-                    <div className="text-[10px] text-zinc-400 truncate">
-                      {u.title || ROLE_LABELS[u.role]}
-                    </div>
-                  </div>
-                  {u.id === currentUser.id && (
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shrink-0" />
-                  )}
-                </button>
-              ))}
-            </div>
-            <div className="my-1 border-t border-zinc-800" />
-            <button
-              onClick={() => {
-                setPersonaMenuOpen(false);
-                signOut();
-              }}
-              className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs text-red-400 hover:bg-zinc-800 cursor-pointer"
-            >
-              <LogOut className="h-3.5 w-3.5" />
-              Sign out to Login
-            </button>
-          </div>
-        )}
+        <button
+          onClick={() => signOut()}
+          className="flex w-full items-center gap-2.5 px-2.5 py-2 rounded-[8px] text-[13px] font-medium text-[#6b7280] hover:bg-[#fef2f2] hover:text-[#ef4444] transition-colors cursor-pointer group"
+        >
+          <LogOut className="h-4 w-4 text-[#9ca3af] group-hover:text-[#ef4444]" />
+          <span>Logout</span>
+        </button>
       </div>
     </div>
   );
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-zinc-50 text-zinc-950">
-      {/* Desktop Collapsible Sidebar */}
-      <aside
-        className={cn(
-          'hidden lg:block shrink-0 border-r border-zinc-200 transition-all duration-200',
-          collapsed ? 'w-14' : 'w-60'
-        )}
-      >
+    <div className="flex h-screen w-full overflow-hidden bg-[#f5f6fa] text-[#111827]">
+      {/* Desktop Fixed Left Sidebar (232px) */}
+      <aside className="hidden lg:block shrink-0 w-[232px] h-full z-20">
         {sidebarContent}
       </aside>
 
-      {/* Mobile Drawer */}
+      {/* Mobile Off-Canvas Drawer */}
       {mobileOpen && (
-        <div className="fixed inset-0 z-50 flex lg:hidden">
+        <div className="fixed inset-0 z-50 flex lg:hidden animate-fade-up">
           <div
-            className="fixed inset-0 bg-black/50"
+            className="fixed inset-0 bg-black/30 backdrop-blur-[3px]"
             onClick={() => setMobileOpen(false)}
           />
-          <aside className="relative z-10 w-64 h-full">{sidebarContent}</aside>
+          <aside className="relative z-10 w-[232px] h-full shadow-xl">
+            {sidebarContent}
+          </aside>
         </div>
       )}
 
-      {/* Main Content Area */}
+      {/* Main Container */}
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        {/* Topbar */}
-        <header className="flex h-14 shrink-0 items-center justify-between border-b border-zinc-200/80 bg-white px-4 lg:px-6">
-          <div className="flex items-center gap-3 min-w-0">
+        {/* Top Header (60px tall, white, bottom border, 24px side padding) */}
+        <header className="flex h-[60px] shrink-0 items-center justify-between border-b border-[#e5e7eb] bg-white px-6 shadow-[0_1px_3px_rgba(0,0,0,0.04)] z-10">
+          <div className="flex items-center gap-3">
             <button
               onClick={() => setMobileOpen(true)}
-              className="lg:hidden rounded-md p-1.5 text-zinc-600 hover:bg-zinc-100 cursor-pointer"
+              className="lg:hidden rounded-[8px] p-1.5 text-[#6b7280] hover:bg-[#f3f4f6] cursor-pointer"
               aria-label="Open navigation"
             >
               <Menu className="h-5 w-5" />
             </button>
 
-            <div className="flex items-center gap-2 text-sm min-w-0">
-              <span className="font-semibold text-zinc-900 truncate">
-                {activeProject ? activeProject.title : 'Command Center'}
-              </span>
-              <Badge variant={ROLE_BADGE_VARIANT[currentUser.role]}>
-                {ROLE_LABELS[currentUser.role]}
-              </Badge>
-              {activeProject?.is_archived && (
-                <Badge variant="secondary">
-                  <Lock className="h-3 w-3" /> Read-Only Archive
-                </Badge>
-              )}
+            {/* Header Search Box (grey bg, border, max-width 240px) */}
+            <div
+              onClick={() => setSearchOpen(true)}
+              className="hidden sm:flex items-center gap-2 rounded-[8px] border border-[#e5e7eb] bg-[#f5f6fa] px-3 py-1.5 w-[220px] text-[13px] text-[#9ca3af] hover:border-[#4361ee] transition-colors cursor-pointer"
+            >
+              <Search className="h-3.5 w-3.5 text-[#9ca3af] shrink-0" />
+              <span className="truncate">Search anything...</span>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            {/* Cmd+K Search Trigger */}
-            <button
-              onClick={() => setSearchOpen(true)}
-              className="flex items-center gap-2 rounded-md border border-zinc-200 bg-zinc-50 px-2.5 py-1.5 text-xs text-zinc-500 hover:border-zinc-300 hover:bg-white hover:text-zinc-800 transition-colors cursor-pointer"
-            >
-              <Search className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Search projects, tasks...</span>
-              <kbd className="hidden md:inline-flex items-center gap-0.5 rounded border border-zinc-200 bg-white px-1.5 py-0.5 text-[10px] font-mono text-zinc-500">
-                <Command className="h-2.5 w-2.5" />K
-              </kbd>
-            </button>
+          {/* Center Page Title (16px / 700) */}
+          <div className="flex-1 text-center font-bold text-[16px] text-[#111827] truncate px-4">
+            {activeProject ? activeProject.title : 'Dashboard'}
+          </div>
 
-            {/* Overdue Notification Bell (Internal Staff Only) */}
+          {/* Right Controls */}
+          <div className="flex items-center gap-2">
+            {/* Notification Bell (34x34 square button, white, border, radius 8) */}
             {permissions.canViewInternalDelays && (
               <div className="relative">
                 <button
                   onClick={() => setNotificationsOpen((o) => !o)}
-                  className="relative flex h-8 w-8 items-center justify-center rounded-md border border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 transition-colors cursor-pointer"
-                  aria-label="Overdue task alerts"
+                  className="relative flex h-[34px] w-[34px] items-center justify-center rounded-[8px] border border-[#e5e7eb] bg-white text-[#6b7280] hover:border-[#4361ee] hover:text-[#4361ee] hover:bg-[rgba(67,97,238,0.08)] transition-all cursor-pointer"
+                  title="Notifications"
                 >
                   <Bell className="h-4 w-4" />
                   {delayedTasks.length > 0 && (
-                    <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-semibold text-white">
-                      {delayedTasks.length}
-                    </span>
+                    <span className="absolute top-[7px] right-[7px] w-[6px] h-[6px] rounded-full bg-[#ef4444] ring-1.5 ring-white" />
                   )}
                 </button>
 
                 {notificationsOpen && (
-                  <div className="absolute right-0 top-10 z-50 w-80 rounded-lg border border-zinc-200 bg-white p-2 shadow-xl">
-                    <div className="flex items-center justify-between border-b border-zinc-100 px-2 py-1.5">
-                      <span className="text-xs font-semibold text-zinc-900">
+                  <div className="absolute right-0 top-11 z-50 w-80 rounded-[12px] border border-[#e5e7eb] bg-white p-3 shadow-[0_8px_24px_rgba(0,0,0,0.12)] animate-drop-in">
+                    <div className="flex items-center justify-between border-b border-[#e5e7eb] pb-2 mb-2">
+                      <span className="text-[13px] font-bold text-[#111827]">
                         Overdue Task Alerts
                       </span>
-                      <Badge variant={delayedTasks.length > 0 ? 'danger' : 'success'}>
+                      <span className="px-2 py-0.5 rounded-[20px] text-[11px] font-medium bg-[#fee2e2] text-[#991b1b]">
                         {delayedTasks.length} Delayed
-                      </Badge>
+                      </span>
                     </div>
-                    <div className="max-h-64 overflow-y-auto py-1">
+                    <div className="max-h-64 overflow-y-auto space-y-1">
                       {delayedTasks.length === 0 ? (
-                        <p className="px-2 py-4 text-center text-xs text-zinc-500">
-                          All tasks are on schedule.
-                        </p>
+                        <div className="p-3 text-center text-[12px] text-[#6b7280]">
+                          All tasks are on schedule! 🎉
+                        </div>
                       ) : (
-                        delayedTasks.map(({ task, delay, project }) => (
-                          <button
+                        delayedTasks.map(({ task, delay, project: p }) => (
+                          <div
                             key={task.id}
-                            onClick={() => {
-                              setNotificationsOpen(false);
-                              router.push(`/projects/${task.project_id}`);
-                            }}
-                            className="flex w-full items-start gap-2 rounded-md px-2 py-2 text-left hover:bg-red-50/60 transition-colors cursor-pointer"
+                            className="rounded-[8px] border border-[#fee2e2] bg-[#fef2f2] p-2 text-[12px]"
                           >
-                            <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-red-600" />
-                            <div className="min-w-0 flex-1">
-                              <div className="truncate text-xs font-medium text-zinc-900">
-                                {task.title}
-                              </div>
-                              <div className="text-[11px] text-zinc-500">
-                                {project?.title} ·{' '}
-                                <span className="font-medium text-red-600">
-                                  {delay.daysOverdue}d overdue
-                                </span>{' '}
-                                (Due {formatDate(task.due_date)})
-                              </div>
+                            <div className="font-semibold text-[#991b1b]">
+                              {task.title}
                             </div>
-                          </button>
+                            <div className="text-[11px] text-[#6b7280]">
+                              {p?.title} · Due: {formatDate(task.due_date)} ({delay.daysOverdue}d overdue)
+                            </div>
+                          </div>
                         ))
                       )}
                     </div>
@@ -577,90 +483,141 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               </div>
             )}
 
-            {/* RBAC-gated New Project CTA */}
-            {permissions.canCreateProject && (
-              <Button
-                size="sm"
-                onClick={() => router.push('/?newProject=1')}
-                className="hidden sm:inline-flex"
+            {/* Persona Switch / Quick Switch */}
+            <div className="relative">
+              <button
+                onClick={() => setPersonaMenuOpen((o) => !o)}
+                className="flex items-center gap-2 rounded-[8px] border border-[#e5e7eb] bg-white px-2.5 py-1 text-left hover:border-[#4361ee] transition-all cursor-pointer"
               >
-                <Plus className="h-3.5 w-3.5" />
-                New Project
-              </Button>
-            )}
+                <div className="w-[28px] h-[28px] rounded-full bg-[#4361ee] text-white font-bold text-[11px] flex items-center justify-center shrink-0">
+                  {userInitials}
+                </div>
+                <div className="hidden sm:flex flex-col leading-tight">
+                  <span className="text-[12px] font-semibold text-[#111827] max-w-[100px] truncate">
+                    {currentUser.name}
+                  </span>
+                  <span className="text-[10px] text-[#9ca3af]">
+                    {ROLE_LABELS[currentUser.role]}
+                  </span>
+                </div>
+                <ChevronDown className="h-3 w-3 text-[#9ca3af] hidden sm:block" />
+              </button>
+
+              {personaMenuOpen && (
+                <div className="absolute right-0 top-11 z-50 w-64 rounded-[12px] border border-[#e5e7eb] bg-white p-2 shadow-[0_8px_24px_rgba(0,0,0,0.12)] animate-drop-in">
+                  <div className="px-2 py-1 text-[11px] font-semibold uppercase text-[#9ca3af]">
+                    Switch Account / Persona
+                  </div>
+                  <div className="space-y-0.5 mt-1">
+                    {users.map((u) => (
+                      <button
+                        key={u.id}
+                        onClick={() => {
+                          switchPersona(u.id);
+                          setPersonaMenuOpen(false);
+                        }}
+                        className={cn(
+                          'flex w-full items-center justify-between rounded-[8px] px-2.5 py-1.5 text-left text-[12.5px] transition-colors cursor-pointer',
+                          u.id === currentUser.id
+                            ? 'bg-[rgba(67,97,238,0.08)] text-[#4361ee] font-semibold'
+                            : 'text-[#6b7280] hover:bg-[#f3f4f6] hover:text-[#111827]'
+                        )}
+                      >
+                        <div className="truncate">
+                          <div className="font-medium text-[#111827]">{u.name}</div>
+                          <div className="text-[11px] text-[#9ca3af]">{u.email}</div>
+                        </div>
+                        <span className="text-[10px] font-medium text-[#6b7280]">
+                          {u.role}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </header>
 
-        {/* Main Viewport */}
-        <main className="flex-1 overflow-y-auto p-4 lg:p-6">{children}</main>
+        {/* Main Content Scroll Area (24px padding, pale grey #f5f6fa background) */}
+        <main className="flex-1 overflow-y-auto p-6 bg-[#f5f6fa]">
+          <div className="animate-fade-up">
+            {children}
+          </div>
+        </main>
       </div>
 
-      {/* Cmd+K Global Search Modal */}
+      {/* Global Cmd+K Search Dialog */}
       {searchOpen && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 pt-20 px-4">
-          <div className="w-full max-w-lg overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-2xl">
-            <div className="flex items-center border-b border-zinc-100 px-3">
-              <Search className="h-4 w-4 text-zinc-400" />
+        <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 bg-black/30 backdrop-blur-[3px] p-4 animate-fade-up">
+          <div className="w-full max-w-lg rounded-[14px] border border-[#e5e7eb] bg-white shadow-[0_4px_16px_rgba(0,0,0,0.08)] overflow-hidden">
+            <div className="flex items-center gap-2 border-b border-[#e5e7eb] px-4 py-3">
+              <Search className="h-4 w-4 text-[#9ca3af] shrink-0" />
               <input
-                autoFocus
+                type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search projects, clients, or tasks..."
-                className="h-11 w-full bg-transparent px-3 text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none"
+                placeholder="Search projects, client deliverables, tasks..."
+                className="flex-1 bg-transparent text-[13px] text-[#111827] placeholder:text-[#9ca3af] outline-none"
+                autoFocus
               />
               <button
                 onClick={() => setSearchOpen(false)}
-                className="rounded p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 cursor-pointer"
+                className="rounded-[6px] p-1 text-[#9ca3af] hover:bg-[#f3f4f6] hover:text-[#111827]"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
 
-            <div className="max-h-80 overflow-y-auto p-2 space-y-3">
+            <div className="max-h-80 overflow-y-auto p-2 space-y-2">
               <div>
-                <div className="px-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
+                <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-[#9ca3af]">
                   Projects ({searchResults.matchedProjects.length})
                 </div>
-                {searchResults.matchedProjects.map((project) => (
-                  <button
-                    key={project.id}
-                    onClick={() => {
-                      setSearchOpen(false);
-                      router.push(`/projects/${project.id}`);
-                    }}
-                    className="flex w-full items-center justify-between rounded-md px-2.5 py-2 text-left text-xs hover:bg-zinc-100 cursor-pointer"
-                  >
-                    <div className="flex items-center gap-2">
-                      {PROJECT_TYPE_ICONS[project.project_type]}
-                      <span className="font-medium text-zinc-900">
-                        {project.title}
-                      </span>
-                      <span className="text-zinc-400">· {project.client_name}</span>
-                    </div>
-                    <Badge variant="outline">{project.status}</Badge>
-                  </button>
-                ))}
+                {searchResults.matchedProjects.length === 0 ? (
+                  <div className="px-2 py-1.5 text-[12px] text-[#9ca3af]">
+                    No matching projects.
+                  </div>
+                ) : (
+                  searchResults.matchedProjects.map((p) => (
+                    <button
+                      key={p.id}
+                      onClick={() => {
+                        setSearchOpen(false);
+                        router.push(`/projects/${p.id}`);
+                      }}
+                      className="flex w-full items-center justify-between rounded-[8px] px-2.5 py-1.5 text-left text-[12.5px] hover:bg-[#f3f4f6] transition-colors cursor-pointer"
+                    >
+                      <span className="font-medium text-[#111827]">{p.title}</span>
+                      <span className="text-[11px] text-[#9ca3af]">{p.client_name}</span>
+                    </button>
+                  ))
+                )}
               </div>
 
               <div>
-                <div className="px-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
+                <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-[#9ca3af]">
                   Tasks ({searchResults.matchedTasks.length})
                 </div>
-                {searchResults.matchedTasks.map((task) => (
-                  <button
-                    key={task.id}
-                    onClick={() => {
-                      setSearchOpen(false);
-                      router.push(`/projects/${task.project_id}`);
-                    }}
-                    className="flex w-full items-center justify-between rounded-md px-2.5 py-2 text-left text-xs hover:bg-zinc-100 cursor-pointer"
-                  >
-                    <span className="font-medium text-zinc-800 truncate">
-                      {task.title}
-                    </span>
-                    <Badge variant="secondary">{task.status}</Badge>
-                  </button>
-                ))}
+                {searchResults.matchedTasks.length === 0 ? (
+                  <div className="px-2 py-1.5 text-[12px] text-[#9ca3af]">
+                    No matching tasks.
+                  </div>
+                ) : (
+                  searchResults.matchedTasks.map((t) => (
+                    <button
+                      key={t.id}
+                      onClick={() => {
+                        setSearchOpen(false);
+                        router.push(`/projects/${t.project_id}`);
+                      }}
+                      className="flex w-full items-center justify-between rounded-[8px] px-2.5 py-1.5 text-left text-[12.5px] hover:bg-[#f3f4f6] transition-colors cursor-pointer"
+                    >
+                      <span className="font-medium text-[#111827] truncate mr-2">{t.title}</span>
+                      <span className="text-[11px] text-[#9ca3af] shrink-0">{t.status}</span>
+                    </button>
+                  ))
+                )}
               </div>
             </div>
           </div>

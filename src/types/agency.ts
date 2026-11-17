@@ -356,11 +356,48 @@ export interface ActivityLog {
   project_id: string;
   user_id: string;
   action_type: ActivityActionType;
-  entity_type: 'project' | 'requirement' | 'asset' | 'credential' | 'task' | 'meeting' | 'proposal' | 'contact' | 'document';
+  entity_type: 'project' | 'requirement' | 'asset' | 'credential' | 'task' | 'meeting' | 'proposal' | 'contact' | 'document' | 'renewal';
   entity_id?: string | null;
   change_summary: string;
   metadata_json: Record<string, unknown>;
   created_at: string;
+}
+
+export interface RenewalItem {
+  id: string;
+  project_id: string;
+  title: string;
+  vendor?: string;
+  amount: number;
+  renewal_date: string; // YYYY-MM-DD
+  remind_days: number;  // Default 7
+  renewed: boolean;
+  renewed_on?: string;
+  renewed_amount_paid?: number;
+  renewed_notes?: string;
+  created_at: string;
+  updated_at?: string;
+}
+
+export type RenewalStatusType = 'Overdue' | 'Due Today' | 'Due Soon' | 'Upcoming' | 'Active' | 'Renewed';
+
+export interface RenewalStatusInfo {
+  label: RenewalStatusType;
+  diff: number;
+}
+
+export function getRenewalStatus(dateStr: string, remindDays = 7): RenewalStatusInfo {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const target = new Date(dateStr);
+  target.setHours(0, 0, 0, 0);
+  const diff = Math.ceil((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+
+  if (diff < 0) return { label: 'Overdue', diff };
+  if (diff === 0) return { label: 'Due Today', diff };
+  if (diff <= remindDays) return { label: 'Due Soon', diff };
+  if (diff <= 30) return { label: 'Upcoming', diff };
+  return { label: 'Active', diff };
 }
 
 export interface RolePermissions {

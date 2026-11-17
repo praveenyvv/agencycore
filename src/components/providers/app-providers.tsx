@@ -31,6 +31,7 @@ import type {
   ProjectType,
   ProposalOutcome,
   ProposalPricingItem,
+  RenewalItem,
   RolePermissions,
   Task,
   TaskPriority,
@@ -52,6 +53,7 @@ import {
   INITIAL_DOCUMENTS,
   INITIAL_MEETINGS,
   INITIAL_PROPOSALS,
+  INITIAL_RENEWALS,
   INITIAL_REQUIREMENTS,
   INITIAL_TASKS,
 } from '@/lib/initial-data';
@@ -171,6 +173,31 @@ export interface UploadDocumentInput {
   is_mandatory: boolean;
 }
 
+export interface CreateRenewalInput {
+  project_id: string;
+  title: string;
+  vendor?: string;
+  amount: number;
+  renewal_date: string;
+  remind_days?: number;
+}
+
+export interface UpdateRenewalInput {
+  id: string;
+  title: string;
+  vendor?: string;
+  amount: number;
+  renewal_date: string;
+  remind_days?: number;
+}
+
+export interface MarkRenewedInput {
+  id: string;
+  next_renewal_date: string;
+  amount_paid: number;
+  notes?: string;
+}
+
 interface AuthContextValue {
   currentUser: User;
   users: User[];
@@ -185,6 +212,7 @@ interface AuthContextValue {
   requirements: ProjectRequirement[];
   assets: ProjectAsset[];
   credentials: ProjectCredential[];
+  renewals: RenewalItem[];
   activityLogs: ActivityLog[];
   todayDate: Date | null;
   switchPersona: (userId: string) => void;
@@ -247,6 +275,11 @@ interface AuthContextValue {
   ) => void;
   toggleProjectArchive: (projectId: string) => void;
   submitClientSignOff: (projectId: string, deliverableId: string) => void;
+  // Renewal Mutations
+  createRenewal: (input: CreateRenewalInput) => RenewalItem;
+  updateRenewal: (input: UpdateRenewalInput) => void;
+  markRenewalAsRenewed: (input: MarkRenewedInput) => void;
+  deleteRenewal: (renewalId: string) => void;
   createAdminUser: (input: {
     name: string;
     email: string;
@@ -312,6 +345,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
   const [assets, setAssets] = useState<ProjectAsset[]>(INITIAL_ASSETS);
   const [credentials, setCredentials] = useState<ProjectCredential[]>(INITIAL_CREDENTIALS);
   const [tasks, setTasks] = useState<Task[]>(INITIAL_TASKS);
+  const [renewals, setRenewals] = useState<RenewalItem[]>(INITIAL_RENEWALS);
   const [activityLogs, setActivityLogs] = useState<ActivityLog[]>(INITIAL_ACTIVITY_LOGS);
 
   const currentUser = useMemo(
@@ -1638,6 +1672,125 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
     [permissions.canSubmitClientSignOff, requirements, currentUser.name, appendLog]
   );
 
+  const createRenewal = useCallback(
+    (input: CreateRenewalInput): RenewalItem => {
+      const renewalId = makeId('ren');
+      const now = new Date().toISOString();
+      const newRenewal: RenewalItem = {
+        id: renewalId,
+        project_id: input.project_id,
+        title: input.title.trim(),
+        vendor: input.vendor?.trim() || undefined,
+        amount: Number(input.amount) || 0,
+        renewal_date: input.renewal_date,
+        remind_days: input.remind_days ?? 7,
+        renewed: false,
+        created_at: now,
+      };
+
+      setRenewals((prev) => [newRenewal, ...prev]);
+
+      appendLog(
+        input.project_id,
+        'TASK_CREATED',
+        'renewal',
+        renewalId,
+        `Added renewal: "${newRenewal.title}" (Due: ${newRenewal.renewal_date})`,
+        { title: newRenewal.title, vendor: newRenewal.vendor, amount: newRenewal.amount }
+      );
+
+      return newRenewal;
+    },
+    [appendLog]
+  );
+
+  const updateRenewal = useCallback(
+    (input: UpdateRenewalInput) => {
+      setRenewals((prev) =>
+        prev.map((r) => {
+          if (r.id !== input.id) return r;
+          return {
+            ...r,
+            title: input.title.trim(),
+            vendor: input.vendor?.trim() || undefined,
+            amount: Number(input.amount) || 0,
+            renewal_date: input.renewal_date,
+            remind_days: input.remind_days ?? 7,
+            updated_at: new Date().toISOString(),
+          };
+        })
+      );
+    },
+    []
+  );
+
+  const markRenewalAsRenewed = useCallback(
+    (input: MarkRenewedInput) => {
+      const existing = renewals.find((r) => r.id === input.id);
+      if (!existing) return;
+
+      const todayStr = new Date().toISOString().split('T')[0];
+      const now = new Date().toISOString();
+
+      setRenewals((prev) => {
+        const updated = prev.map((r) => {
+          if (r.id !== input.id) return r;
+          return {
+            ...r,
+            renewed: true,
+            renewed_on: todayStr,
+            renewed_amount_paid: Number(input.amount_paid) || r.amount,
+            renewed_notes: input.notes?.trim() || undefined,
+            updated_at: now,
+          };
+        });
+
+        const nextId = makeId('ren');
+        const nextItem: RenewalItem = {
+          id: nextId,
+          project_id: existing.project_id,
+          title: existing.title,
+          vendor: existing.vendor,
+          amount: existing.amount,
+          renewal_date: input.next_renewal_date,
+          remind_days: existing.remind_days || 7,
+          renewed: false,
+          created_at: now,
+        };
+
+        return [nextItem, ...updated];
+      });
+
+      appendLog(
+        existing.project_id,
+        'TASK_STATUS_CHANGED',
+        'renewal',
+        existing.id,
+        `Marked "${existing.title}" as renewed. Next due: ${input.next_renewal_date}`,
+        { title: existing.title, next_renewal_date: input.next_renewal_date }
+      );
+    },
+    [renewals, appendLog]
+  );
+
+  const deleteRenewal = useCallback(
+    (renewalId: string) => {
+      const existing = renewals.find((r) => r.id === renewalId);
+      setRenewals((prev) => prev.filter((r) => r.id !== renewalId));
+      if (existing) {
+        appendLog(
+          existing.project_id,
+          'TASK_STATUS_CHANGED',
+          'renewal',
+          renewalId,
+          `Deleted renewal "${existing.title}"`,
+          { title: existing.title }
+        );
+      }
+    },
+    [renewals, appendLog]
+  );
+
   const value: AuthContextValue = {
     currentUser,
     users,
@@ -1652,6 +1805,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
     requirements,
     assets,
     credentials,
+    renewals,
     activityLogs,
     todayDate,
     switchPersona,
@@ -1692,6 +1846,10 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
     updateTaskDeliverable,
     toggleProjectArchive,
     submitClientSignOff,
+    createRenewal,
+    updateRenewal,
+    markRenewalAsRenewed,
+    deleteRenewal,
     createAdminUser,
     changeUserPassword,
   };

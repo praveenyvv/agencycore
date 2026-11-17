@@ -3,23 +3,28 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 
 const buttonVariants = cva(
-  'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900/20 disabled:pointer-events-none disabled:opacity-50 cursor-pointer',
+  'inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-[8px] text-[13px] font-medium transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4361ee]/20 disabled:pointer-events-none disabled:opacity-50 cursor-pointer active:scale-[0.97]',
   {
     variants: {
       variant: {
-        default: 'bg-zinc-900 text-zinc-50 hover:bg-zinc-800 shadow-xs',
-        destructive: 'bg-red-600 text-white hover:bg-red-700 shadow-xs',
+        default:
+          'bg-[#4361ee] text-white hover:bg-[#3451d1] shadow-[0_2px_6px_rgba(67,97,238,0.25)] border-transparent',
+        destructive:
+          'bg-[#fef2f2] text-[#ef4444] border border-[#fca5a5] hover:bg-[#fee2e2]',
         outline:
-          'border border-zinc-200 bg-white text-zinc-900 hover:bg-zinc-50 hover:text-zinc-900',
-        secondary: 'bg-zinc-100 text-zinc-900 hover:bg-zinc-200/80',
-        ghost: 'hover:bg-zinc-100 text-zinc-700 hover:text-zinc-900',
-        link: 'text-zinc-900 underline-offset-4 hover:underline',
+          'border border-[#e5e7eb] bg-white text-[#6b7280] hover:border-[#4361ee] hover:text-[#4361ee] hover:bg-[rgba(67,97,238,0.08)]',
+        secondary:
+          'bg-[#f3f4f6] text-[#4b5563] hover:bg-[#e5e7eb]',
+        ghost:
+          'border border-transparent text-[#6b7280] hover:bg-[#f3f4f6] hover:text-[#111827]',
+        link:
+          'text-[#4361ee] underline-offset-4 hover:underline p-0 h-auto font-normal',
       },
       size: {
-        default: 'h-9 px-3.5 py-2',
-        sm: 'h-8 rounded-md px-2.5 text-xs',
-        lg: 'h-10 rounded-md px-5',
-        icon: 'h-8 w-8',
+        default: 'h-[36px] px-4 py-2',
+        sm: 'h-[30px] rounded-[7px] px-3 text-[12px]',
+        lg: 'h-[40px] rounded-[8px] px-5',
+        icon: 'h-[30px] w-[30px] rounded-[7px] p-0 border border-[#e5e7eb] bg-white text-[#9ca3af] hover:border-[#4361ee] hover:text-[#4361ee] hover:bg-[rgba(67,97,238,0.08)]',
       },
     },
     defaultVariants: {

@@ -7,6 +7,7 @@ import { z } from 'zod';
 import {
   AlertTriangle,
   Columns3,
+  GripVertical,
   Link2,
   List,
   Plus,
@@ -73,6 +74,8 @@ export function TabExecutionBoard({ project }: { project: Project }) {
     null
   );
   const [linkDraft, setLinkDraft] = useState('');
+  const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null);
+  const [dragOverCol, setDragOverCol] = useState<TaskStatus | null>(null);
 
   const projectTasks = useMemo(
     () => accessibleTasks.filter((t) => t.project_id === project.id),
@@ -301,16 +304,47 @@ export function TabExecutionBoard({ project }: { project: Project }) {
         >
           {visibleColumns.map((col) => {
             const colTasks = projectTasks.filter((t) => t.status === col);
+            const isTargetCol = dragOverCol === col;
             return (
               <div
                 key={col}
-                className="flex flex-col rounded-lg border border-zinc-200/80 bg-zinc-100/70 p-2.5 min-h-[260px]"
+                onDragOver={(e) => {
+                  if (!canUpdateStatus) return;
+                  e.preventDefault();
+                  e.dataTransfer.dropEffect = 'move';
+                  if (dragOverCol !== col) {
+                    setDragOverCol(col);
+                  }
+                }}
+                onDragLeave={(e) => {
+                  if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+                    if (dragOverCol === col) setDragOverCol(null);
+                  }
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setDragOverCol(null);
+                  const taskId =
+                    e.dataTransfer.getData('text/plain') || draggedTaskId;
+                  if (taskId && canUpdateStatus) {
+                    updateTaskStatus(project.id, taskId, col);
+                  }
+                  setDraggedTaskId(null);
+                }}
+                className={cn(
+                  'flex flex-col rounded-[12px] border p-2.5 min-h-[260px] transition-all',
+                  isTargetCol
+                    ? 'border-2 border-dashed border-[#4361ee] bg-[rgba(67,97,238,0.06)]'
+                    : 'border-[#e5e7eb] bg-[#f9fafb]'
+                )}
               >
                 <div className="flex items-center justify-between pb-2.5 px-1">
-                  <span className="text-xs font-semibold text-zinc-800">
+                  <span className="text-[12.5px] font-semibold text-[#6b7280]">
                     {col}
                   </span>
-                  <Badge variant="outline">{colTasks.length}</Badge>
+                  <span className="bg-[#f3f4f6] text-[#9ca3af] text-[10px] font-bold px-2 py-0.5 rounded-[10px]">
+                    {colTasks.length}
+                  </span>
                 </div>
 
                 <div className="space-y-2 flex-1">
@@ -326,21 +360,42 @@ export function TabExecutionBoard({ project }: { project: Project }) {
                           (b) => b.id === task.blocked_by_task_id
                         )
                       : null;
+                    const isBeingDragged = draggedTaskId === task.id;
 
                     return (
                       <div
                         key={task.id}
+                        draggable={canUpdateStatus}
+                        onDragStart={(e) => {
+                          if (!canUpdateStatus) return;
+                          e.dataTransfer.setData('text/plain', task.id);
+                          e.dataTransfer.effectAllowed = 'move';
+                          setDraggedTaskId(task.id);
+                        }}
+                        onDragEnd={() => {
+                          setDraggedTaskId(null);
+                          setDragOverCol(null);
+                        }}
                         className={cn(
-                          'rounded-md border bg-white p-2.5 shadow-2xs space-y-2',
+                          'rounded-[10px] border bg-white p-3 shadow-[0_1px_3px_rgba(0,0,0,0.06),0_1px_2px_rgba(0,0,0,0.04)] space-y-2 transition-all',
+                          canUpdateStatus &&
+                            'cursor-grab active:cursor-grabbing hover:border-[#4361ee] hover:shadow-[0_4px_16px_rgba(0,0,0,0.08)] hover:-translate-y-0.5',
+                          isBeingDragged &&
+                            'opacity-40 scale-95 border-dashed border-[#4361ee]',
                           delay.isDelayed
-                            ? 'border-red-300 bg-red-50/40'
-                            : 'border-zinc-200'
+                            ? 'border-[#fca5a5] bg-[#fef2f2]'
+                            : 'border-[#e5e7eb]'
                         )}
                       >
                         <div className="flex items-start justify-between gap-1.5">
-                          <span className="text-xs font-medium text-zinc-900 leading-snug">
-                            {task.title}
-                          </span>
+                          <div className="flex items-start gap-1 min-w-0">
+                            {canUpdateStatus && (
+                              <GripVertical className="h-3.5 w-3.5 mt-0.5 shrink-0 text-[#9ca3af]" />
+                            )}
+                            <span className="text-[13px] font-medium text-[#111827] leading-[1.4]">
+                              {task.title}
+                            </span>
+                          </div>
                           <Badge variant={PRIORITY_BADGE[task.priority]}>
                             {task.priority}
                           </Badge>

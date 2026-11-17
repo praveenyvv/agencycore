@@ -9,12 +9,11 @@ import { ArrowRight, Lock, ShieldCheck } from 'lucide-react';
 import { useAuth } from '@/components/providers/app-providers';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { ROLE_LABELS } from '@/types/agency';
 
 const loginSchema = z.object({
-  email: z.string().email('Enter a valid agency or client email address'),
+  email: z.string().email('Enter a valid email address'),
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
@@ -30,7 +29,7 @@ export default function LoginPage() {
     formState: { errors },
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { email: 'elena@agencycore.io' },
+    defaultValues: { email: 'elena@holabusiness.io' },
   });
 
   const onSubmit = (data: LoginFormValues) => {
@@ -39,99 +38,102 @@ export default function LoginPage() {
     if (ok) {
       router.push('/');
     } else {
-      setAuthError('No account found for that email. Use one of the RBAC demo accounts below.');
+      setAuthError('No account found for that email. Use one of the demo accounts below.');
     }
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-950 px-4 py-12">
-      <div className="w-full max-w-md space-y-6">
-        <div className="flex flex-col items-center text-center">
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white text-zinc-950 font-bold text-base shadow-lg">
-            AC
+    <div className="flex min-h-screen items-center justify-center bg-[#f5f6fa] px-4 py-12">
+      <div className="w-full max-w-[420px] rounded-[16px] bg-white p-10 shadow-[0_4px_16px_rgba(0,0,0,0.08)] border border-[#e5e7eb] space-y-6">
+        {/* Logo Block */}
+        <div className="flex items-center gap-2.5 justify-center">
+          <div className="w-[40px] h-[40px] rounded-[10px] bg-[#4361ee] text-white font-bold text-[18px] flex items-center justify-center shadow-[0_2px_6px_rgba(67,97,238,0.25)]">
+            HB
           </div>
-          <h1 className="mt-4 text-xl font-semibold tracking-tight text-white">
-            Sign in to AgencyCore
-          </h1>
-          <p className="mt-1 text-xs text-zinc-400">
-            Role-Based Agency Operations &amp; Project Lifecycle Hub
+          <div>
+            <div className="text-[20px] font-bold text-[#111827] leading-none">
+              HolaBusiness
+            </div>
+            <div className="text-[11px] text-[#6b7280] mt-0.5">
+              Project Operations System
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <h2 className="text-[22px] font-bold text-[#111827]">
+            Sign in
+          </h2>
+          <p className="text-[13px] text-[#6b7280] mt-1">
+            Access your synchronized project operations workspace.
           </p>
         </div>
 
-        <Card className="border-zinc-800 bg-zinc-900 text-zinc-100">
-          <CardHeader>
-            <CardTitle className="text-white flex items-center gap-2">
-              <Lock className="h-4 w-4 text-zinc-400" />
-              Workspace Authentication
-            </CardTitle>
-            <CardDescription className="text-zinc-400">
-              Sign in as Founder / Admin to access the shared agency workspace.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-5">
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <div>
+            <label className="block text-[12px] font-medium text-[#6b7280] mb-1.5">
+              Email Address
+            </label>
+            <Input
+              type="email"
+              placeholder="name@holabusiness.io"
+              className="h-[38px] text-[13px]"
+              {...register('email')}
+            />
+            {errors.email && (
+              <p className="mt-1 text-[11px] text-[#ef4444]">
+                {errors.email.message}
+              </p>
+            )}
+            {authError && (
+              <p className="mt-1 text-[11px] text-[#ef4444]">{authError}</p>
+            )}
+          </div>
+
+          <Button
+            type="submit"
+            className="w-full h-[38px] rounded-[8px] bg-[#4361ee] hover:bg-[#3451d1] text-white font-medium text-[13px] shadow-[0_2px_6px_rgba(67,97,238,0.25)] gap-2"
+          >
+            <span>Continue with Email</span>
+            <ArrowRight className="h-4 w-4" />
+          </Button>
+        </form>
+
+        <div className="relative my-4">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t border-[#e5e7eb]" />
+          </div>
+          <div className="relative flex justify-center text-[10px] uppercase tracking-wider font-semibold">
+            <span className="bg-white px-2.5 text-[#9ca3af]">
+              Quick Sign-in
+            </span>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          {users.map((u) => (
+            <button
+              key={u.id}
+              type="button"
+              onClick={() => {
+                switchPersona(u.id);
+                router.push('/');
+              }}
+              className="flex w-full items-center justify-between rounded-[8px] border border-[#e5e7eb] bg-white p-2.5 text-left hover:border-[#4361ee] hover:bg-[#fafbff] transition-all cursor-pointer"
+            >
               <div>
-                <Input
-                  type="email"
-                  placeholder="name@agencycore.io"
-                  className="border-zinc-700 bg-zinc-950 text-white placeholder:text-zinc-500"
-                  {...register('email')}
-                />
-                {errors.email && (
-                  <p className="mt-1 text-xs text-red-400">
-                    {errors.email.message}
-                  </p>
-                )}
-                {authError && (
-                  <p className="mt-1 text-xs text-red-400">{authError}</p>
-                )}
+                <div className="text-[13px] font-semibold text-[#111827]">
+                  {u.name}
+                </div>
+                <div className="text-[11px] text-[#9ca3af]">{u.email}</div>
               </div>
-              <Button
-                type="submit"
-                className="w-full bg-white text-zinc-950 hover:bg-zinc-200"
-              >
-                Continue with Email
-                <ArrowRight className="h-4 w-4" />
-              </Button>
-            </form>
-
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t border-zinc-800" />
-              </div>
-              <div className="relative flex justify-center text-[10px] uppercase tracking-wider">
-                <span className="bg-zinc-900 px-2 text-zinc-500">
-                  Active Founders &amp; Admins
-                </span>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              {users.map((u) => (
-                <button
-                  key={u.id}
-                  type="button"
-                  onClick={() => {
-                    switchPersona(u.id);
-                    router.push('/');
-                  }}
-                  className="flex w-full items-center justify-between rounded-lg border border-zinc-800 bg-zinc-950/70 px-3 py-2 text-left hover:border-zinc-700 hover:bg-zinc-950 transition-colors cursor-pointer"
-                >
-                  <div>
-                    <div className="text-xs font-medium text-white">
-                      {u.name}
-                    </div>
-                    <div className="text-[11px] text-zinc-400">{u.email}</div>
-                  </div>
-                  <Badge variant="outline" className="border-zinc-700 bg-zinc-900 text-zinc-200">
-                    <ShieldCheck className="h-3 w-3 text-emerald-400" />
-                    {ROLE_LABELS[u.role]}
-                  </Badge>
-                </button>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+              <span className="inline-flex items-center px-2 py-0.5 rounded-[20px] text-[10.5px] font-semibold bg-[#d1fae5] text-[#065f46]">
+                <ShieldCheck className="h-3 w-3 mr-1" />
+                {ROLE_LABELS[u.role] || 'Founder & Admin'}
+              </span>
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );

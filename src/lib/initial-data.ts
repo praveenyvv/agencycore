@@ -9,6 +9,7 @@ import type {
   ProjectMeeting,
   ProjectProposal,
   ProjectRequirement,
+  RenewalItem,
   Task,
 } from '@/types/agency';
 
@@ -431,7 +432,7 @@ export const INITIAL_DOCUMENTS: ProjectDocument[] = [
     project_id: 'proj-aurora-web',
     title: 'Mutual Non-Disclosure Agreement (NDA)',
     doc_type: 'NDA',
-    file_name: 'aurora-agencycore-mutual-nda-signed.pdf',
+    file_name: 'aurora-holabusiness-mutual-nda-signed.pdf',
     file_url: '#doc-aurora-nda',
     file_size: 640000,
     is_mandatory: true,
@@ -701,7 +702,7 @@ export const INITIAL_CREDENTIALS: ProjectCredential[] = [
     service_name: 'WordPress Engine (Staging/Production)',
     category: 'Hosting',
     login_url: 'https://auroralabs.wpengine.com/wp-admin',
-    username: 'ops@agencycore.io',
+    username: 'ops@holabusiness.io',
     encrypted_secret: '09q9xggs1zW6anZYrwdH7uISfdc=',
     iv: 'FRH83+u+3IkBPzw8',
     auth_tag: 'mVTn7+PsFDIAelZsjfQekw==',
@@ -868,7 +869,7 @@ export const INITIAL_TASKS: Task[] = [
     is_delayed: false,
     blocked_by_task_id: null,
     linked_deliverable: 'Multi-Tenant RBAC Session Engine & Auth Architecture',
-    deliverable_url: 'https://github.com/agencycore/veridian/pull/142',
+    deliverable_url: 'https://github.com/holabusiness/veridian/pull/142',
     created_at: '2026-11-05T10:00:00Z',
     updated_at: '2026-11-12T15:00:00Z',
   },
@@ -886,7 +887,7 @@ export const INITIAL_TASKS: Task[] = [
     is_delayed: false,
     blocked_by_task_id: null,
     linked_deliverable: 'Portfolio Performance Analytics & Chart Engine',
-    deliverable_url: 'https://github.com/agencycore/veridian/pull/128',
+    deliverable_url: 'https://github.com/holabusiness/veridian/pull/128',
     created_at: '2026-10-15T09:00:00Z',
     updated_at: '2026-10-27T18:10:00Z',
   },
@@ -904,7 +905,7 @@ export const INITIAL_TASKS: Task[] = [
     is_delayed: true,
     blocked_by_task_id: null,
     linked_deliverable: 'SOC-2 Aligned Event Audit Logging Pipeline',
-    deliverable_url: 'https://github.com/agencycore/veridian/pull/156',
+    deliverable_url: 'https://github.com/holabusiness/veridian/pull/156',
     created_at: '2026-10-28T09:00:00Z',
     updated_at: '2026-11-10T12:00:00Z',
   },
@@ -1108,7 +1109,7 @@ export const INITIAL_ACTIVITY_LOGS: ActivityLog[] = [
     entity_type: 'credential',
     entity_id: 'cred-aurora-hubspot',
     change_summary: 'Sora Takahashi viewed credential "HubSpot Private App Access Token"',
-    metadata_json: { service_name: 'HubSpot Private App Access Token', actor: 'sora@agencycore.io' },
+    metadata_json: { service_name: 'HubSpot Private App Access Token', actor: 'sora@holabusiness.io' },
     created_at: '2026-11-04T10:15:00Z',
   },
   {
@@ -1152,7 +1153,7 @@ export const INITIAL_ACTIVITY_LOGS: ActivityLog[] = [
     entity_type: 'task',
     entity_id: 'task-veridian-202',
     change_summary: 'Submitted deliverable link on "Portfolio IRR & Benchmark Chart Optimization"',
-    metadata_json: { deliverable_url: 'https://github.com/agencycore/veridian/pull/128' },
+    metadata_json: { deliverable_url: 'https://github.com/holabusiness/veridian/pull/128' },
     created_at: '2026-10-27T18:10:00Z',
   },
   {
@@ -1211,3 +1212,120 @@ export const INITIAL_ACTIVITY_LOGS: ActivityLog[] = [
     created_at: '2026-10-06T10:00:00Z',
   },
 ];
+
+function getRelativeDateStr(daysOffset: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() + daysOffset);
+  return d.toISOString().split('T')[0];
+}
+
+// ============================================================================
+// 12. RENEWALS (Domains, Hosting, SSL, Subscriptions per project)
+// ============================================================================
+export const INITIAL_RENEWALS: RenewalItem[] = [
+  // Aurora Labs Marketing Site
+  {
+    id: 'ren-aurora-01',
+    project_id: 'proj-aurora-web',
+    title: 'Domain – auroralabs.com',
+    vendor: 'GoDaddy',
+    amount: 1299,
+    renewal_date: getRelativeDateStr(3), // Due in 3 days (Due this week)
+    remind_days: 7,
+    renewed: false,
+    created_at: '2026-06-01T00:00:00Z',
+  },
+  {
+    id: 'ren-aurora-02',
+    project_id: 'proj-aurora-web',
+    title: 'Hosting – Hostinger Cloud',
+    vendor: 'Hostinger',
+    amount: 4999,
+    renewal_date: getRelativeDateStr(6), // Due in 6 days (Due this week)
+    remind_days: 7,
+    renewed: false,
+    created_at: '2026-06-01T00:00:00Z',
+  },
+  {
+    id: 'ren-aurora-03',
+    project_id: 'proj-aurora-web',
+    title: 'Wildcard SSL Certificate',
+    vendor: 'ZeroSSL',
+    amount: 1799,
+    renewal_date: getRelativeDateStr(-12), // Overdue
+    remind_days: 7,
+    renewed: false,
+    created_at: '2026-06-01T00:00:00Z',
+  },
+  {
+    id: 'ren-aurora-04',
+    project_id: 'proj-aurora-web',
+    title: 'Google Workspace (5 seats)',
+    vendor: 'Google',
+    amount: 2160,
+    renewal_date: getRelativeDateStr(-25), // Overdue
+    remind_days: 7,
+    renewed: false,
+    created_at: '2026-06-01T00:00:00Z',
+  },
+  {
+    id: 'ren-aurora-05',
+    project_id: 'proj-aurora-web',
+    title: 'Sentry Error Monitoring Pro',
+    vendor: 'Sentry',
+    amount: 3200,
+    renewal_date: getRelativeDateStr(24), // Due this month
+    remind_days: 7,
+    renewed: false,
+    created_at: '2026-06-01T00:00:00Z',
+  },
+  {
+    id: 'ren-aurora-06',
+    project_id: 'proj-aurora-web',
+    title: 'Cloudflare Pro DNS & WAF',
+    vendor: 'Cloudflare',
+    amount: 1650,
+    renewal_date: getRelativeDateStr(-40),
+    remind_days: 7,
+    renewed: true,
+    renewed_on: getRelativeDateStr(-39),
+    renewed_amount_paid: 1650,
+    renewed_notes: 'Renewed for 1 year via corporate credit card',
+    created_at: '2026-06-01T00:00:00Z',
+  },
+  // Veridian FinTech Portal
+  {
+    id: 'ren-veridian-01',
+    project_id: 'proj-veridian-app',
+    title: 'AWS Production Kubernetes Cluster',
+    vendor: 'Amazon Web Services',
+    amount: 28500,
+    renewal_date: getRelativeDateStr(4), // Due in 4 days
+    remind_days: 7,
+    renewed: false,
+    created_at: '2026-06-01T00:00:00Z',
+  },
+  {
+    id: 'ren-veridian-02',
+    project_id: 'proj-veridian-app',
+    title: 'Auth0 Enterprise Tenant',
+    vendor: 'Okta / Auth0',
+    amount: 14500,
+    renewal_date: getRelativeDateStr(22),
+    remind_days: 14,
+    renewed: false,
+    created_at: '2026-06-01T00:00:00Z',
+  },
+  {
+    id: 'ren-veridian-03',
+    project_id: 'proj-veridian-app',
+    title: 'Production SSL Certificate',
+    vendor: 'DigiCert',
+    amount: 8900,
+    renewal_date: getRelativeDateStr(-10),
+    remind_days: 7,
+    renewed: false,
+    created_at: '2026-06-01T00:00:00Z',
+  },
+];
+
