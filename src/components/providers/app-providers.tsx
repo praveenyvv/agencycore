@@ -12,6 +12,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type {
   ActivityActionType,
   ActivityLog,
+  AddAssetInput,
   AssetFolderCategory,
   ClientTalkRecord,
   CreateClientTalkInput,
@@ -33,6 +34,7 @@ import type {
   Task,
   TaskPriority,
   TaskStatus,
+  UpdateAssetInput,
   User,
 } from '@/types/agency';
 import {
@@ -218,6 +220,9 @@ interface AuthContextValue {
     },
     changeReason: string
   ) => void;
+  addAsset: (input: AddAssetInput) => ProjectAsset;
+  updateAsset: (input: UpdateAssetInput) => void;
+  deleteAsset: (assetId: string) => void;
   uploadAsset: (input: {
     project_id: string;
     folder_category: AssetFolderCategory;
@@ -1077,6 +1082,91 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
     [projects, permissions.canEditScope, requirements, currentUser.id, appendLog]
   );
 
+  const addAsset = useCallback(
+    (input: AddAssetInput): ProjectAsset => {
+      const assetId = makeId('ast');
+      const now = new Date().toISOString();
+      const newAsset: ProjectAsset = {
+        id: assetId,
+        project_id: input.project_id,
+        name: input.name.trim(),
+        doc_type: input.doc_type,
+        drive_link: input.drive_link.trim(),
+        notes: input.notes?.trim() || null,
+        file_name: input.name.trim(),
+        file_url: input.drive_link.trim(),
+        uploaded_by: currentUser.id,
+        created_at: now,
+        updated_at: now,
+      };
+
+      setAssets((prev) => [newAsset, ...prev]);
+      appendLog(
+        input.project_id,
+        'ASSET_UPLOADED',
+        'asset',
+        assetId,
+        `Added asset link "${newAsset.name}" [${newAsset.doc_type}]`,
+        { doc_type: newAsset.doc_type, drive_link: newAsset.drive_link }
+      );
+      return newAsset;
+    },
+    [currentUser.id, appendLog]
+  );
+
+  const updateAsset = useCallback(
+    (input: UpdateAssetInput) => {
+      const target = assets.find((a) => a.id === input.asset_id);
+      if (!target) return;
+      const now = new Date().toISOString();
+
+      setAssets((prev) =>
+        prev.map((a) =>
+          a.id === input.asset_id
+            ? {
+                ...a,
+                name: input.name.trim(),
+                doc_type: input.doc_type,
+                drive_link: input.drive_link.trim(),
+                notes: input.notes?.trim() || null,
+                file_name: input.name.trim(),
+                file_url: input.drive_link.trim(),
+                updated_at: now,
+              }
+            : a
+        )
+      );
+
+      appendLog(
+        target.project_id,
+        'ASSET_UPDATED',
+        'asset',
+        target.id,
+        `Updated asset link "${input.name.trim()}" [${input.doc_type}]`,
+        { doc_type: input.doc_type, drive_link: input.drive_link }
+      );
+    },
+    [assets, appendLog]
+  );
+
+  const deleteAsset = useCallback(
+    (assetId: string) => {
+      const target = assets.find((a) => a.id === assetId);
+      if (!target) return;
+
+      setAssets((prev) => prev.filter((a) => a.id !== assetId));
+      appendLog(
+        target.project_id,
+        'ASSET_DELETED',
+        'asset',
+        target.id,
+        `Deleted asset link "${target.name || target.file_name}"`,
+        { name: target.name || target.file_name, doc_type: target.doc_type }
+      );
+    },
+    [assets, appendLog]
+  );
+
   const uploadAsset = useCallback(
     (input: {
       project_id: string;
@@ -1093,6 +1183,9 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
       const newAsset: ProjectAsset = {
         id: assetId,
         project_id: input.project_id,
+        name: input.file_name,
+        doc_type: 'Document',
+        drive_link: input.file_url ?? `#asset-${assetId}`,
         folder_category: input.folder_category,
         file_name: input.file_name,
         file_url: input.file_url ?? `#asset-${assetId}`,
@@ -1552,6 +1645,9 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
     uploadDocument,
     toggleDocumentSignOff,
     updateRequirements,
+    addAsset,
+    updateAsset,
+    deleteAsset,
     uploadAsset,
     toggleAssetApproval,
     addCredential,

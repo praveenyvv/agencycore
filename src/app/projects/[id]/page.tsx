@@ -95,12 +95,6 @@ export default function ProjectWorkspacePage() {
         visible: !isClient,
       },
       {
-        id: 'documents',
-        label: 'Documents & Contracts',
-        icon: FileCheck,
-        visible: true,
-      },
-      {
         id: 'assets',
         label: 'Asset Repository',
         icon: FolderArchive,

@@ -72,6 +72,8 @@ export type ActivityActionType =
   | 'PROPOSAL_OUTCOME_RECORDED'
   | 'SCOPE_UPDATED'
   | 'ASSET_UPLOADED'
+  | 'ASSET_UPDATED'
+  | 'ASSET_DELETED'
   | 'ASSET_APPROVED'
   | 'CREDENTIAL_ADDED'
   | 'CREDENTIAL_REVEALED'
@@ -241,17 +243,46 @@ export interface ProjectRequirement {
   updated_at: string;
 }
 
+export type AssetDocType =
+  | 'Image'
+  | 'Document'
+  | 'Design / Figma'
+  | 'Video'
+  | 'Spreadsheet'
+  | 'Other';
+
 export interface ProjectAsset {
   id: string;
   project_id: string;
-  folder_category: AssetFolderCategory;
-  file_name: string;
-  file_url: string;
-  file_size: number;
-  version_tag: string;
-  client_approved: boolean;
+  name: string;
+  doc_type: AssetDocType;
+  drive_link: string;
+  notes?: string | null;
+  folder_category?: AssetFolderCategory;
+  file_name?: string;
+  file_url?: string;
+  file_size?: number;
+  version_tag?: string;
+  client_approved?: boolean;
   uploaded_by: string;
   created_at: string;
+  updated_at?: string;
+}
+
+export interface AddAssetInput {
+  project_id: string;
+  name: string;
+  doc_type: AssetDocType;
+  drive_link: string;
+  notes?: string | null;
+}
+
+export interface UpdateAssetInput {
+  asset_id: string;
+  name: string;
+  doc_type: AssetDocType;
+  drive_link: string;
+  notes?: string | null;
 }
 
 export type CredentialCategory =
