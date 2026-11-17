@@ -237,6 +237,7 @@ interface AuthContextValue {
   deleteProposal: (proposalId: string) => void;
   recordProposalOutcome: (input: RecordProposalOutcomeInput) => void;
   updateProjectStatus: (projectId: string, status: ProjectStatus) => void;
+  deleteProject: (projectId: string) => void;
   reopenDraftProject: (projectId: string, targetStage: 'Meeting Scheduled' | 'Proposal Review' | 'Intake' | 'In Execution', note?: string) => void;
   uploadDocument: (input: UploadDocumentInput) => ProjectDocument;
   toggleDocumentSignOff: (docId: string) => void;
@@ -1046,6 +1047,33 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
     [appendLog]
   );
 
+  const deleteProject = useCallback(
+    (projectId: string) => {
+      setProjects((prev) => prev.filter((p) => p.id !== projectId));
+      setTasks((prev) => prev.filter((t) => t.project_id !== projectId));
+      setClientTalks((prev) => prev.filter((t) => t.project_id !== projectId));
+      setMeetings((prev) => prev.filter((m) => m.project_id !== projectId));
+      setProposals((prev) => prev.filter((p) => p.project_id !== projectId));
+      setAssets((prev) => prev.filter((a) => a.project_id !== projectId));
+      setCredentials((prev) => prev.filter((c) => c.project_id !== projectId));
+      setRenewals((prev) => prev.filter((r) => r.project_id !== projectId));
+      setRequirements((prev) => prev.filter((r) => r.project_id !== projectId));
+      setDocuments((prev) => prev.filter((d) => d.project_id !== projectId));
+      setActivityLogs((prev) => prev.filter((l) => l.project_id !== projectId));
+      setContacts((prev) => prev.filter((c) => c.project_id !== projectId));
+
+      appendLog(
+        projectId,
+        'PROJECT_DELETED',
+        'project',
+        projectId,
+        `Project permanently deleted`,
+        { projectId }
+      );
+    },
+    [appendLog]
+  );
+
   // 6. Documents Management (Mandatory proposals, contracts, SOWs, NDAs)
   const uploadDocument = useCallback(
     (input: UploadDocumentInput): ProjectDocument => {
@@ -1828,6 +1856,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
     deleteProposal,
     recordProposalOutcome,
     updateProjectStatus,
+    deleteProject,
     reopenDraftProject,
     uploadDocument,
     toggleDocumentSignOff,

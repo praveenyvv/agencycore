@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import {
+  AlertTriangle,
   ChevronDown,
   FileCheck,
   FileSpreadsheet,
@@ -17,11 +18,14 @@ import {
   MessageSquare,
   RotateCcw,
   ShieldAlert,
+  Trash2,
   Users,
 } from 'lucide-react';
 import { useAuth } from '@/components/providers/app-providers';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Modal } from '@/components/ui/modal';
 import { TabAssetRepository } from '@/components/workspace/tab-asset-repository';
 import { TabAuditTimeline } from '@/components/workspace/tab-audit-timeline';
 import { TabClientTalk } from '@/components/workspace/tab-client-talk';
@@ -52,11 +56,20 @@ type WorkspaceTab =
   | 'audit';
 
 export default function ProjectWorkspacePage() {
+  const router = useRouter();
   const params = useParams<{ id: string }>();
-  const { accessibleProjects, currentUser, permissions, renewals, updateProjectStatus } = useAuth();
+  const { accessibleProjects, currentUser, permissions, renewals, updateProjectStatus, deleteProject } = useAuth();
   const [activeTab, setActiveTab] = useState<WorkspaceTab>('overview');
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const project = accessibleProjects.find((p) => p.id === params.id);
+
+  const handleDelete = () => {
+    if (!project) return;
+    deleteProject(project.id);
+    setShowDeleteModal(false);
+    router.push('/drafts');
+  };
 
   const projectUpcomingRenewals = useMemo(() => {
     if (!project) return 0;
@@ -218,6 +231,19 @@ export default function ProjectWorkspacePage() {
             )}
           </p>
         </div>
+
+        {permissions.canCreateProject && (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setShowDeleteModal(true)}
+            className="flex items-center gap-1.5 h-8 px-3 rounded-[8px] border border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 hover:border-red-300 transition-colors cursor-pointer text-xs font-medium self-start sm:self-auto shrink-0"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+            Delete Project
+          </Button>
+        )}
       </div>
 
       {/* Navigation Tab Bar (Segmented Control Pill Container) */}
@@ -262,6 +288,56 @@ export default function ProjectWorkspacePage() {
         {resolvedTab === 'renewals' && <TabRenewals project={project} />}
         {resolvedTab === 'board' && <TabExecutionBoard project={project} />}
       </div>
+
+      {/* Delete Project Confirmation Modal */}
+      {showDeleteModal && (
+        <Modal
+          isOpen={showDeleteModal}
+          onClose={() => setShowDeleteModal(false)}
+          title="Delete Project?"
+          maxWidth="max-w-md"
+        >
+          <div className="space-y-4">
+            <div className="flex items-start gap-3 text-red-600">
+              <div className="rounded-full bg-red-100 p-2 shrink-0">
+                <AlertTriangle className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-zinc-900">
+                  Permanently delete &quot;{project.title}&quot;?
+                </h3>
+                <p className="text-xs text-zinc-500 mt-1">
+                  This will permanently delete this project and all of its associated records, including tasks, meetings, client talks, proposals, credentials, renewals, and asset links.
+                </p>
+              </div>
+            </div>
+
+            <div className="rounded-lg bg-red-50 p-3 border border-red-200 text-xs text-red-700">
+              <strong>Warning:</strong> This action is irreversible and cannot be undone.
+            </div>
+
+            <div className="flex justify-end gap-2 border-t border-zinc-100 pt-3">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setShowDeleteModal(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                size="sm"
+                onClick={handleDelete}
+                className="bg-red-600 hover:bg-red-700 text-white"
+              >
+                Yes, Delete Project
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }

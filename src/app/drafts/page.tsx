@@ -3,6 +3,7 @@
 import React, { useMemo, useState } from 'react';
 import Link from 'next/link';
 import {
+  AlertTriangle,
   Archive,
   ArrowRight,
   CheckCircle2,
@@ -12,20 +13,23 @@ import {
   PauseCircle,
   RotateCcw,
   Search,
+  Trash2,
   X,
 } from 'lucide-react';
 import { useAuth } from '@/components/providers/app-providers';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Modal } from '@/components/ui/modal';
 import { cn, formatDate } from '@/lib/utils';
-import { getProjectSimpleStatus, type ProjectStatus } from '@/types/agency';
+import { getProjectSimpleStatus, type Project, type ProjectStatus } from '@/types/agency';
 
 export default function DraftsPage() {
-  const { accessibleProjects, updateProjectStatus } = useAuth();
+  const { accessibleProjects, updateProjectStatus, deleteProject, permissions } = useAuth();
 
   const [activeTab, setActiveTab] = useState<'all' | 'active' | 'inactive' | 'completed'>('active');
   const [searchQuery, setSearchQuery] = useState('');
+  const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
 
   const activeProjects = useMemo(() => {
     return accessibleProjects.filter((p) => getProjectSimpleStatus(p) === 'Active');
@@ -182,37 +186,50 @@ export default function DraftsPage() {
                 className="rounded-[12px] bg-white border border-[#e5e7eb] p-5 shadow-[0_1px_3px_rgba(0,0,0,0.06),0_1px_2px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.08)] hover:-translate-y-0.5 transition-all flex flex-col justify-between"
               >
                 <div className="space-y-3">
-                  {/* Header: Project Type + Interactive Status Dropdown */}
+                  {/* Header: Project Type + Interactive Status Dropdown + Delete */}
                   <div className="flex items-center justify-between gap-2">
                     <Badge variant="outline">
                       {project.project_type}
                     </Badge>
 
-                    {/* Status Dropdown */}
-                    <div className="relative inline-flex items-center">
-                      <select
-                        value={simpleStatus}
-                        onChange={(e) =>
-                          updateProjectStatus(
-                            project.id,
-                            e.target.value as ProjectStatus
-                          )
-                        }
-                        className={cn(
-                          'h-6 rounded-[20px] border px-2.5 pr-6 text-[11px] font-semibold cursor-pointer transition-colors appearance-none focus:outline-none focus:ring-1 focus:ring-[#4361ee]',
-                          simpleStatus === 'Active'
-                            ? 'border-transparent bg-[#d1fae5] text-[#065f46]'
-                            : simpleStatus === 'Inactive'
-                            ? 'border-transparent bg-[#fef3c7] text-[#92400e]'
-                            : 'border-transparent bg-[#dbeafe] text-[#1d4ed8]'
-                        )}
-                        aria-label="Project Status"
-                      >
-                        <option value="Active">● Active</option>
-                        <option value="Inactive">● Inactive</option>
-                        <option value="Completed">● Completed</option>
-                      </select>
-                      <ChevronDown className="pointer-events-none absolute right-2 h-3 w-3 text-[#6b7280]" />
+                    <div className="flex items-center gap-1.5">
+                      {/* Status Dropdown */}
+                      <div className="relative inline-flex items-center">
+                        <select
+                          value={simpleStatus}
+                          onChange={(e) =>
+                            updateProjectStatus(
+                              project.id,
+                              e.target.value as ProjectStatus
+                            )
+                          }
+                          className={cn(
+                            'h-6 rounded-[20px] border px-2.5 pr-6 text-[11px] font-semibold cursor-pointer transition-colors appearance-none focus:outline-none focus:ring-1 focus:ring-[#4361ee]',
+                            simpleStatus === 'Active'
+                              ? 'border-transparent bg-[#d1fae5] text-[#065f46]'
+                              : simpleStatus === 'Inactive'
+                              ? 'border-transparent bg-[#fef3c7] text-[#92400e]'
+                              : 'border-transparent bg-[#dbeafe] text-[#1d4ed8]'
+                          )}
+                          aria-label="Project Status"
+                        >
+                          <option value="Active">● Active</option>
+                          <option value="Inactive">● Inactive</option>
+                          <option value="Completed">● Completed</option>
+                        </select>
+                        <ChevronDown className="pointer-events-none absolute right-2 h-3 w-3 text-[#6b7280]" />
+                      </div>
+
+                      {permissions.canCreateProject && (
+                        <button
+                          type="button"
+                          onClick={() => setProjectToDelete(project)}
+                          title="Delete Project"
+                          className="h-6 w-6 rounded-md flex items-center justify-center text-zinc-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      )}
                     </div>
                   </div>
 
@@ -278,6 +295,59 @@ export default function DraftsPage() {
             );
           })}
         </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {projectToDelete && (
+        <Modal
+          isOpen={!!projectToDelete}
+          onClose={() => setProjectToDelete(null)}
+          title="Delete Project?"
+          maxWidth="max-w-md"
+        >
+          <div className="space-y-4">
+            <div className="flex items-start gap-3 text-red-600">
+              <div className="rounded-full bg-red-100 p-2 shrink-0">
+                <AlertTriangle className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-zinc-900">
+                  Permanently delete &quot;{projectToDelete.title}&quot;?
+                </h3>
+                <p className="text-xs text-zinc-500 mt-1">
+                  This will remove this project and all of its associated records across tasks, meetings, proposals, credentials, renewals, and assets.
+                </p>
+              </div>
+            </div>
+
+            <div className="rounded-lg bg-red-50 p-3 border border-red-200 text-xs text-red-700">
+              <strong>Warning:</strong> This action is irreversible and cannot be undone.
+            </div>
+
+            <div className="flex justify-end gap-2 border-t border-zinc-100 pt-3">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setProjectToDelete(null)}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                size="sm"
+                onClick={() => {
+                  deleteProject(projectToDelete.id);
+                  setProjectToDelete(null);
+                }}
+                className="bg-red-600 hover:bg-red-700 text-white"
+              >
+                Yes, Delete Project
+              </Button>
+            </div>
+          </div>
+        </Modal>
       )}
     </div>
   );
