@@ -1,90 +1,40 @@
 import type { Project, RolePermissions, Task, UserRole } from '@/types/agency';
 
+const ADMIN_PERMISSIONS: RolePermissions = {
+  canCreateProject: true,
+  canEditScope: true,
+  canManageTasks: true,
+  canUpdateTaskStatus: true,
+  canUploadAssets: true,
+  canViewCredentials: true,
+  canManageCredentials: true,
+  canRevealCredentials: true,
+  canViewInternalDelays: true,
+  canViewAuditLogs: true,
+  canToggleArchive: true,
+  canManageUsers: true,
+  canSubmitClientSignOff: false,
+  canManageMeetingsAndProposals: true,
+};
+
 const PERMISSION_MATRIX: Record<UserRole, RolePermissions> = {
-  admin: {
-    canCreateProject: true,
-    canEditScope: true,
-    canManageTasks: true,
-    canUpdateTaskStatus: true,
-    canUploadAssets: true,
-    canViewCredentials: true,
-    canManageCredentials: true,
-    canRevealCredentials: true,
-    canViewInternalDelays: true,
-    canViewAuditLogs: true,
-    canToggleArchive: true,
-    canManageUsers: true,
-    canSubmitClientSignOff: false,
-    canManageMeetingsAndProposals: true,
-  },
-  pm: {
-    canCreateProject: true,
-    canEditScope: true,
-    canManageTasks: true,
-    canUpdateTaskStatus: true,
-    canUploadAssets: true,
-    canViewCredentials: true,
-    canManageCredentials: true,
-    canRevealCredentials: true,
-    canViewInternalDelays: true,
-    canViewAuditLogs: true,
-    canToggleArchive: false,
-    canManageUsers: false,
-    canSubmitClientSignOff: false,
-    canManageMeetingsAndProposals: true,
-  },
-  member: {
-    canCreateProject: false,
-    canEditScope: false,
-    canManageTasks: false,
-    canUpdateTaskStatus: true,
-    canUploadAssets: true,
-    canViewCredentials: true,
-    canManageCredentials: false,
-    canRevealCredentials: true,
-    canViewInternalDelays: true,
-    canViewAuditLogs: true,
-    canToggleArchive: false,
-    canManageUsers: false,
-    canSubmitClientSignOff: false,
-    canManageMeetingsAndProposals: false,
-  },
-  client: {
-    canCreateProject: false,
-    canEditScope: false,
-    canManageTasks: false,
-    canUpdateTaskStatus: false,
-    canUploadAssets: false,
-    canViewCredentials: false,
-    canManageCredentials: false,
-    canRevealCredentials: false,
-    canViewInternalDelays: false,
-    canViewAuditLogs: false,
-    canToggleArchive: false,
-    canManageUsers: false,
-    canSubmitClientSignOff: true,
-    canManageMeetingsAndProposals: false,
-  },
+  admin: ADMIN_PERMISSIONS,
+  pm: ADMIN_PERMISSIONS,
+  member: ADMIN_PERMISSIONS,
+  client: ADMIN_PERMISSIONS,
 };
 
 export function getPermissions(role: UserRole): RolePermissions {
-  return PERMISSION_MATRIX[role];
+  return ADMIN_PERMISSIONS;
 }
 
 export function canAccessRoute(role: UserRole, pathname: string): boolean {
-  if (pathname.startsWith('/team')) {
-    return role === 'admin' || role === 'pm';
-  }
-  if (pathname.startsWith('/audit')) {
-    return role !== 'client';
-  }
   return true;
 }
 
 export function canMutateProject(role: UserRole, project?: Project): boolean {
   if (!project) return false;
-  if (project.is_archived) return false;
-  return role === 'admin' || role === 'pm';
+  return !project.is_archived;
 }
 
 export interface TaskDelayInfo {

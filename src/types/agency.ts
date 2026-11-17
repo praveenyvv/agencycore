@@ -112,6 +112,7 @@ export interface User {
   name: string;
   email: string;
   role: UserRole;
+  password?: string;
   avatar_url?: string | null;
   title?: string | null;
   client_company?: string | null;
@@ -326,8 +327,8 @@ export interface RolePermissions {
 }
 
 export const ROLE_LABELS: Record<UserRole, string> = {
-  admin: 'Admin / Founder',
-  pm: 'Project Manager',
-  member: 'Team Member',
-  client: 'Client Portal',
+  admin: 'Founder & Admin',
+  pm: 'Founder & Admin',
+  member: 'Founder & Admin',
+  client: 'Founder & Admin',
 };

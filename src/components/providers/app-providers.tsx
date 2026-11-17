@@ -240,6 +240,13 @@ interface AuthContextValue {
   ) => void;
   toggleProjectArchive: (projectId: string) => void;
   submitClientSignOff: (projectId: string, deliverableId: string) => void;
+  createAdminUser: (input: {
+    name: string;
+    email: string;
+    title?: string;
+    password?: string;
+  }) => User;
+  changeUserPassword: (userId: string, newPass: string) => void;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -276,6 +283,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
       })
   );
 
+  const [users, setUsers] = useState<User[]>(DEMO_USERS);
   const [currentUserId, setCurrentUserId] = useState<string>(DEMO_USERS[0].id);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(true);
   const todayDate = useSyncExternalStore(
@@ -300,8 +308,8 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
   const [activityLogs, setActivityLogs] = useState<ActivityLog[]>(INITIAL_ACTIVITY_LOGS);
 
   const currentUser = useMemo(
-    () => DEMO_USERS.find((u) => u.id === currentUserId) ?? DEMO_USERS[0],
-    [currentUserId]
+    () => users.find((u) => u.id === currentUserId) ?? users[0] ?? DEMO_USERS[0],
+    [users, currentUserId]
   );
 
   const permissions = useMemo(
@@ -334,45 +342,18 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
     [currentUser.id]
   );
 
+  // All Admins / Founders share the exact same projects and live workspace state
   const accessibleProjects = useMemo(() => {
-    // 1. Internal Agency Staff (Admin, PM, and Members/Employees):
-    // All internal agency staff (designers, developers, PMs, founders) have access
-    // to agency projects to collaborate across design, engineering, and QA.
-    if (
-      currentUser.role === 'admin' ||
-      currentUser.role === 'pm' ||
-      currentUser.role === 'member'
-    ) {
-      return projects;
-    }
+    return projects;
+  }, [projects]);
 
-    // 2. External Clients: Strictly scoped to their own company's projects
-    const allowedIds = new Set(memberships[currentUser.id] ?? []);
-    return projects.filter((p) => {
-      if (allowedIds.has(p.id)) return true;
-      if (
-        currentUser.client_company &&
-        p.client_name.toLowerCase().includes(currentUser.client_company.toLowerCase())
-      ) {
-        return true;
-      }
-      return false;
-    });
-  }, [currentUser, projects, memberships]);
-
+  // All Admins / Founders share the exact same tasks
   const accessibleTasks = useMemo(() => {
-    const projectIds = new Set(accessibleProjects.map((p) => p.id));
-    return tasks.filter((t) => {
-      if (!projectIds.has(t.project_id)) return false;
-      if (currentUser.role === 'client') {
-        return t.status === 'Done';
-      }
-      return true;
-    });
-  }, [accessibleProjects, tasks, currentUser.role]);
+    return tasks;
+  }, [tasks]);
 
   const switchPersona = (userId: string) => {
-    const found = DEMO_USERS.find((u) => u.id === userId);
+    const found = users.find((u) => u.id === userId);
     if (found) {
       setCurrentUserId(found.id);
       setIsAuthenticated(true);
@@ -380,7 +361,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
   };
 
   const signInWithEmail = (email: string) => {
-    const found = DEMO_USERS.find(
+    const found = users.find(
       (u) => u.email.toLowerCase() === email.trim().toLowerCase()
     );
     if (found) {
@@ -392,6 +373,45 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = () => setIsAuthenticated(false);
+
+  const createAdminUser = useCallback(
+    (input: {
+      name: string;
+      email: string;
+      title?: string;
+      password?: string;
+    }): User => {
+      const newId = makeId('usr-admin');
+      const newUser: User = {
+        id: newId,
+        name: input.name.trim(),
+        email: input.email.trim(),
+        role: 'admin',
+        title: input.title?.trim() || 'Co-Founder & Admin',
+        password: input.password?.trim() || 'admin',
+        created_at: new Date().toISOString(),
+      };
+      setUsers((prev) => [...prev, newUser]);
+      appendLog(
+        projects[0]?.id || 'system',
+        'SCOPE_UPDATED',
+        'project',
+        newId,
+        `Added new Founder & Admin: ${newUser.name} (${newUser.email})`
+      );
+      return newUser;
+    },
+    [projects, appendLog]
+  );
+
+  const changeUserPassword = useCallback(
+    (userId: string, newPass: string) => {
+      setUsers((prev) =>
+        prev.map((u) => (u.id === userId ? { ...u, password: newPass.trim() } : u))
+      );
+    },
+    []
+  );
 
   // 1. Create Project (Supports Discovery / Meetings / Draft intake)
   const createProject = useCallback(
@@ -1495,7 +1515,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
 
   const value: AuthContextValue = {
     currentUser,
-    users: DEMO_USERS,
+    users,
     permissions,
     accessibleProjects,
     accessibleTasks,
@@ -1543,6 +1563,8 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
     updateTaskDeliverable,
     toggleProjectArchive,
     submitClientSignOff,
+    createAdminUser,
+    changeUserPassword,
   };
 
   return (

@@ -119,8 +119,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const navItems = useMemo(() => {
     const items = [
       {
-        label:
-          currentUser.role === 'client' ? 'Client Portal' : 'Command Center',
+        label: 'Command Center',
         href: '/',
         icon: LayoutDashboard,
         visible: true,
@@ -129,35 +128,35 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         label: 'Business Contacts',
         href: '/contacts',
         icon: Contact,
-        visible: currentUser.role !== 'client',
+        visible: true,
       },
       {
         label: 'Drafts & Deals',
         href: '/drafts',
         icon: Archive,
-        visible: currentUser.role !== 'client',
+        visible: true,
       },
       {
         label: 'My Tasks',
         href: '/tasks',
         icon: CheckSquare,
-        visible: currentUser.role !== 'client',
+        visible: true,
       },
       {
-        label: 'Team & Roles',
+        label: 'Founders & Admins',
         href: '/team',
         icon: Users,
-        visible: permissions.canManageUsers || currentUser.role === 'pm',
+        visible: true,
       },
       {
         label: 'Audit & Archive',
         href: '/audit',
         icon: ShieldCheck,
-        visible: permissions.canViewAuditLogs,
+        visible: true,
       },
     ];
     return items.filter((i) => i.visible);
-  }, [currentUser.role, permissions.canManageUsers, permissions.canViewAuditLogs]);
+  }, []);
 
   const searchResults = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -376,11 +375,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
         {personaMenuOpen && (
           <div className="absolute bottom-14 left-2 right-2 z-50 rounded-lg border border-zinc-800 bg-zinc-900 p-1.5 shadow-2xl">
-            <div className="px-2 py-1 text-[10px] font-medium uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
-              <ShieldCheck className="h-3 w-3 text-emerald-400" />
-              Switch RBAC Role (Demo)
+            <div className="px-2 py-1 text-[10px] font-medium uppercase tracking-wider text-zinc-400 flex items-center justify-between">
+              <span className="flex items-center gap-1.5">
+                <ShieldCheck className="h-3 w-3 text-emerald-400" />
+                Switch Founder / Admin
+              </span>
+              <Link
+                href="/team"
+                onClick={() => setPersonaMenuOpen(false)}
+                className="text-[10px] text-blue-400 hover:underline"
+              >
+                + Add
+              </Link>
             </div>
-            <div className="space-y-0.5 mt-1">
+            <div className="space-y-0.5 mt-1 max-h-56 overflow-y-auto">
               {users.map((u) => (
                 <button
                   key={u.id}
@@ -397,12 +405,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 >
                   <div className="truncate">
                     <div className="font-medium truncate">{u.name}</div>
-                    <div className="text-[10px] text-zinc-400">
-                      {ROLE_LABELS[u.role]}
+                    <div className="text-[10px] text-zinc-400 truncate">
+                      {u.title || ROLE_LABELS[u.role]}
                     </div>
                   </div>
                   {u.id === currentUser.id && (
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shrink-0" />
                   )}
                 </button>
               ))}

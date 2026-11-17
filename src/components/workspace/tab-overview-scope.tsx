@@ -256,23 +256,15 @@ export function TabOverviewScope({ project }: { project: Project }) {
                   </button>
 
                   <div className="flex items-center gap-2">
-                    {del.client_signed_off ? (
-                      <Badge variant="success">
-                        <ShieldCheck className="h-3 w-3" /> Client Signed Off
-                      </Badge>
-                    ) : permissions.canSubmitClientSignOff && del.completed ? (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => submitClientSignOff(project.id, del.id)}
-                      >
-                        Approve &amp; Sign Off
-                      </Button>
-                    ) : (
-                      <Badge variant={del.completed ? 'info' : 'secondary'}>
-                        {del.completed ? 'Ready for Sign-off' : 'In Progress'}
-                      </Badge>
-                    )}
+                    <Badge variant={del.completed ? 'success' : 'secondary'}>
+                      {del.completed ? (
+                        <>
+                          <CheckCircle2 className="h-3 w-3 mr-1" /> Completed
+                        </>
+                      ) : (
+                        'In Progress'
+                      )}
+                    </Badge>
                   </div>
                 </div>
               ))

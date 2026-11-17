@@ -65,7 +65,7 @@ export default function LoginPage() {
               Workspace Authentication
             </CardTitle>
             <CardDescription className="text-zinc-400">
-              Sign in with your agency email or select an RBAC persona below.
+              Sign in as Founder / Admin to access the shared agency workspace.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-5">
@@ -101,7 +101,7 @@ export default function LoginPage() {
               </div>
               <div className="relative flex justify-center text-[10px] uppercase tracking-wider">
                 <span className="bg-zinc-900 px-2 text-zinc-500">
-                  Quick RBAC Persona Login
+                  Active Founders &amp; Admins
                 </span>
               </div>
             </div>

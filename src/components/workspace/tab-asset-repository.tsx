@@ -40,13 +40,12 @@ export function TabAssetRepository({ project }: { project: Project }) {
   const projectAssets = useMemo(() => {
     return assets.filter((a) => {
       if (a.project_id !== project.id) return false;
-      if (currentUser.role === 'client' && !a.client_approved) return false;
       if (selectedFolder !== 'All' && a.folder_category !== selectedFolder) {
         return false;
       }
       return true;
     });
-  }, [assets, project.id, currentUser.role, selectedFolder]);
+  }, [assets, project.id, selectedFolder]);
 
   const handleFiles = (fileList: FileList | null) => {
     if (!fileList || !canUpload) return;
@@ -88,8 +87,7 @@ export function TabAssetRepository({ project }: { project: Project }) {
             const count = assets.filter(
               (a) =>
                 a.project_id === project.id &&
-                a.folder_category === folder &&
-                (currentUser.role !== 'client' || a.client_approved)
+                a.folder_category === folder
             ).length;
             return (
               <button
@@ -220,24 +218,7 @@ export function TabAssetRepository({ project }: { project: Project }) {
                     </div>
 
                     <div className="flex items-center gap-2">
-                      {asset.client_approved ? (
-                        <Badge variant="success">
-                          <CheckCircle2 className="h-3 w-3" /> Client Approved
-                        </Badge>
-                      ) : (
-                        <Badge variant="secondary">Internal Draft</Badge>
-                      )}
-                      {permissions.canEditScope && !project.is_archived && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() =>
-                            toggleAssetApproval(project.id, asset.id)
-                          }
-                        >
-                          {asset.client_approved ? 'Revoke' : 'Approve'}
-                        </Button>
-                      )}
+                      <Badge variant="outline">{asset.version_tag}</Badge>
                     </div>
                   </div>
                 );
