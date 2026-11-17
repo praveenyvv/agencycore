@@ -33,7 +33,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { getTaskDelayInfo } from '@/lib/rbac';
 import { cn, formatDate } from '@/lib/utils';
-import { ROLE_LABELS, type ProjectType, type UserRole } from '@/types/agency';
+import { ROLE_LABELS, getProjectSimpleStatus, type ProjectType, type UserRole } from '@/types/agency';
 
 const PROJECT_TYPE_ICONS: Record<ProjectType, React.ReactNode> = {
   Website: <Globe className="h-3.5 w-3.5 text-blue-600" />,
@@ -115,6 +115,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     ? pathname.split('/')[2]
     : null;
   const activeProject = accessibleProjects.find((p) => p.id === activeProjectId);
+
+  const activeProjects = useMemo(() => {
+    return accessibleProjects.filter((p) => getProjectSimpleStatus(p) === 'Active');
+  }, [accessibleProjects]);
+
+  const draftsCount = useMemo(() => {
+    return accessibleProjects.filter((p) => getProjectSimpleStatus(p) !== 'Active').length;
+  }, [accessibleProjects]);
 
   const navItems = useMemo(() => {
     const items = [
@@ -231,32 +239,48 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           {switcherOpen && (
             <div className="absolute left-3 right-3 top-14 z-50 rounded-md border border-zinc-800 bg-zinc-900 p-1 shadow-xl">
               <div className="px-2 py-1 text-[10px] font-medium uppercase tracking-wider text-zinc-500">
-                Accessible Projects ({accessibleProjects.length})
+                Active Projects ({activeProjects.length})
               </div>
-              {accessibleProjects.map((project) => (
-                <button
-                  key={project.id}
+              {activeProjects.length === 0 ? (
+                <div className="px-2 py-2 text-xs text-zinc-500">
+                  No active projects.
+                </div>
+              ) : (
+                activeProjects.map((project) => (
+                  <button
+                    key={project.id}
+                    onClick={() => {
+                      setSwitcherOpen(false);
+                      setMobileOpen(false);
+                      router.push(`/projects/${project.id}`);
+                    }}
+                    className={cn(
+                      'flex w-full items-center justify-between rounded px-2 py-1.5 text-left text-xs transition-colors cursor-pointer',
+                      activeProjectId === project.id
+                        ? 'bg-zinc-800 text-white font-medium'
+                        : 'text-zinc-300 hover:bg-zinc-800/60 hover:text-white'
+                    )}
+                  >
+                    <div className="flex items-center gap-2 truncate">
+                      {PROJECT_TYPE_ICONS[project.project_type]}
+                      <span className="truncate">{project.title}</span>
+                    </div>
+                  </button>
+                ))
+              )}
+              {draftsCount > 0 && (
+                <Link
+                  href="/drafts"
                   onClick={() => {
                     setSwitcherOpen(false);
                     setMobileOpen(false);
-                    router.push(`/projects/${project.id}`);
                   }}
-                  className={cn(
-                    'flex w-full items-center justify-between rounded px-2 py-1.5 text-left text-xs transition-colors cursor-pointer',
-                    activeProjectId === project.id
-                      ? 'bg-zinc-800 text-white'
-                      : 'text-zinc-300 hover:bg-zinc-800/60 hover:text-white'
-                  )}
+                  className="mt-1 flex items-center justify-between border-t border-zinc-800 px-2 py-1.5 text-[11px] text-zinc-400 hover:text-zinc-200"
                 >
-                  <div className="flex items-center gap-2 truncate">
-                    {PROJECT_TYPE_ICONS[project.project_type]}
-                    <span className="truncate">{project.title}</span>
-                  </div>
-                  {project.is_archived && (
-                    <Lock className="h-3 w-3 shrink-0 text-zinc-500" />
-                  )}
-                </button>
-              ))}
+                  <span>Drafts ({draftsCount} Inactive/Completed)</span>
+                  <Archive className="h-3 w-3" />
+                </Link>
+              )}
             </div>
           )}
         </div>
@@ -302,44 +326,38 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <span className="text-[10px] font-medium uppercase tracking-wider text-zinc-500">
                 Projects
               </span>
-              <span className="text-[10px] text-zinc-600">
-                {accessibleProjects.length}
+              <span className="text-[10px] font-semibold text-zinc-400">
+                {activeProjects.length}
               </span>
             </div>
             <div className="space-y-0.5">
-              {accessibleProjects.map((project) => {
-                const isSelected = activeProjectId === project.id;
-                return (
-                  <Link
-                    key={project.id}
-                    href={`/projects/${project.id}`}
-                    onClick={() => setMobileOpen(false)}
-                    className={cn(
-                      'flex items-center justify-between rounded-md px-2.5 py-1.5 text-xs transition-colors',
-                      isSelected
-                        ? 'bg-zinc-800 text-white font-medium'
-                        : 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200'
-                    )}
-                  >
-                    <div className="flex items-center gap-2 truncate">
-                      <span
-                        className={cn(
-                          'h-1.5 w-1.5 shrink-0 rounded-full',
-                          project.status === 'In Execution' && 'bg-blue-400',
-                          project.status === 'QA & Handover' && 'bg-amber-400',
-                          project.status === 'Maintenance' && 'bg-emerald-400',
-                          project.status === 'Completed/Archived' &&
-                            'bg-zinc-500',
-                          (project.status === 'Intake' ||
-                            project.status === 'Scoping') &&
-                            'bg-violet-400'
-                        )}
-                      />
-                      <span className="truncate">{project.title}</span>
-                    </div>
-                  </Link>
-                );
-              })}
+              {activeProjects.length === 0 ? (
+                <div className="px-2.5 py-2 text-[11px] text-zinc-500">
+                  No active projects.
+                </div>
+              ) : (
+                activeProjects.map((project) => {
+                  const isSelected = activeProjectId === project.id;
+                  return (
+                    <Link
+                      key={project.id}
+                      href={`/projects/${project.id}`}
+                      onClick={() => setMobileOpen(false)}
+                      className={cn(
+                        'flex items-center justify-between rounded-md px-2.5 py-1.5 text-xs transition-colors',
+                        isSelected
+                          ? 'bg-zinc-800 text-white font-medium'
+                          : 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200'
+                      )}
+                    >
+                      <div className="flex items-center gap-2 truncate">
+                        <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-400" />
+                        <span className="truncate">{project.title}</span>
+                      </div>
+                    </Link>
+                  );
+                })
+              )}
             </div>
           </div>
         )}
