@@ -166,16 +166,16 @@ export default function ProjectWorkspacePage() {
   const simpleStatus = getProjectSimpleStatus(project);
 
   return (
-    <div className="mx-auto max-w-7xl space-y-3.5 sm:space-y-4">
+    <div className="mx-auto max-w-7xl space-y-5">
       {/* Project Header */}
-      <div className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="flex flex-wrap items-center gap-2">
             <FolderKanban className="h-4 w-4 text-zinc-500" />
-            <h1 className="text-base sm:text-lg font-bold tracking-tight text-[#111827]">
+            <h1 className="text-lg font-semibold tracking-tight text-zinc-900">
               {project.title}
             </h1>
-            <Badge variant="outline" className="text-[11px] py-0.5">{project.project_type}</Badge>
+            <Badge variant="outline">{project.project_type}</Badge>
             <div className="relative inline-flex items-center">
               <select
                 value={simpleStatus}
@@ -221,7 +221,7 @@ export default function ProjectWorkspacePage() {
       </div>
 
       {/* Navigation Tab Bar (Segmented Control Pill Container) */}
-      <div className="flex items-center gap-1 overflow-x-auto bg-[#f3f4f6] p-[2.5px] rounded-[8px] w-fit max-w-full">
+      <div className="flex items-center gap-1 overflow-x-auto bg-[#f3f4f6] p-[3px] rounded-[9px] w-fit max-w-full">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = resolvedTab === tab.id;
@@ -231,7 +231,7 @@ export default function ProjectWorkspacePage() {
               type="button"
               onClick={() => setActiveTab(tab.id)}
               className={cn(
-                'flex items-center gap-1.5 whitespace-nowrap px-3 py-1.5 rounded-[6px] text-[12px] font-medium transition-all cursor-pointer',
+                'flex items-center gap-1.5 whitespace-nowrap px-3.5 py-1.5 rounded-[7px] text-[12.5px] font-medium transition-all cursor-pointer',
                 isActive
                   ? 'bg-white text-[#4361ee] font-semibold shadow-[0_1px_3px_rgba(0,0,0,0.06)]'
                   : 'text-[#6b7280] hover:text-[#111827] hover:bg-white/60'

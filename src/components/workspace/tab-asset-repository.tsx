@@ -244,31 +244,32 @@ export function TabAssetRepository({ project }: { project: Project }) {
   };
 
   return (
-    <div className="space-y-3.5 sm:space-y-4">
+    <div className="space-y-6">
       {/* Top Header Card */}
-      <div className="flex flex-col gap-2.5 rounded-xl border border-zinc-200 bg-white p-3.5 sm:p-4 shadow-xs sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-2.5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700 shrink-0">
-            <FolderArchive className="h-4 w-4" />
-          </div>
-          <div>
-            <h2 className="text-sm sm:text-base font-semibold text-zinc-900 leading-tight">
-              Asset Repository
-            </h2>
-            <p className="text-[11.5px] text-zinc-500 line-clamp-1">
-              Centralized cloud links for Google Drive, Figma, Dropbox &amp; SOWs. Zero storage limits, instant 1-click access.
-            </p>
+      <div className="flex flex-col gap-4 rounded-xl border border-zinc-200 bg-white p-5 shadow-xs sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <div className="flex items-center gap-2">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700">
+              <FolderArchive className="h-5 w-5" />
+            </div>
+            <div>
+              <h2 className="text-base font-semibold text-zinc-900">
+                Asset Repository
+              </h2>
+              <p className="text-xs text-zinc-500">
+                Centralized cloud links for Google Drive, Figma, Dropbox &amp; SOWs. Zero storage limits, instant 1-click access.
+              </p>
+            </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-2">
           <Button
             type="button"
-            size="sm"
             onClick={openAddModal}
-            className="flex items-center gap-1.5 bg-[#4361ee] text-xs font-medium text-white hover:bg-[#3451d1] shadow-sm"
+            className="flex items-center gap-1.5 bg-zinc-900 text-xs font-medium text-white hover:bg-zinc-800"
           >
-            <Plus className="h-3.5 w-3.5" />
+            <Plus className="h-4 w-4" />
             Add Asset Link
           </Button>
         </div>
@@ -377,7 +378,7 @@ export function TabAssetRepository({ project }: { project: Project }) {
                 key={asset.id}
                 className="group relative flex flex-col justify-between overflow-hidden border border-zinc-200 bg-white transition-all hover:border-zinc-300 hover:shadow-xs"
               >
-                <CardContent className="p-3.5 sm:p-4 space-y-2.5">
+                <CardContent className="p-4 space-y-3">
                   {/* Header: DocType badge + Edit/Delete action buttons */}
                   <div className="flex items-center justify-between gap-2">
                     <span
@@ -418,11 +419,11 @@ export function TabAssetRepository({ project }: { project: Project }) {
                       {asset.name || asset.file_name}
                     </h3>
                     {asset.notes ? (
-                      <p className="mt-0.5 text-xs text-zinc-600 line-clamp-2">
+                      <p className="mt-1 text-xs text-zinc-600 line-clamp-2">
                         {asset.notes}
                       </p>
                     ) : (
-                      <p className="mt-0.5 text-xs text-zinc-400 italic">
+                      <p className="mt-1 text-xs text-zinc-400 italic">
                         No additional notes
                       </p>
                     )}
@@ -433,7 +434,7 @@ export function TabAssetRepository({ project }: { project: Project }) {
                     href={cleanUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 rounded-lg bg-[rgba(67,97,238,0.06)] hover:bg-[rgba(67,97,238,0.12)] px-2.5 py-1 border border-[rgba(67,97,238,0.18)] text-[#4361ee] transition-colors group/link"
+                    className="flex items-center gap-1.5 rounded-lg bg-[rgba(67,97,238,0.06)] hover:bg-[rgba(67,97,238,0.12)] px-2.5 py-1.5 border border-[rgba(67,97,238,0.18)] text-[#4361ee] transition-colors group/link"
                   >
                     <Link2 className="h-3.5 w-3.5 shrink-0 text-[#4361ee]" />
                     <span className="truncate text-[11.5px] font-medium font-mono text-[#4361ee] group-hover/link:underline">
@@ -443,13 +444,13 @@ export function TabAssetRepository({ project }: { project: Project }) {
                   </a>
 
                   {/* Metadata (Uploader & Date) */}
-                  <div className="flex items-center justify-between text-[11px] text-zinc-400 pt-0.5 border-t border-zinc-100">
+                  <div className="flex items-center justify-between text-[11px] text-zinc-400 pt-1 border-t border-zinc-100">
                     <span>By {uploader?.name || 'Admin'}</span>
                     <span>{formatTimestamp(asset.created_at)}</span>
                   </div>
 
                   {/* Action Bar: 1-Click Copy & 1-Click Open */}
-                  <div className="grid grid-cols-2 gap-2 pt-0.5">
+                  <div className="grid grid-cols-2 gap-2 pt-1">
                     <Button
                       type="button"
                       variant="outline"
