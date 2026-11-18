@@ -4,7 +4,9 @@ import React, {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
+  useRef,
   useState,
   useSyncExternalStore,
 } from 'react';
@@ -291,6 +293,8 @@ interface AuthContextValue {
   changeUserPassword: (userId: string, newPass: string) => void;
   toggleUserDisabled: (userId: string) => void;
   deleteUser: (userId: string) => void;
+  isCloudSyncing?: boolean;
+  isCloudSynced?: boolean;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -374,6 +378,99 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
   const [tasks, setTasks] = useState<Task[]>(INITIAL_TASKS);
   const [renewals, setRenewals] = useState<RenewalItem[]>(INITIAL_RENEWALS);
   const [activityLogs, setActivityLogs] = useState<ActivityLog[]>(INITIAL_ACTIVITY_LOGS);
+
+  const [isCloudSyncing, setIsCloudSyncing] = useState<boolean>(true);
+  const [isCloudSynced, setIsCloudSynced] = useState<boolean>(false);
+  const hasLoadedCloud = useRef<boolean>(false);
+
+  // 1. Initial Load: Fetch full workspace from Turso Cloud Database
+  useEffect(() => {
+    let isCancelled = false;
+    async function loadFromTurso() {
+      try {
+        const res = await fetch('/api/sync');
+        if (!res.ok) throw new Error(`Sync HTTP ${res.status}`);
+        const result = await res.json();
+        if (result.configured && result.data && !isCancelled) {
+          const d = result.data;
+          if (Array.isArray(d.users) && d.users.length > 0) setUsers(d.users);
+          if (Array.isArray(d.projects)) setProjects(d.projects);
+          if (Array.isArray(d.contacts)) setContacts(d.contacts);
+          if (Array.isArray(d.meetings)) setMeetings(d.meetings);
+          if (Array.isArray(d.clientTalks)) setClientTalks(d.clientTalks);
+          if (Array.isArray(d.proposals)) setProposals(d.proposals);
+          if (Array.isArray(d.documents)) setDocuments(d.documents);
+          if (Array.isArray(d.requirements)) setRequirements(d.requirements);
+          if (Array.isArray(d.assets)) setAssets(d.assets);
+          if (Array.isArray(d.credentials)) setCredentials(d.credentials);
+          if (Array.isArray(d.tasks)) setTasks(d.tasks);
+          if (Array.isArray(d.renewals)) setRenewals(d.renewals);
+          if (Array.isArray(d.activityLogs)) setActivityLogs(d.activityLogs);
+          setIsCloudSynced(true);
+        }
+      } catch (err) {
+        console.warn('Could not load from Turso cloud, using local cache:', err);
+      } finally {
+        if (!isCancelled) {
+          setIsCloudSyncing(false);
+          setTimeout(() => {
+            hasLoadedCloud.current = true;
+          }, 300);
+        }
+      }
+    }
+    loadFromTurso();
+    return () => {
+      isCancelled = true;
+    };
+  }, []);
+
+  // 2. Debounced Cloud Persistence: Automatically sync any changes to Turso
+  useEffect(() => {
+    if (!hasLoadedCloud.current) return;
+
+    const timeout = setTimeout(() => {
+      fetch('/api/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          updates: {
+            users,
+            projects,
+            contacts,
+            meetings,
+            clientTalks,
+            proposals,
+            documents,
+            requirements,
+            assets,
+            credentials,
+            tasks,
+            renewals,
+            activityLogs,
+          },
+        }),
+      })
+        .then(() => setIsCloudSynced(true))
+        .catch((e) => console.warn('Cloud sync error:', e));
+    }, 400);
+
+    return () => clearTimeout(timeout);
+  }, [
+    users,
+    projects,
+    contacts,
+    meetings,
+    clientTalks,
+    proposals,
+    documents,
+    requirements,
+    assets,
+    credentials,
+    tasks,
+    renewals,
+    activityLogs,
+  ]);
 
   const currentUser = useMemo(
     () => users.find((u) => u.id === currentUserId) ?? users[0] ?? DEMO_USERS[0],
@@ -2014,6 +2111,8 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
     changeUserPassword,
     toggleUserDisabled,
     deleteUser,
+    isCloudSyncing,
+    isCloudSynced,
   };
 
   return (
