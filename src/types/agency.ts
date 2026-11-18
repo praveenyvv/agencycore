@@ -111,7 +111,12 @@ export type ActivityActionType =
   | 'DOCUMENT_UPLOADED'
   | 'CLIENT_TALK_LOGGED'
   | 'CLIENT_TALK_UPDATED'
-  | 'CLIENT_TALK_DELETED';
+  | 'CLIENT_TALK_DELETED'
+  | 'USER_CREATED'
+  | 'USER_UPDATED'
+  | 'USER_DISABLED'
+  | 'USER_ACTIVATED'
+  | 'USER_DELETED';
 
 export type ClientTalkType = 'Call' | 'WhatsApp' | 'Email' | 'Meeting';
 
@@ -139,6 +144,7 @@ export interface User {
   email: string;
   role: UserRole;
   is_main_admin?: boolean;
+  is_disabled?: boolean;
   password?: string;
   avatar_url?: string | null;
   title?: string | null;

@@ -38,11 +38,11 @@ export default function LoginPage() {
 
   const onSubmit = (data: LoginFormValues) => {
     setAuthError(null);
-    const ok = signInWithCredentials(data.email, data.password);
-    if (ok) {
+    const res = signInWithCredentials(data.email, data.password);
+    if (res.success) {
       router.push('/');
     } else {
-      setAuthError('Invalid email or password. Please check your credentials.');
+      setAuthError(res.error || 'Invalid email or password. Please check your credentials.');
     }
   };
 

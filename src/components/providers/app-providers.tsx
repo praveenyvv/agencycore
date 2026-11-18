@@ -216,8 +216,8 @@ interface AuthContextValue {
   activityLogs: ActivityLog[];
   todayDate: Date | null;
   switchPersona: (userId: string) => void;
-  signInWithEmail: (email: string, password?: string) => boolean;
-  signInWithCredentials: (email: string, password?: string) => boolean;
+  signInWithEmail: (email: string, password?: string) => { success: boolean; error?: string };
+  signInWithCredentials: (email: string, password?: string) => { success: boolean; error?: string };
   isAuthenticated: boolean;
   signOut: () => void;
   // Core Pre-Sales & Lifecycle Mutations
@@ -289,6 +289,8 @@ interface AuthContextValue {
     password?: string;
   }) => User;
   changeUserPassword: (userId: string, newPass: string) => void;
+  toggleUserDisabled: (userId: string) => void;
+  deleteUser: (userId: string) => void;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -429,23 +431,37 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const signInWithCredentials = (email: string, password?: string) => {
+  const signInWithCredentials = (
+    email: string,
+    password?: string
+  ): { success: boolean; error?: string } => {
     const found = users.find(
       (u) => u.email.toLowerCase() === email.trim().toLowerCase()
     );
-    if (!found) return false;
+    if (!found) {
+      return { success: false, error: 'No account found with this email address.' };
+    }
+    if (found.is_disabled) {
+      return {
+        success: false,
+        error: 'This account has been disabled. Please contact the Main Admin.',
+      };
+    }
     if (found.password && password && found.password !== password.trim()) {
-      return false;
+      return { success: false, error: 'Incorrect password. Please try again.' };
     }
     setCurrentUserId(found.id);
     setIsAuthenticated(true);
     if (typeof window !== 'undefined') {
       localStorage.setItem('holabusiness_auth_user', found.id);
     }
-    return true;
+    return { success: true };
   };
 
-  const signInWithEmail = (email: string, password?: string) => {
+  const signInWithEmail = (
+    email: string,
+    password?: string
+  ): { success: boolean; error?: string } => {
     return signInWithCredentials(email, password);
   };
 
@@ -504,6 +520,69 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
       });
     },
     []
+  );
+
+  const toggleUserDisabled = useCallback(
+    (userId: string) => {
+      if (!currentUser.is_main_admin) {
+        throw new Error('Only the Main Admin can disable or re-activate accounts.');
+      }
+      const target = users.find((u) => u.id === userId);
+      if (!target) return;
+      if (target.is_main_admin || target.id === currentUser.id) {
+        throw new Error('The Main Admin account cannot be disabled.');
+      }
+
+      const nextDisabled = !target.is_disabled;
+      setUsers((prev) => {
+        const updated = prev.map((u) =>
+          u.id === userId ? { ...u, is_disabled: nextDisabled } : u
+        );
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('holabusiness_users', JSON.stringify(updated));
+        }
+        return updated;
+      });
+
+      appendLog(
+        projects[0]?.id || 'system',
+        nextDisabled ? 'USER_DISABLED' : 'USER_ACTIVATED',
+        'project',
+        userId,
+        `${nextDisabled ? 'Disabled' : 'Re-activated'} admin account for ${target.name} (${target.email})`
+      );
+    },
+    [currentUser, users, projects, appendLog]
+  );
+
+  const deleteUser = useCallback(
+    (userId: string) => {
+      if (!currentUser.is_main_admin) {
+        throw new Error('Only the Main Admin can delete administrator accounts.');
+      }
+      const target = users.find((u) => u.id === userId);
+      if (!target) return;
+      if (target.is_main_admin || target.id === currentUser.id) {
+        throw new Error('The Main Admin account cannot be deleted.');
+      }
+
+      setUsers((prev) => {
+        const updated = prev.filter((u) => u.id !== userId);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('holabusiness_users', JSON.stringify(updated));
+        }
+        return updated;
+      });
+
+      appendLog(
+        projects[0]?.id || 'system',
+        'USER_DELETED',
+        'project',
+        userId,
+        `Permanently deleted admin account for ${target.name} (${target.email})`
+      );
+    },
+    [currentUser, users, projects, appendLog]
   );
 
   // 1. Create Project (Supports Discovery / Meetings / Draft intake)
@@ -1933,6 +2012,8 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
     deleteRenewal,
     createAdminUser,
     changeUserPassword,
+    toggleUserDisabled,
+    deleteUser,
   };
 
   return (

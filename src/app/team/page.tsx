@@ -2,6 +2,8 @@
 
 import React, { useState } from 'react';
 import {
+  AlertTriangle,
+  Ban,
   Check,
   Eye,
   EyeOff,
@@ -9,7 +11,9 @@ import {
   Lock,
   Plus,
   ShieldCheck,
+  Trash2,
   UserCheck,
+  UserX,
   Users,
   X,
 } from 'lucide-react';
@@ -21,11 +25,19 @@ import { Modal } from '@/components/ui/modal';
 import { ROLE_LABELS, type User } from '@/types/agency';
 
 export default function TeamPage() {
-  const { currentUser, users, createAdminUser, changeUserPassword, switchPersona } =
-    useAuth();
+  const {
+    currentUser,
+    users,
+    createAdminUser,
+    changeUserPassword,
+    toggleUserDisabled,
+    deleteUser,
+    switchPersona,
+  } = useAuth();
 
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [changingPassUser, setChangingPassUser] = useState<User | null>(null);
+  const [deletingUser, setDeletingUser] = useState<User | null>(null);
 
   // Add User Form
   const [name, setName] = useState('');
@@ -81,6 +93,13 @@ export default function TeamPage() {
         setConfirmPassword('');
         setPassSuccess(false);
       }, 1000);
+    }
+  };
+
+  const handleConfirmDelete = () => {
+    if (deletingUser) {
+      deleteUser(deletingUser.id);
+      setDeletingUser(null);
     }
   };
 
@@ -158,15 +177,27 @@ export default function TeamPage() {
             return (
               <div
                 key={u.id}
-                className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 hover:bg-[#fafbff] transition-colors"
+                className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 transition-colors ${
+                  u.is_disabled ? 'bg-zinc-50/70 opacity-90' : 'hover:bg-[#fafbff]'
+                }`}
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-[40px] h-[40px] rounded-full bg-[#4361ee] text-white font-bold text-[13px] flex items-center justify-center shrink-0 shadow-xs">
+                  <div
+                    className={`w-[40px] h-[40px] rounded-full font-bold text-[13px] flex items-center justify-center shrink-0 shadow-xs ${
+                      u.is_disabled
+                        ? 'bg-zinc-300 text-zinc-600'
+                        : 'bg-[#4361ee] text-white'
+                    }`}
+                  >
                     {initials}
                   </div>
                   <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-[14px] font-semibold text-[#111827]">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span
+                        className={`text-[14px] font-semibold ${
+                          u.is_disabled ? 'text-zinc-500 line-through' : 'text-[#111827]'
+                        }`}
+                      >
                         {u.name}
                       </span>
                       {isCurrent && (
@@ -174,7 +205,12 @@ export default function TeamPage() {
                           You
                         </span>
                       )}
-                      {u.is_main_admin ? (
+                      {u.is_disabled ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-[20px] text-[11px] font-semibold bg-red-100 text-red-700 border border-red-200">
+                          <Ban className="h-3 w-3 mr-1" />
+                          Account Disabled
+                        </span>
+                      ) : u.is_main_admin ? (
                         <span className="inline-flex items-center px-2 py-0.5 rounded-[20px] text-[11px] font-semibold bg-blue-100 text-blue-800 border border-blue-200">
                           <ShieldCheck className="h-3 w-3 mr-1" />
                           Main Admin / Primary Founder
@@ -192,7 +228,7 @@ export default function TeamPage() {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 self-end sm:self-center">
+                <div className="flex items-center gap-2 self-end sm:self-center flex-wrap">
                   <button
                     onClick={() => {
                       setChangingPassUser(u);
@@ -207,7 +243,45 @@ export default function TeamPage() {
                     Change Password
                   </button>
 
-                  {!isCurrent && (
+                  {/* Main Admin Only Controls for other Admins */}
+                  {currentUser.is_main_admin && !u.is_main_admin && !isCurrent && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => toggleUserDisabled(u.id)}
+                        className={`inline-flex items-center gap-1.5 h-[32px] px-2.5 rounded-[7px] text-[12px] font-medium border transition-colors cursor-pointer ${
+                          u.is_disabled
+                            ? 'border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                            : 'border-amber-300 bg-amber-50 text-amber-700 hover:bg-amber-100'
+                        }`}
+                        title={u.is_disabled ? 'Re-enable account' : 'Temporarily suspend account'}
+                      >
+                        {u.is_disabled ? (
+                          <>
+                            <UserCheck className="h-3.5 w-3.5" />
+                            Enable
+                          </>
+                        ) : (
+                          <>
+                            <UserX className="h-3.5 w-3.5" />
+                            Disable
+                          </>
+                        )}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setDeletingUser(u)}
+                        className="inline-flex items-center gap-1.5 h-[32px] px-2.5 rounded-[7px] border border-red-200 bg-red-50 text-red-600 hover:bg-red-100 hover:border-red-300 text-[12px] font-medium transition-colors cursor-pointer"
+                        title="Permanently remove account"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                        Delete
+                      </button>
+                    </>
+                  )}
+
+                  {!isCurrent && !u.is_disabled && (
                     <button
                       onClick={() => switchPersona(u.id)}
                       className="inline-flex items-center gap-1.5 h-[32px] px-3 rounded-[7px] bg-[#f3f4f6] text-[#4b5563] hover:bg-[#e5e7eb] hover:text-[#111827] text-[12px] font-medium transition-colors cursor-pointer"
@@ -382,6 +456,57 @@ export default function TeamPage() {
             />
           </div>
         </form>
+      </Modal>
+
+      {/* Modal: Confirm Delete User */}
+      <Modal
+        isOpen={!!deletingUser}
+        onClose={() => setDeletingUser(null)}
+        title="Delete Admin Account"
+        icon={<AlertTriangle className="h-5 w-5 text-red-600" />}
+        maxWidth="max-w-[440px]"
+        footer={
+          <>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setDeletingUser(null)}
+              className="h-[36px] px-4 text-[13px]"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={handleConfirmDelete}
+              className="h-[36px] px-4 rounded-[8px] bg-red-600 hover:bg-red-700 text-white text-[13px] font-medium shadow-[0_2px_6px_rgba(239,68,68,0.25)]"
+            >
+              Permanently Delete Account
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-3 text-[13px] text-zinc-600">
+          <p>
+            Are you sure you want to permanently delete the admin account for{' '}
+            <strong className="text-zinc-900">{deletingUser?.name}</strong> (
+            <span className="font-mono text-xs">{deletingUser?.email}</span>)?
+          </p>
+          <div className="rounded-[8px] bg-amber-50 border border-amber-200 p-3 text-xs text-amber-800 space-y-1.5">
+            <p className="font-semibold flex items-center gap-1.5 text-amber-900">
+              <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-amber-600" />
+              Safety &amp; Audit Preservation:
+            </p>
+            <p>
+              • This will permanently revoke this user&apos;s ability to log into HolaBusiness.
+            </p>
+            <p>
+              • Any projects, tasks, or audit logs previously created or edited by this user will remain intact.
+            </p>
+            <p>
+              • If you only need to temporarily restrict access, consider using <strong>Disable</strong> instead.
+            </p>
+          </div>
+        </div>
       </Modal>
     </div>
   );
