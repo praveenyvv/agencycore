@@ -52,9 +52,11 @@ export async function GET() {
       }
     }
 
-    // If projects are not yet seeded in workspace_store, seed default initial data
-    if (!store.projects || !Array.isArray(store.projects) || store.projects.length === 0) {
+    // Seeding happens ONLY ONCE on absolute first initialization.
+    // We check _system_seeded so that user deletions (e.g. 0 projects or customized users) are NEVER wiped!
+    if (!store._system_seeded) {
       const initialSeed: Record<string, any> = {
+        _system_seeded: true,
         users: DEMO_USERS,
         projects: INITIAL_SHELL_PROJECTS,
         contacts: INITIAL_CONTACTS,

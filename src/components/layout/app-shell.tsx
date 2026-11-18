@@ -186,6 +186,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     return <>{children}</>;
   }
 
+  if (!isAuthenticated) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#f5f6fa]">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 rounded-full border-2 border-[#4361ee] border-t-transparent animate-spin" />
+          <p className="text-[13px] text-zinc-500 font-medium">Redirecting to login...</p>
+        </div>
+      </div>
+    );
+  }
+
   const userInitials = (currentUser.name || 'User')
     .split(' ')
     .map((s) => s[0])

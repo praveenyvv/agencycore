@@ -31,8 +31,8 @@ export default function LoginPage() {
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: 'elena@holabusiness.io',
-      password: 'admin',
+      email: '',
+      password: '',
     },
   });
 
@@ -40,7 +40,13 @@ export default function LoginPage() {
     setAuthError(null);
     const res = signInWithCredentials(data.email, data.password);
     if (res.success) {
-      router.push('/');
+      if (typeof window !== 'undefined') {
+        const params = new URLSearchParams(window.location.search);
+        const returnTo = params.get('return_to');
+        router.push(returnTo && returnTo.startsWith('/') ? returnTo : '/');
+      } else {
+        router.push('/');
+      }
     } else {
       setAuthError(res.error || 'Invalid email or password. Please check your credentials.');
     }
