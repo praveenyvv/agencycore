@@ -9,6 +9,8 @@ import {
   Bell,
   CheckSquare,
   ChevronDown,
+  CloudCheck,
+  CloudSync,
   Command,
   Contact,
   FolderOpen,
@@ -56,6 +58,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     switchPersona,
     isAuthenticated,
     signOut,
+    isCloudSyncing,
+    isCloudSynced,
   } = useAuth();
 
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -443,6 +447,22 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
           {/* Right Controls */}
           <div className="flex items-center gap-2">
+            {/* Cloud Sync Status Indicator */}
+            {isCloudSyncing ? (
+              <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[6px] text-[11px] font-medium bg-zinc-100 text-zinc-600 border border-zinc-200">
+                <CloudSync className="h-3.5 w-3.5 animate-spin text-[#4361ee]" />
+                <span>Syncing...</span>
+              </span>
+            ) : isCloudSynced ? (
+              <span
+                className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[6px] text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200"
+                title="Connected & Synced with Turso Cloud Database"
+              >
+                <CloudCheck className="h-3.5 w-3.5 text-emerald-600" />
+                <span>Cloud Synced</span>
+              </span>
+            ) : null}
+
             {/* Notification Bell (34x34 square button, white, border, radius 8) */}
             {permissions.canViewInternalDelays && (
               <div className="relative">
