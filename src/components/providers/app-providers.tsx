@@ -365,10 +365,18 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
         if (savedAuth) return savedAuth;
       } catch {}
     }
-    return DEMO_USERS[0].id;
+    return '';
   });
 
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(true);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const savedAuth = localStorage.getItem('holabusiness_auth_user');
+        return Boolean(savedAuth);
+      } catch {}
+    }
+    return false;
+  });
   const todayDate = useSyncExternalStore(
     emptySubscribe,
     getClientTodaySnapshot,
@@ -482,15 +490,13 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
             if (typeof window !== 'undefined') localStorage.setItem('holabusiness_activity_logs', JSON.stringify(d.activityLogs));
           }
           setIsCloudSynced(true);
+          hasLoadedCloud.current = true;
         }
       } catch (err) {
         console.warn('Could not load from Turso cloud, using local cache:', err);
       } finally {
         if (!isCancelled) {
           setIsCloudSyncing(false);
-          setTimeout(() => {
-            hasLoadedCloud.current = true;
-          }, 300);
         }
       }
     }
@@ -616,6 +622,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
       setIsAuthenticated(true);
       if (typeof window !== 'undefined') {
         localStorage.setItem('holabusiness_auth_user', found.id);
+        document.cookie = `holabusiness_auth_session=${found.id}; path=/; max-age=2592000; SameSite=Lax`;
       }
     }
   };
@@ -643,6 +650,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
     setIsAuthenticated(true);
     if (typeof window !== 'undefined') {
       localStorage.setItem('holabusiness_auth_user', found.id);
+      document.cookie = `holabusiness_auth_session=${found.id}; path=/; max-age=2592000; SameSite=Lax`;
     }
     return { success: true };
   };
@@ -656,8 +664,11 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
 
   const signOut = () => {
     setIsAuthenticated(false);
+    setCurrentUserId('');
     if (typeof window !== 'undefined') {
       localStorage.removeItem('holabusiness_auth_user');
+      document.cookie = 'holabusiness_auth_session=; path=/; max-age=0; SameSite=Lax';
+      window.location.href = '/login';
     }
   };
 
