@@ -318,6 +318,18 @@ function makeId(prefix: string): string {
   return `${prefix}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
+function getInitialStorage<T>(key: string, fallback: T): T {
+  if (typeof window !== 'undefined') {
+    try {
+      const stored = localStorage.getItem(key);
+      if (stored !== null) {
+        return JSON.parse(stored);
+      }
+    } catch {}
+  }
+  return fallback;
+}
+
 export function AppProviders({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
     () =>
@@ -363,21 +375,45 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
     getServerTodaySnapshot
   );
 
-  const [projects, setProjects] = useState<Project[]>(INITIAL_SHELL_PROJECTS);
+  const [projects, setProjects] = useState<Project[]>(() =>
+    getInitialStorage('holabusiness_projects', INITIAL_SHELL_PROJECTS)
+  );
   const [memberships, setMemberships] = useState<Record<string, string[]>>(
     DEMO_PROJECT_MEMBERSHIPS
   );
-  const [contacts, setContacts] = useState<ProjectContact[]>(INITIAL_CONTACTS);
-  const [meetings, setMeetings] = useState<ProjectMeeting[]>(INITIAL_MEETINGS);
-  const [clientTalks, setClientTalks] = useState<ClientTalkRecord[]>(INITIAL_CLIENT_TALKS);
-  const [proposals, setProposals] = useState<ProjectProposal[]>(INITIAL_PROPOSALS);
-  const [documents, setDocuments] = useState<ProjectDocument[]>(INITIAL_DOCUMENTS);
-  const [requirements, setRequirements] = useState<ProjectRequirement[]>(INITIAL_REQUIREMENTS);
-  const [assets, setAssets] = useState<ProjectAsset[]>(INITIAL_ASSETS);
-  const [credentials, setCredentials] = useState<ProjectCredential[]>(INITIAL_CREDENTIALS);
-  const [tasks, setTasks] = useState<Task[]>(INITIAL_TASKS);
-  const [renewals, setRenewals] = useState<RenewalItem[]>(INITIAL_RENEWALS);
-  const [activityLogs, setActivityLogs] = useState<ActivityLog[]>(INITIAL_ACTIVITY_LOGS);
+  const [contacts, setContacts] = useState<ProjectContact[]>(() =>
+    getInitialStorage('holabusiness_contacts', INITIAL_CONTACTS)
+  );
+  const [meetings, setMeetings] = useState<ProjectMeeting[]>(() =>
+    getInitialStorage('holabusiness_meetings', INITIAL_MEETINGS)
+  );
+  const [clientTalks, setClientTalks] = useState<ClientTalkRecord[]>(() =>
+    getInitialStorage('holabusiness_client_talks', INITIAL_CLIENT_TALKS)
+  );
+  const [proposals, setProposals] = useState<ProjectProposal[]>(() =>
+    getInitialStorage('holabusiness_proposals', INITIAL_PROPOSALS)
+  );
+  const [documents, setDocuments] = useState<ProjectDocument[]>(() =>
+    getInitialStorage('holabusiness_documents', INITIAL_DOCUMENTS)
+  );
+  const [requirements, setRequirements] = useState<ProjectRequirement[]>(() =>
+    getInitialStorage('holabusiness_requirements', INITIAL_REQUIREMENTS)
+  );
+  const [assets, setAssets] = useState<ProjectAsset[]>(() =>
+    getInitialStorage('holabusiness_assets', INITIAL_ASSETS)
+  );
+  const [credentials, setCredentials] = useState<ProjectCredential[]>(() =>
+    getInitialStorage('holabusiness_credentials', INITIAL_CREDENTIALS)
+  );
+  const [tasks, setTasks] = useState<Task[]>(() =>
+    getInitialStorage('holabusiness_tasks', INITIAL_TASKS)
+  );
+  const [renewals, setRenewals] = useState<RenewalItem[]>(() =>
+    getInitialStorage('holabusiness_renewals', INITIAL_RENEWALS)
+  );
+  const [activityLogs, setActivityLogs] = useState<ActivityLog[]>(() =>
+    getInitialStorage('holabusiness_activity_logs', INITIAL_ACTIVITY_LOGS)
+  );
 
   const [isCloudSyncing, setIsCloudSyncing] = useState<boolean>(true);
   const [isCloudSynced, setIsCloudSynced] = useState<boolean>(false);
@@ -393,19 +429,58 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
         const result = await res.json();
         if (result.configured && result.data && !isCancelled) {
           const d = result.data;
-          if (Array.isArray(d.users) && d.users.length > 0) setUsers(d.users);
-          if (Array.isArray(d.projects)) setProjects(d.projects);
-          if (Array.isArray(d.contacts)) setContacts(d.contacts);
-          if (Array.isArray(d.meetings)) setMeetings(d.meetings);
-          if (Array.isArray(d.clientTalks)) setClientTalks(d.clientTalks);
-          if (Array.isArray(d.proposals)) setProposals(d.proposals);
-          if (Array.isArray(d.documents)) setDocuments(d.documents);
-          if (Array.isArray(d.requirements)) setRequirements(d.requirements);
-          if (Array.isArray(d.assets)) setAssets(d.assets);
-          if (Array.isArray(d.credentials)) setCredentials(d.credentials);
-          if (Array.isArray(d.tasks)) setTasks(d.tasks);
-          if (Array.isArray(d.renewals)) setRenewals(d.renewals);
-          if (Array.isArray(d.activityLogs)) setActivityLogs(d.activityLogs);
+          if (Array.isArray(d.users) && d.users.length > 0) {
+            setUsers(d.users);
+            if (typeof window !== 'undefined') localStorage.setItem('holabusiness_users', JSON.stringify(d.users));
+          }
+          if (Array.isArray(d.projects)) {
+            setProjects(d.projects);
+            if (typeof window !== 'undefined') localStorage.setItem('holabusiness_projects', JSON.stringify(d.projects));
+          }
+          if (Array.isArray(d.contacts)) {
+            setContacts(d.contacts);
+            if (typeof window !== 'undefined') localStorage.setItem('holabusiness_contacts', JSON.stringify(d.contacts));
+          }
+          if (Array.isArray(d.meetings)) {
+            setMeetings(d.meetings);
+            if (typeof window !== 'undefined') localStorage.setItem('holabusiness_meetings', JSON.stringify(d.meetings));
+          }
+          if (Array.isArray(d.clientTalks)) {
+            setClientTalks(d.clientTalks);
+            if (typeof window !== 'undefined') localStorage.setItem('holabusiness_client_talks', JSON.stringify(d.clientTalks));
+          }
+          if (Array.isArray(d.proposals)) {
+            setProposals(d.proposals);
+            if (typeof window !== 'undefined') localStorage.setItem('holabusiness_proposals', JSON.stringify(d.proposals));
+          }
+          if (Array.isArray(d.documents)) {
+            setDocuments(d.documents);
+            if (typeof window !== 'undefined') localStorage.setItem('holabusiness_documents', JSON.stringify(d.documents));
+          }
+          if (Array.isArray(d.requirements)) {
+            setRequirements(d.requirements);
+            if (typeof window !== 'undefined') localStorage.setItem('holabusiness_requirements', JSON.stringify(d.requirements));
+          }
+          if (Array.isArray(d.assets)) {
+            setAssets(d.assets);
+            if (typeof window !== 'undefined') localStorage.setItem('holabusiness_assets', JSON.stringify(d.assets));
+          }
+          if (Array.isArray(d.credentials)) {
+            setCredentials(d.credentials);
+            if (typeof window !== 'undefined') localStorage.setItem('holabusiness_credentials', JSON.stringify(d.credentials));
+          }
+          if (Array.isArray(d.tasks)) {
+            setTasks(d.tasks);
+            if (typeof window !== 'undefined') localStorage.setItem('holabusiness_tasks', JSON.stringify(d.tasks));
+          }
+          if (Array.isArray(d.renewals)) {
+            setRenewals(d.renewals);
+            if (typeof window !== 'undefined') localStorage.setItem('holabusiness_renewals', JSON.stringify(d.renewals));
+          }
+          if (Array.isArray(d.activityLogs)) {
+            setActivityLogs(d.activityLogs);
+            if (typeof window !== 'undefined') localStorage.setItem('holabusiness_activity_logs', JSON.stringify(d.activityLogs));
+          }
           setIsCloudSynced(true);
         }
       } catch (err) {
@@ -425,9 +500,26 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  // 2. Debounced Cloud Persistence: Automatically sync any changes to Turso
+  // 2. Debounced Cloud Persistence: Automatically sync any changes to Turso & localStorage
   useEffect(() => {
     if (!hasLoadedCloud.current) return;
+
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('holabusiness_projects', JSON.stringify(projects));
+        localStorage.setItem('holabusiness_tasks', JSON.stringify(tasks));
+        localStorage.setItem('holabusiness_contacts', JSON.stringify(contacts));
+        localStorage.setItem('holabusiness_meetings', JSON.stringify(meetings));
+        localStorage.setItem('holabusiness_client_talks', JSON.stringify(clientTalks));
+        localStorage.setItem('holabusiness_proposals', JSON.stringify(proposals));
+        localStorage.setItem('holabusiness_documents', JSON.stringify(documents));
+        localStorage.setItem('holabusiness_requirements', JSON.stringify(requirements));
+        localStorage.setItem('holabusiness_assets', JSON.stringify(assets));
+        localStorage.setItem('holabusiness_credentials', JSON.stringify(credentials));
+        localStorage.setItem('holabusiness_renewals', JSON.stringify(renewals));
+        localStorage.setItem('holabusiness_activity_logs', JSON.stringify(activityLogs));
+      } catch {}
+    }
 
     const timeout = setTimeout(() => {
       fetch('/api/sync', {
@@ -453,7 +545,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
       })
         .then(() => setIsCloudSynced(true))
         .catch((e) => console.warn('Cloud sync error:', e));
-    }, 400);
+    }, 300);
 
     return () => clearTimeout(timeout);
   }, [
@@ -727,7 +819,13 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
         updated_at: now,
       };
 
-      setProjects((prev) => [newProject, ...prev]);
+      setProjects((prev) => {
+        const next = [newProject, ...prev];
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('holabusiness_projects', JSON.stringify(next));
+        }
+        return next;
+      });
       setRequirements((prev) => [newReq, ...prev]);
       setMemberships((prev) => {
         const next = { ...prev };
@@ -1276,8 +1374,20 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
 
   const deleteProject = useCallback(
     (projectId: string) => {
-      setProjects((prev) => prev.filter((p) => p.id !== projectId));
-      setTasks((prev) => prev.filter((t) => t.project_id !== projectId));
+      setProjects((prev) => {
+        const next = prev.filter((p) => p.id !== projectId);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('holabusiness_projects', JSON.stringify(next));
+        }
+        return next;
+      });
+      setTasks((prev) => {
+        const next = prev.filter((t) => t.project_id !== projectId);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('holabusiness_tasks', JSON.stringify(next));
+        }
+        return next;
+      });
       setClientTalks((prev) => prev.filter((t) => t.project_id !== projectId));
       setMeetings((prev) => prev.filter((m) => m.project_id !== projectId));
       setProposals((prev) => prev.filter((p) => p.project_id !== projectId));

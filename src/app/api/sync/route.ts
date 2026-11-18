@@ -128,6 +128,17 @@ export async function POST(req: Request) {
 
       // Synchronize to relational tables where relevant for external SQL querying
       if (key === 'projects' && Array.isArray(value)) {
+        if (value.length > 0) {
+          const ids = value.map((p) => `'${p.id.replace(/'/g, "''")}'`).join(',');
+          try {
+            await client.execute(`DELETE FROM projects WHERE id NOT IN (${ids})`);
+          } catch (e) {}
+        } else {
+          try {
+            await client.execute('DELETE FROM projects');
+          } catch (e) {}
+        }
+
         for (const p of value) {
           try {
             await client.execute({
@@ -163,6 +174,12 @@ export async function POST(req: Request) {
       }
 
       if (key === 'users' && Array.isArray(value)) {
+        if (value.length > 0) {
+          const ids = value.map((u) => `'${u.id.replace(/'/g, "''")}'`).join(',');
+          try {
+            await client.execute(`DELETE FROM users WHERE id NOT IN (${ids}) AND is_main_admin = 0`);
+          } catch (e) {}
+        }
         for (const u of value) {
           try {
             await client.execute({
