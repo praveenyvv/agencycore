@@ -138,6 +138,7 @@ export interface User {
   name: string;
   email: string;
   role: UserRole;
+  is_main_admin?: boolean;
   password?: string;
   avatar_url?: string | null;
   title?: string | null;

@@ -24,8 +24,14 @@ const PERMISSION_MATRIX: Record<UserRole, RolePermissions> = {
   client: ADMIN_PERMISSIONS,
 };
 
-export function getPermissions(role: UserRole): RolePermissions {
-  return ADMIN_PERMISSIONS;
+export function getPermissions(
+  role: UserRole,
+  user?: { is_main_admin?: boolean }
+): RolePermissions {
+  return {
+    ...ADMIN_PERMISSIONS,
+    canManageUsers: Boolean(user?.is_main_admin),
+  };
 }
 
 export function canAccessRoute(role: UserRole, pathname: string): boolean {

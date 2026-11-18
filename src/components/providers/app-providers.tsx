@@ -216,7 +216,8 @@ interface AuthContextValue {
   activityLogs: ActivityLog[];
   todayDate: Date | null;
   switchPersona: (userId: string) => void;
-  signInWithEmail: (email: string) => boolean;
+  signInWithEmail: (email: string, password?: string) => boolean;
+  signInWithCredentials: (email: string, password?: string) => boolean;
   isAuthenticated: boolean;
   signOut: () => void;
   // Core Pre-Sales & Lifecycle Mutations
@@ -324,8 +325,31 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
       })
   );
 
-  const [users, setUsers] = useState<User[]>(DEMO_USERS);
-  const [currentUserId, setCurrentUserId] = useState<string>(DEMO_USERS[0].id);
+  const [users, setUsers] = useState<User[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem('holabusiness_users');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        }
+      } catch (err) {
+        console.error('Failed to read users from localStorage', err);
+      }
+    }
+    return DEMO_USERS;
+  });
+
+  const [currentUserId, setCurrentUserId] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const savedAuth = localStorage.getItem('holabusiness_auth_user');
+        if (savedAuth) return savedAuth;
+      } catch {}
+    }
+    return DEMO_USERS[0].id;
+  });
+
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(true);
   const todayDate = useSyncExternalStore(
     emptySubscribe,
@@ -355,8 +379,8 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
   );
 
   const permissions = useMemo(
-    () => getPermissions(currentUser.role),
-    [currentUser.role]
+    () => getPermissions(currentUser.role, currentUser),
+    [currentUser.role, currentUser]
   );
 
   const appendLog = useCallback(
@@ -399,22 +423,38 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
     if (found) {
       setCurrentUserId(found.id);
       setIsAuthenticated(true);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('holabusiness_auth_user', found.id);
+      }
     }
   };
 
-  const signInWithEmail = (email: string) => {
+  const signInWithCredentials = (email: string, password?: string) => {
     const found = users.find(
       (u) => u.email.toLowerCase() === email.trim().toLowerCase()
     );
-    if (found) {
-      setCurrentUserId(found.id);
-      setIsAuthenticated(true);
-      return true;
+    if (!found) return false;
+    if (found.password && password && found.password !== password.trim()) {
+      return false;
     }
-    return false;
+    setCurrentUserId(found.id);
+    setIsAuthenticated(true);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('holabusiness_auth_user', found.id);
+    }
+    return true;
   };
 
-  const signOut = () => setIsAuthenticated(false);
+  const signInWithEmail = (email: string, password?: string) => {
+    return signInWithCredentials(email, password);
+  };
+
+  const signOut = () => {
+    setIsAuthenticated(false);
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('holabusiness_auth_user');
+    }
+  };
 
   const createAdminUser = useCallback(
     (input: {
@@ -429,11 +469,18 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
         name: input.name.trim(),
         email: input.email.trim(),
         role: 'admin',
+        is_main_admin: false,
         title: input.title?.trim() || 'Co-Founder & Admin',
-        password: input.password?.trim() || 'admin',
+        password: input.password?.trim() || 'admin123',
         created_at: new Date().toISOString(),
       };
-      setUsers((prev) => [...prev, newUser]);
+      setUsers((prev) => {
+        const updated = [...prev, newUser];
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('holabusiness_users', JSON.stringify(updated));
+        }
+        return updated;
+      });
       appendLog(
         projects[0]?.id || 'system',
         'SCOPE_UPDATED',
@@ -448,9 +495,13 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
 
   const changeUserPassword = useCallback(
     (userId: string, newPass: string) => {
-      setUsers((prev) =>
-        prev.map((u) => (u.id === userId ? { ...u, password: newPass.trim() } : u))
-      );
+      setUsers((prev) => {
+        const updated = prev.map((u) => (u.id === userId ? { ...u, password: newPass.trim() } : u));
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('holabusiness_users', JSON.stringify(updated));
+        }
+        return updated;
+      });
     },
     []
   );
@@ -1838,6 +1889,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
     todayDate,
     switchPersona,
     signInWithEmail,
+    signInWithCredentials,
     isAuthenticated,
     signOut,
     createProject,

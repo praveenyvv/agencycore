@@ -98,13 +98,20 @@ export default function TeamPage() {
           </p>
         </div>
 
-        <Button
-          onClick={() => setIsAddOpen(true)}
-          className="h-[36px] px-4 rounded-[8px] bg-[#4361ee] hover:bg-[#3451d1] text-white shadow-[0_2px_6px_rgba(67,97,238,0.25)] text-[13px] font-medium gap-1.5"
-        >
-          <Plus className="h-4 w-4" />
-          Add Founder / Admin
-        </Button>
+        {currentUser.is_main_admin ? (
+          <Button
+            onClick={() => setIsAddOpen(true)}
+            className="h-[36px] px-4 rounded-[8px] bg-[#4361ee] hover:bg-[#3451d1] text-white shadow-[0_2px_6px_rgba(67,97,238,0.25)] text-[13px] font-medium gap-1.5"
+          >
+            <Plus className="h-4 w-4" />
+            Add Founder / Admin
+          </Button>
+        ) : (
+          <div className="rounded-[8px] bg-zinc-100 px-3 py-1.5 text-xs text-zinc-600 border border-zinc-200 flex items-center gap-1.5">
+            <Lock className="h-3.5 w-3.5 text-zinc-400" />
+            <span>Only Main Admin can invite new administrators</span>
+          </div>
+        )}
       </div>
 
       {/* 2. Tinted Info Banner */}
@@ -167,10 +174,17 @@ export default function TeamPage() {
                           You
                         </span>
                       )}
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-[20px] text-[11px] font-semibold bg-[#d1fae5] text-[#065f46]">
-                        <ShieldCheck className="h-3 w-3 mr-1" />
-                        Founder &amp; Admin
-                      </span>
+                      {u.is_main_admin ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-[20px] text-[11px] font-semibold bg-blue-100 text-blue-800 border border-blue-200">
+                          <ShieldCheck className="h-3 w-3 mr-1" />
+                          Main Admin / Primary Founder
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-[20px] text-[11px] font-semibold bg-[#d1fae5] text-[#065f46]">
+                          <ShieldCheck className="h-3 w-3 mr-1" />
+                          Co-Founder &amp; Admin
+                        </span>
+                      )}
                     </div>
                     <div className="text-[12px] text-[#6b7280] mt-0.5">
                       {u.email} · {u.title || 'Co-Founder & Admin'}
