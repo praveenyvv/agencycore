@@ -192,7 +192,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const sidebarContent = (
     <div className="flex h-full flex-col bg-white text-[#111827] select-none border-r border-[#e5e7eb] w-[232px]">
       {/* 1. Top Logo Block (60px tall, bottom border) */}
-      <div className="flex h-[60px] items-center px-[18px] border-b border-[#e5e7eb] shrink-0 gap-2.5">
+      <div className="flex h-[60px] items-center px-[18px] border-b border-[#e5e7eb] shrink-0 gap-2.5 justify-between">
         <Link href="/" className="flex items-center gap-2.5 min-w-0">
           <div className="w-[32px] h-[32px] rounded-[8px] bg-[#4361ee] text-white font-bold text-[14px] flex items-center justify-center shrink-0">
             HB
@@ -206,6 +206,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </span>
           </div>
         </Link>
+        {process.env.NEXT_PUBLIC_APP_ENV === 'staging' && (
+          <span className="rounded-[4px] bg-amber-100 px-1.5 py-0.5 text-[9.5px] font-bold tracking-wider text-amber-800 uppercase border border-amber-300">
+            Staging
+          </span>
+        )}
+        {process.env.NEXT_PUBLIC_APP_ENV === 'development' && (
+          <span className="rounded-[4px] bg-blue-50 px-1.5 py-0.5 text-[9.5px] font-bold tracking-wider text-[#4361ee] uppercase border border-blue-200">
+            Dev
+          </span>
+        )}
       </div>
 
       {/* 2. Navigation & Project Selector */}

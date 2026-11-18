@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS users (
   email TEXT UNIQUE NOT NULL,
   role TEXT NOT NULL DEFAULT 'admin',
   is_main_admin INTEGER NOT NULL DEFAULT 0,
+  is_disabled INTEGER NOT NULL DEFAULT 0,
   password TEXT NOT NULL DEFAULT 'admin123',
   title TEXT,
   avatar_url TEXT,
