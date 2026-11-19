@@ -79,6 +79,8 @@ export function TabCredentialVault({ project }: { project: Project }) {
   const [formUrl, setFormUrl] = useState('');
   const [formNotes, setFormNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [revealError, setRevealError] = useState<{ id: string; message: string } | null>(null);
 
   // Access Control Guard
   if (!permissions.canViewCredentials) {
@@ -128,9 +130,13 @@ export function TabCredentialVault({ project }: { project: Project }) {
     }
 
     setLoadingId(credId);
+    setRevealError(null);
     try {
       const plaintext = await revealCredential(project.id, credId);
       setRevealedMap((prev) => ({ ...prev, [credId]: plaintext }));
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Decryption failed';
+      setRevealError({ id: credId, message: msg });
     } finally {
       setLoadingId(null);
     }
@@ -148,9 +154,13 @@ export function TabCredentialVault({ project }: { project: Project }) {
     let secret = revealedMap[credId];
     if (!secret) {
       setLoadingId(credId);
+      setRevealError(null);
       try {
         secret = await revealCredential(project.id, credId);
         setRevealedMap((prev) => ({ ...prev, [credId]: secret }));
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : 'Decryption failed';
+        setRevealError({ id: credId, message: msg });
       } finally {
         setLoadingId(null);
       }
@@ -165,6 +175,7 @@ export function TabCredentialVault({ project }: { project: Project }) {
   };
 
   const openAddModal = () => {
+    setFormError(null);
     setFormService('');
     setFormCategory('Hosting');
     setFormUsername('');
@@ -176,6 +187,7 @@ export function TabCredentialVault({ project }: { project: Project }) {
   };
 
   const openEditModal = (cred: ProjectCredential) => {
+    setFormError(null);
     setEditingCred(cred);
     setFormService(cred.service_name);
     setFormCategory(cred.category || 'Other');
@@ -191,6 +203,7 @@ export function TabCredentialVault({ project }: { project: Project }) {
     if (!formService.trim() || !formUsername.trim() || !formSecret.trim()) return;
 
     setIsSubmitting(true);
+    setFormError(null);
     try {
       await addCredential({
         project_id: project.id,
@@ -202,6 +215,9 @@ export function TabCredentialVault({ project }: { project: Project }) {
         notes: formNotes.trim() || undefined,
       });
       setIsAddOpen(false);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to save credential';
+      setFormError(msg);
     } finally {
       setIsSubmitting(false);
     }
@@ -212,6 +228,7 @@ export function TabCredentialVault({ project }: { project: Project }) {
     if (!editingCred || !formService.trim() || !formUsername.trim()) return;
 
     setIsSubmitting(true);
+    setFormError(null);
     try {
       await updateCredential({
         project_id: project.id,
@@ -224,6 +241,9 @@ export function TabCredentialVault({ project }: { project: Project }) {
         notes: formNotes.trim() || undefined,
       });
       setEditingCred(null);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to update credential';
+      setFormError(msg);
     } finally {
       setIsSubmitting(false);
     }
@@ -478,6 +498,13 @@ export function TabCredentialVault({ project }: { project: Project }) {
                     </button>
                   )}
                 </div>
+
+                {revealError?.id === cred.id && (
+                  <div className="w-full text-xs text-red-600 bg-red-50 border border-red-200 px-3 py-1.5 rounded-lg flex items-center gap-2 mt-2">
+                    <ShieldAlert className="h-3.5 w-3.5 shrink-0" />
+                    <span>{revealError.message}</span>
+                  </div>
+                )}
               </div>
             );
           })}
@@ -519,6 +546,12 @@ export function TabCredentialVault({ project }: { project: Project }) {
         }
       >
         <form id="add-cred-form" onSubmit={handleSaveAdd} className="space-y-3.5">
+          {formError && (
+            <div className="rounded-lg bg-red-50 border border-red-200 p-2.5 text-xs text-red-600 flex items-center gap-2">
+              <ShieldAlert className="h-4 w-4 shrink-0" />
+              <span>{formError}</span>
+            </div>
+          )}
           <div className="space-y-1">
             <label className="text-xs font-medium text-zinc-700">
               Service / Platform Name *
@@ -650,6 +683,12 @@ export function TabCredentialVault({ project }: { project: Project }) {
         }
       >
         <form id="edit-cred-form" onSubmit={handleSaveEdit} className="space-y-3.5">
+          {formError && (
+            <div className="rounded-lg bg-red-50 border border-red-200 p-2.5 text-xs text-red-600 flex items-center gap-2">
+              <ShieldAlert className="h-4 w-4 shrink-0" />
+              <span>{formError}</span>
+            </div>
+          )}
           <div className="space-y-1">
             <label className="text-xs font-medium text-zinc-700">
               Service / Platform Name *
