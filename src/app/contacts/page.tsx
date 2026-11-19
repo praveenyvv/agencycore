@@ -82,7 +82,7 @@ export default function BusinessContactsPage() {
     setFormName(c.name);
     setFormRole(c.role);
     setFormCompany(c.company_name || '');
-    setFormEmail(c.email);
+    setFormEmail(c.email || '');
     setFormPhone(c.phone || '');
     setFormNotes(c.notes || '');
     setFormProjectId(c.project_id || '');
@@ -91,7 +91,7 @@ export default function BusinessContactsPage() {
 
   const handleSaveContact = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formName.trim() || !formRole.trim() || !formEmail.trim()) return;
+    if (!formName.trim() || !formRole.trim() || !formPhone.trim()) return;
 
     if (countWords(formNotes) > 20) {
       alert('Notes must be 20 words or less.');
@@ -103,8 +103,8 @@ export default function BusinessContactsPage() {
         name: formName.trim(),
         role: formRole.trim(),
         company_name: formCompany.trim() || null,
-        email: formEmail.trim(),
-        phone: formPhone.trim() || null,
+        email: formEmail.trim() || '',
+        phone: formPhone.trim(),
         notes: formNotes.trim() || null,
         project_id: formProjectId || null,
       });
@@ -114,8 +114,8 @@ export default function BusinessContactsPage() {
         name: formName.trim(),
         role: formRole.trim(),
         company_name: formCompany.trim() || null,
-        email: formEmail.trim(),
-        phone: formPhone.trim() || null,
+        email: formEmail.trim() || '',
+        phone: formPhone.trim(),
         notes: formNotes.trim() || null,
         project_id: formProjectId || null,
       });
@@ -158,7 +158,8 @@ export default function BusinessContactsPage() {
         const matchesName = c.name.toLowerCase().includes(q);
         const matchesRole = c.role.toLowerCase().includes(q);
         const matchesCompany = (c.company_name || '').toLowerCase().includes(q);
-        const matchesEmail = c.email.toLowerCase().includes(q);
+        const matchesPhone = Boolean(c.phone && c.phone.toLowerCase().includes(q));
+        const matchesEmail = Boolean(c.email && c.email.toLowerCase().includes(q));
         const matchesNotes = (c.notes || '').toLowerCase().includes(q);
         const proj = getProject(c.project_id);
         const matchesProject = proj ? proj.title.toLowerCase().includes(q) : false;
@@ -166,6 +167,7 @@ export default function BusinessContactsPage() {
           matchesName ||
           matchesRole ||
           matchesCompany ||
+          matchesPhone ||
           matchesEmail ||
           matchesNotes ||
           matchesProject
@@ -414,17 +416,19 @@ export default function BusinessContactsPage() {
 
                     {/* Contact details */}
                     <div className="space-y-1 pt-1 text-[12px]">
-                      <div className="flex items-center gap-2 truncate">
-                        <Mail className="h-3.5 w-3.5 text-[#9ca3af] shrink-0" />
-                        <a href={`mailto:${contact.email}`} className="truncate hover:text-[#4361ee] hover:underline">
-                          {contact.email}
-                        </a>
-                      </div>
                       {contact.phone && (
                         <div className="flex items-center gap-2 truncate">
                           <Phone className="h-3.5 w-3.5 text-[#9ca3af] shrink-0" />
                           <a href={`tel:${contact.phone}`} className="truncate hover:text-[#4361ee] hover:underline">
                             {contact.phone}
+                          </a>
+                        </div>
+                      )}
+                      {contact.email && (
+                        <div className="flex items-center gap-2 truncate">
+                          <Mail className="h-3.5 w-3.5 text-[#9ca3af] shrink-0" />
+                          <a href={`mailto:${contact.email}`} className="truncate hover:text-[#4361ee] hover:underline">
+                            {contact.email}
                           </a>
                         </div>
                       )}
@@ -528,25 +532,26 @@ export default function BusinessContactsPage() {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-[12px] font-medium text-[#6b7280] mb-1">
-                Email Address *
+                Phone *
               </label>
               <Input
                 required
-                type="email"
-                value={formEmail}
-                onChange={(e) => setFormEmail(e.target.value)}
-                placeholder="jane@company.com"
+                type="tel"
+                value={formPhone}
+                onChange={(e) => setFormPhone(e.target.value)}
+                placeholder="+1 (555) 000-0000"
                 className="text-[13px] h-[36px]"
               />
             </div>
             <div>
               <label className="block text-[12px] font-medium text-[#6b7280] mb-1">
-                Phone (Optional)
+                Email Address (Optional)
               </label>
               <Input
-                value={formPhone}
-                onChange={(e) => setFormPhone(e.target.value)}
-                placeholder="+1 (555) 000-0000"
+                type="email"
+                value={formEmail}
+                onChange={(e) => setFormEmail(e.target.value)}
+                placeholder="jane@company.com"
                 className="text-[13px] h-[36px]"
               />
             </div>

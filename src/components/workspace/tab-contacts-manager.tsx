@@ -60,14 +60,14 @@ export function TabContactsManager({ project }: { project: Project }) {
 
   const handleAddSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || !email.trim()) return;
+    if (!name.trim() || !phone.trim()) return;
 
     addContact({
       project_id: project.id,
       name,
       role: role.trim() || 'Stakeholder',
-      email,
-      phone,
+      email: email.trim() || '',
+      phone: phone.trim(),
       notes,
       is_primary: projectContacts.length === 0,
       can_access_portal: true,
@@ -85,20 +85,20 @@ export function TabContactsManager({ project }: { project: Project }) {
     setEditingContact(c);
     setEditName(c.name);
     setEditRole(c.role);
-    setEditEmail(c.email);
+    setEditEmail(c.email || '');
     setEditPhone(c.phone || '');
     setEditNotes(c.notes || '');
   };
 
   const handleEditSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editingContact || !editName.trim() || !editEmail.trim()) return;
+    if (!editingContact || !editName.trim() || !editPhone.trim()) return;
 
     updateContact(editingContact.id, {
       name: editName.trim(),
       role: editRole.trim() || 'Stakeholder',
-      email: editEmail.trim(),
-      phone: editPhone.trim() || null,
+      email: editEmail.trim() || '',
+      phone: editPhone.trim(),
       notes: editNotes.trim() || null,
     });
 
@@ -165,24 +165,25 @@ export function TabContactsManager({ project }: { project: Project }) {
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs font-medium text-zinc-700">
-                    Email Address *
+                    Phone / Mobile *
                   </label>
                   <Input
                     required
-                    type="email"
-                    placeholder="sarah@client.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    type="tel"
+                    placeholder="+1 (555) 019-2834"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
                   />
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs font-medium text-zinc-700">
-                    Phone / WhatsApp
+                    Email Address (Optional)
                   </label>
                   <Input
-                    placeholder="+1 (555) 019-2834"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
+                    type="email"
+                    placeholder="sarah@client.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                   />
                 </div>
               </div>
@@ -248,19 +249,20 @@ export function TabContactsManager({ project }: { project: Project }) {
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-medium text-zinc-700">Email Address *</label>
+                <label className="text-xs font-medium text-zinc-700">Phone / Mobile *</label>
                 <Input
                   required
-                  type="email"
-                  value={editEmail}
-                  onChange={(e) => setEditEmail(e.target.value)}
+                  type="tel"
+                  value={editPhone}
+                  onChange={(e) => setEditPhone(e.target.value)}
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-medium text-zinc-700">Phone / WhatsApp</label>
+                <label className="text-xs font-medium text-zinc-700">Email Address (Optional)</label>
                 <Input
-                  value={editPhone}
-                  onChange={(e) => setEditPhone(e.target.value)}
+                  type="email"
+                  value={editEmail}
+                  onChange={(e) => setEditEmail(e.target.value)}
                 />
               </div>
             </div>
@@ -362,19 +364,21 @@ export function TabContactsManager({ project }: { project: Project }) {
                 </div>
 
                 <div className="space-y-1.5 text-xs text-zinc-600 border-t border-zinc-100 pt-2">
-                  <div className="flex items-center gap-2">
-                    <Mail className="h-3.5 w-3.5 text-zinc-400 shrink-0" />
-                    <a
-                      href={`mailto:${contact.email}`}
-                      className="text-blue-600 hover:underline truncate"
-                    >
-                      {contact.email}
-                    </a>
-                  </div>
                   {contact.phone && (
                     <div className="flex items-center gap-2">
                       <Phone className="h-3.5 w-3.5 text-zinc-400 shrink-0" />
                       <span>{contact.phone}</span>
+                    </div>
+                  )}
+                  {contact.email && (
+                    <div className="flex items-center gap-2">
+                      <Mail className="h-3.5 w-3.5 text-zinc-400 shrink-0" />
+                      <a
+                        href={`mailto:${contact.email}`}
+                        className="text-blue-600 hover:underline truncate"
+                      >
+                        {contact.email}
+                      </a>
                     </div>
                   )}
                   {contact.notes && (

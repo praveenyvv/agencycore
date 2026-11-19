@@ -158,7 +158,7 @@ export interface ProjectContact {
   company_name?: string | null; // For standalone business contact
   name: string;
   role: string;
-  email: string;
+  email?: string | null;
   phone?: string | null;
   notes?: string | null;
   is_primary?: boolean;

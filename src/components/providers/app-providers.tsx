@@ -78,7 +78,7 @@ export interface CreateContactInput {
   company_name?: string | null;
   name: string;
   role: string;
-  email: string;
+  email?: string | null;
   phone?: string | null;
   notes?: string | null;
   is_primary?: boolean;
@@ -881,7 +881,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
         company_name: input.company_name?.trim() || null,
         name: input.name.trim(),
         role: input.role.trim(),
-        email: input.email.trim(),
+        email: input.email?.trim() || '',
         phone: input.phone?.trim() || null,
         notes: input.notes?.trim() || null,
         is_primary: Boolean(input.is_primary),
@@ -897,7 +897,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
           'contact',
           contactId,
           `Added contact ${newContact.name} (${newContact.role})`,
-          { email: newContact.email, role: newContact.role }
+          { contact: newContact.phone || newContact.email, role: newContact.role }
         );
       }
       return newContact;

@@ -60,7 +60,8 @@ export function generateProposalPdf(
     doc.setTextColor(51, 65, 85);
 
     contacts.forEach((contact) => {
-      const line = `• ${contact.name} (${contact.role}) — ${contact.email}${contact.phone ? ` | ${contact.phone}` : ''}`;
+      const contactInfo = [contact.phone, contact.email].filter(Boolean).join(' | ');
+      const line = `• ${contact.name} (${contact.role})${contactInfo ? ` — ${contactInfo}` : ''}`;
       doc.text(line, margin + 2, cursorY);
       cursorY += 4.5;
     });
