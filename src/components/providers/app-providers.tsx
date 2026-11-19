@@ -1700,7 +1700,8 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
         body: JSON.stringify({ plaintext: input.plaintext_secret }),
       });
       if (!res.ok) {
-        throw new Error('Encryption failed');
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.error || `Encryption failed (${res.status})`);
       }
       const { encrypted_secret, iv, auth_tag } = await res.json();
 
@@ -1753,7 +1754,8 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
         }),
       });
       if (!res.ok) {
-        throw new Error('Decryption failed');
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.error || `Decryption failed (${res.status})`);
       }
       const { plaintext } = await res.json();
 
@@ -1793,7 +1795,10 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ plaintext: input.plaintext_secret }),
         });
-        if (!res.ok) throw new Error('Encryption failed');
+        if (!res.ok) {
+          const errJson = await res.json().catch(() => ({}));
+          throw new Error(errJson.error || `Encryption failed (${res.status})`);
+        }
         const encryptedData = await res.json();
         encrypted_secret = encryptedData.encrypted_secret;
         iv = encryptedData.iv;

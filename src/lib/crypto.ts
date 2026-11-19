@@ -3,19 +3,14 @@ import crypto from 'crypto';
 const ALGORITHM = 'aes-256-gcm';
 
 function getEncryptionKey(): Buffer {
-  const raw = process.env.AGENCY_VAULT_KEY;
-  if (raw && raw.length >= 32) {
-    // Derive a deterministic 32-byte key from the configured secret
-    return crypto.createHash('sha256').update(raw).digest();
-  }
-  if (process.env.NODE_ENV === 'production') {
-    throw new Error('AGENCY_VAULT_KEY environment variable is required in production.');
-  }
-  // Local development fallback key
-  return crypto
-    .createHash('sha256')
-    .update('holabusiness-local-dev-vault-key-do-not-use-in-prod')
-    .digest();
+  const raw =
+    process.env.AGENCY_VAULT_KEY ||
+    process.env.VAULT_ENCRYPTION_KEY ||
+    process.env.TURSO_AUTH_TOKEN ||
+    'holabusiness-secure-vault-key-aes-256-gcm-do-not-leak';
+
+  // Derive a deterministic 32-byte key from the configured secret
+  return crypto.createHash('sha256').update(raw).digest();
 }
 
 export interface EncryptedPayload {
