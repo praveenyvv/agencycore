@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
@@ -69,6 +69,31 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+
+  const switcherRef = useRef<HTMLDivElement>(null);
+  const notificationsRef = useRef<HTMLDivElement>(null);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+
+  // Close floating menus when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      const target = event.target as Node;
+      if (switcherOpen && switcherRef.current && !switcherRef.current.contains(target)) {
+        setSwitcherOpen(false);
+      }
+      if (notificationsOpen && notificationsRef.current && !notificationsRef.current.contains(target)) {
+        setNotificationsOpen(false);
+      }
+      if (personaMenuOpen && userMenuRef.current && !userMenuRef.current.contains(target)) {
+        setPersonaMenuOpen(false);
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [switcherOpen, notificationsOpen, personaMenuOpen]);
 
   // Redirect to /login if signed out (unless already on /login)
   useEffect(() => {
@@ -251,7 +276,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </Link>
 
         {/* Project Selector Button */}
-        <div className="relative">
+        <div ref={switcherRef} className="relative">
           <button
             onClick={() => setSwitcherOpen((o) => !o)}
             className={cn(
@@ -387,16 +412,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           })}
       </div>
 
-      {/* 3. Bottom Sidebar (Settings & Logout) */}
+      {/* 3. Bottom Sidebar (Logout) */}
       <div className="p-2.5 border-t border-[#e5e7eb] shrink-0 space-y-0.5">
-        <button
-          onClick={() => setPersonaMenuOpen(true)}
-          className="flex w-full items-center gap-2.5 px-2.5 py-2 rounded-[8px] text-[13px] font-medium text-[#6b7280] hover:bg-[#f3f4f6] hover:text-[#111827] transition-colors cursor-pointer"
-        >
-          <Settings className="h-4 w-4 text-[#9ca3af]" />
-          <span>Switch Account</span>
-        </button>
-
         <button
           onClick={() => signOut()}
           className="flex w-full items-center gap-2.5 px-2.5 py-2 rounded-[8px] text-[13px] font-medium text-[#6b7280] hover:bg-[#fef2f2] hover:text-[#ef4444] transition-colors cursor-pointer group"
@@ -476,7 +493,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
             {/* Notification Bell (34x34 square button, white, border, radius 8) */}
             {permissions.canViewInternalDelays && (
-              <div className="relative">
+              <div ref={notificationsRef} className="relative">
                 <button
                   onClick={() => setNotificationsOpen((o) => !o)}
                   className="relative flex h-[34px] w-[34px] items-center justify-center rounded-[8px] border border-[#e5e7eb] bg-white text-[#6b7280] hover:border-[#4361ee] hover:text-[#4361ee] hover:bg-[rgba(67,97,238,0.08)] transition-all cursor-pointer"
@@ -524,8 +541,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               </div>
             )}
 
-            {/* Persona Switch / Quick Switch */}
-            <div className="relative">
+            {/* User Profile Menu */}
+            <div ref={userMenuRef} className="relative">
               <button
                 onClick={() => setPersonaMenuOpen((o) => !o)}
                 className="flex items-center gap-2 rounded-[8px] border border-[#e5e7eb] bg-white px-2.5 py-1 text-left hover:border-[#4361ee] transition-all cursor-pointer"
@@ -538,41 +555,54 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     {currentUser.name}
                   </span>
                   <span className="text-[10px] text-[#9ca3af]">
-                    {ROLE_LABELS[currentUser.role]}
+                    {currentUser.title || ROLE_LABELS[currentUser.role]}
                   </span>
                 </div>
                 <ChevronDown className="h-3 w-3 text-[#9ca3af] hidden sm:block" />
               </button>
 
               {personaMenuOpen && (
-                <div className="absolute right-0 top-11 z-50 w-64 rounded-[12px] border border-[#e5e7eb] bg-white p-2 shadow-[0_8px_24px_rgba(0,0,0,0.12)] animate-drop-in">
-                  <div className="px-2 py-1 text-[11px] font-semibold uppercase text-[#9ca3af]">
-                    Switch Account / Persona
-                  </div>
-                  <div className="space-y-0.5 mt-1">
-                    {users.map((u) => (
-                      <button
-                        key={u.id}
-                        onClick={() => {
-                          switchPersona(u.id);
-                          setPersonaMenuOpen(false);
-                        }}
-                        className={cn(
-                          'flex w-full items-center justify-between rounded-[8px] px-2.5 py-1.5 text-left text-[12.5px] transition-colors cursor-pointer',
-                          u.id === currentUser.id
-                            ? 'bg-[rgba(67,97,238,0.08)] text-[#4361ee] font-semibold'
-                            : 'text-[#6b7280] hover:bg-[#f3f4f6] hover:text-[#111827]'
-                        )}
-                      >
-                        <div className="truncate">
-                          <div className="font-medium text-[#111827]">{u.name}</div>
-                          <div className="text-[11px] text-[#9ca3af]">{u.email}</div>
-                        </div>
-                        <span className="text-[10px] font-medium text-[#6b7280]">
-                          {u.role}
+                <div className="absolute right-0 top-11 z-50 w-64 rounded-[12px] border border-[#e5e7eb] bg-white p-3 shadow-[0_8px_24px_rgba(0,0,0,0.12)] animate-drop-in">
+                  <div className="flex items-center gap-3 pb-3 border-b border-[#e5e7eb]">
+                    <div className="w-10 h-10 rounded-full bg-[#4361ee] text-white font-bold text-sm flex items-center justify-center shrink-0">
+                      {userInitials}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="font-semibold text-[13px] text-[#111827] truncate">
+                        {currentUser.name}
+                      </div>
+                      <div className="text-[11px] text-[#6b7280] truncate">
+                        {currentUser.email}
+                      </div>
+                      <div className="mt-1">
+                        <span className="inline-block text-[10px] font-semibold text-[#4361ee] bg-[#eef0fd] px-2 py-0.5 rounded-full">
+                          {currentUser.title || ROLE_LABELS[currentUser.role]}
                         </span>
-                      </button>
-                    ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="pt-2 space-y-1">
+                    <Link
+                      href="/team"
+                      onClick={() => setPersonaMenuOpen(false)}
+                      className="flex items-center gap-2 px-2.5 py-1.5 rounded-[7px] text-[12.5px] font-medium text-[#4b5563] hover:bg-[#f3f4f6] hover:text-[#111827] transition-colors"
+                    >
+                      <Users className="h-4 w-4 text-[#9ca3af]" />
+                      <span>Manage Founders &amp; Admins</span>
+                    </Link>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPersonaMenuOpen(false);
+                        signOut();
+                      }}
+                      className="flex w-full items-center gap-2 px-2.5 py-1.5 rounded-[7px] text-[12.5px] font-medium text-[#ef4444] hover:bg-[#fef2f2] transition-colors cursor-pointer"
+                    >
+                      <LogOut className="h-4 w-4 text-[#ef4444]" />
+                      <span>Log Out</span>
+                    </button>
                   </div>
                 </div>
               )}

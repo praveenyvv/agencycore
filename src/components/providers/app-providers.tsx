@@ -290,6 +290,7 @@ interface AuthContextValue {
     title?: string;
     password?: string;
   }) => User;
+  updateUser: (userId: string, updates: { name: string; email: string; title?: string }) => void;
   changeUserPassword: (userId: string, newPass: string) => void;
   toggleUserDisabled: (userId: string) => void;
   deleteUser: (userId: string) => void;
@@ -712,6 +713,37 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
       return newUser;
     },
     [projects, appendLog]
+  );
+
+  const updateUser = useCallback(
+    (userId: string, updates: { name: string; email: string; title?: string }) => {
+      setUsers((prev) => {
+        const updated = prev.map((u) => {
+          if (u.id === userId) {
+            return {
+              ...u,
+              name: updates.name.trim(),
+              email: updates.email.trim(),
+              title: updates.title !== undefined ? updates.title.trim() : u.title,
+            };
+          }
+          return u;
+        });
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('holabusiness_users', JSON.stringify(updated));
+        }
+        return updated;
+      });
+
+      appendLog(
+        projects[0]?.id || 'system',
+        'SCOPE_UPDATED',
+        'project',
+        userId,
+        `Updated account details for ${updates.name.trim()} (${updates.email.trim()})`
+      );
+    },
+    [currentUser.id, projects, appendLog]
   );
 
   const changeUserPassword = useCallback(
@@ -2239,6 +2271,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
     markRenewalAsRenewed,
     deleteRenewal,
     createAdminUser,
+    updateUser,
     changeUserPassword,
     toggleUserDisabled,
     deleteUser,

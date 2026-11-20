@@ -222,7 +222,7 @@ export function TabClientTalk({ project }: { project: Project }) {
         <Button
           onClick={openAddModal}
           size="sm"
-          className="gap-1.5 bg-zinc-900 text-white hover:bg-zinc-800 shadow-xs cursor-pointer"
+          className="gap-1.5 bg-[#4361ee] text-white hover:bg-[#3451d1] shadow-[0_2px_6px_rgba(67,97,238,0.25)] cursor-pointer"
         >
           <Plus className="h-4 w-4" />
           Add Talk
@@ -288,7 +288,7 @@ export function TabClientTalk({ project }: { project: Project }) {
             <Button
               onClick={openAddModal}
               size="sm"
-              className="mt-4 gap-1.5 bg-zinc-900 text-white"
+              className="mt-4 gap-1.5 bg-[#4361ee] text-white hover:bg-[#3451d1] shadow-[0_2px_6px_rgba(67,97,238,0.25)] cursor-pointer"
             >
               <Plus className="h-3.5 w-3.5" />
               Add First Client Talk

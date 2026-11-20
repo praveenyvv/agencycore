@@ -9,6 +9,7 @@ import {
   EyeOff,
   KeyRound,
   Lock,
+  Pencil,
   Plus,
   ShieldCheck,
   Trash2,
@@ -29,15 +30,21 @@ export default function TeamPage() {
     currentUser,
     users,
     createAdminUser,
+    updateUser,
     changeUserPassword,
     toggleUserDisabled,
     deleteUser,
-    switchPersona,
   } = useAuth();
 
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
   const [changingPassUser, setChangingPassUser] = useState<User | null>(null);
   const [deletingUser, setDeletingUser] = useState<User | null>(null);
+
+  // Edit User Form
+  const [editName, setEditName] = useState('');
+  const [editEmail, setEditEmail] = useState('');
+  const [editTitle, setEditTitle] = useState('');
 
   // Add User Form
   const [name, setName] = useState('');
@@ -51,6 +58,25 @@ export default function TeamPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passError, setPassError] = useState('');
   const [passSuccess, setPassSuccess] = useState(false);
+
+  const openEditModal = (u: User) => {
+    setEditingUser(u);
+    setEditName(u.name);
+    setEditEmail(u.email);
+    setEditTitle(u.title || '');
+  };
+
+  const handleSaveEditUser = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingUser || !editName.trim() || !editEmail.trim()) return;
+
+    updateUser(editingUser.id, {
+      name: editName.trim(),
+      email: editEmail.trim(),
+      title: editTitle.trim() || undefined,
+    });
+    setEditingUser(null);
+  };
 
   const handleCreateAdmin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -229,6 +255,18 @@ export default function TeamPage() {
                 </div>
 
                 <div className="flex items-center gap-2 self-end sm:self-center flex-wrap">
+                  {(isCurrent || currentUser.is_main_admin) && (
+                    <button
+                      type="button"
+                      onClick={() => openEditModal(u)}
+                      className="inline-flex items-center gap-1.5 h-[32px] px-3 rounded-[7px] border border-[#e5e7eb] bg-white text-[#4b5563] hover:border-[#4361ee] hover:text-[#4361ee] text-[12px] font-medium transition-colors cursor-pointer"
+                      title="Edit name, email, or role title"
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                      Edit Details
+                    </button>
+                  )}
+
                   <button
                     onClick={() => {
                       setChangingPassUser(u);
@@ -280,22 +318,83 @@ export default function TeamPage() {
                       </button>
                     </>
                   )}
-
-                  {!isCurrent && !u.is_disabled && (
-                    <button
-                      onClick={() => switchPersona(u.id)}
-                      className="inline-flex items-center gap-1.5 h-[32px] px-3 rounded-[7px] bg-[#f3f4f6] text-[#4b5563] hover:bg-[#e5e7eb] hover:text-[#111827] text-[12px] font-medium transition-colors cursor-pointer"
-                    >
-                      <UserCheck className="h-3.5 w-3.5" />
-                      Switch To
-                    </button>
-                  )}
                 </div>
               </div>
             );
           })}
         </div>
       </div>
+
+      {/* Modal: Edit Founder / Admin Details */}
+      {editingUser && (
+        <Modal
+          isOpen={!!editingUser}
+          onClose={() => setEditingUser(null)}
+          title={`Edit Details: ${editingUser.name}`}
+          icon={<Pencil className="h-5 w-5 text-[#4361ee]" />}
+          maxWidth="max-w-[460px]"
+          footer={
+            <>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setEditingUser(null)}
+                className="h-[36px] px-4 text-[13px]"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                form="edit-admin-form"
+                className="h-[36px] px-5 rounded-[8px] bg-[#4361ee] hover:bg-[#3451d1] text-white text-[13px]"
+              >
+                Save Changes
+              </Button>
+            </>
+          }
+        >
+          <form id="edit-admin-form" onSubmit={handleSaveEditUser} className="space-y-3.5">
+            <div className="space-y-1">
+              <label className="block text-[12px] font-medium text-[#6b7280]">
+                Full Name *
+              </label>
+              <Input
+                required
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                placeholder="e.g. Elena Vance"
+                className="text-[13px] h-[36px]"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="block text-[12px] font-medium text-[#6b7280]">
+                Email Address *
+              </label>
+              <Input
+                required
+                type="email"
+                value={editEmail}
+                onChange={(e) => setEditEmail(e.target.value)}
+                placeholder="elena@holabusiness.io"
+                className="text-[13px] h-[36px]"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="block text-[12px] font-medium text-[#6b7280]">
+                Role / Title
+              </label>
+              <Input
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+                placeholder="e.g. Co-Founder &amp; CTO"
+                className="text-[13px] h-[36px]"
+              />
+            </div>
+          </form>
+        </Modal>
+      )}
 
       {/* Modal: Add New Founder / Admin */}
       <Modal
